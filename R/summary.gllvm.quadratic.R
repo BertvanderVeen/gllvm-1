@@ -16,7 +16,7 @@
 #'
 #'@export
 
-summary.gllvm <- function(object, ...) {
+summary.gllvm.quadratic <- function(object, ...) {
   n <- NROW(object$y)
   p <- NCOL(object$y)
   nX <- dim(object$X)[2]
@@ -37,7 +37,7 @@ summary.gllvm <- function(object, ...) {
     newnams <- c("Intercept")
 
   if (num.lv > 0)
-    newnams <- c(newnams, paste("theta.LV", 1:num.lv, sep = ""))
+    newnams <- c(newnams, c(paste("theta.LV", 1:num.lv, sep = ""),paste("theta.LV^2", 1:num.lv, sep = "")))
   colnames(M) <- newnams
   rownames(M) <- colnames(object$y)
   sumry$Call <- object$call
@@ -75,6 +75,6 @@ summary.gllvm <- function(object, ...) {
   if(object$family == "gaussian"){
     sumry$'Standard deviations' <- object$params$phi
   }
-  class(sumry) <- "summary.gllvm"
+  class(sumry) <- "summary.gllvm.quadratic"
   return(sumry)
 }

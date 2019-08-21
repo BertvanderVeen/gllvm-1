@@ -20,7 +20,7 @@
 #'
 #'@export
 
-confint.gllvm <- function(object, parm=NULL, level = 0.95, ...) {
+confint.gllvm.quadratic <- function(object, parm=NULL, level = 0.95, ...) {
   if(is.logical(object$sd)) stop("Standard errors for parameters haven't been calculated, so confidence intervals can not be calculated.");
   n <- NROW(object$y)
   p <- NCOL(object$y)

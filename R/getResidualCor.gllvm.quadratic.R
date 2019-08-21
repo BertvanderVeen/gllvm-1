@@ -29,10 +29,10 @@
 #'@aliases getResidualCor getResidualCor.gllvm
 #'@method getResidualCor gllvm
 #'@export
-#'@export getResidualCor.gllvm
-getResidualCor.gllvm = function(object, adjust = 1)
+#'@export getResidualCor.gllvm.quadratic
+getResidualCor.gllvm.quadratic = function(object, adjust = 1)
 {
-  ResCov <- getResidualCov.gllvm(object, adjust = adjust)$cov
+  ResCov <- getResidualCov.gllvm.quadratic(object, adjust = adjust)$cov
   Res.sd <- 1 / sqrt(diag(ResCov))
   Res.Cor <- diag(Res.sd) %*% ResCov %*% diag(Res.sd)
   colnames(Res.Cor) <- colnames(object$y)

@@ -1,7 +1,7 @@
 #'@export
 
 
-coef.gllvm <- function(object, ...)
+coef.gllvm.quadratic <- function(object, ...)
 {
   names(object$params)[names(object$params) == "beta0"] = "Intercept"
   if (object$row.eff %in% c(TRUE, "fixed"))

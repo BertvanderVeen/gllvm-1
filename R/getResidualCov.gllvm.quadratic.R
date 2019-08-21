@@ -54,10 +54,10 @@
 #'@aliases getResidualCov getResidualCov.gllvm
 #'@method getResidualCov gllvm
 #'@export
-#'@export getResidualCov.gllvm
-getResidualCov.gllvm = function(object, adjust = 1)
+#'@export getResidualCov.gllvm.quadratic
+getResidualCov.gllvm.quadratic = function(object, adjust = 1)
 {
-  ResCov <- object$params$theta %*% t(object$params$theta)
+  ResCov <- object$params$theta[,1:test$num.lv] %*% t(object$params$theta[,1:test$num.lv]) + 2*object$params$theta[,-c(1:test$num.lv)] %*% t(object$params$theta[,-c(1:test$num.lv)]) 
   if(adjust > 0 && object$family %in% c("negative.binomial", "binomial")){
   if(object$family == "negative.binomial"){ 
     if(adjust == 1) ResCov <- ResCov + diag(log(object$params$phi + 1))

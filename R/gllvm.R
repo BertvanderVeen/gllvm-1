@@ -373,27 +373,11 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
           stop("There are rows full of zeros in y, model can not be fitted. \n");
       }
 
-
-    if (row.eff == "random" && family == "ordinal") {
-      stop("Random row effect model is not implemented for ordinal family. \n")
-    }
-    if (method == "LA" && family == "ordinal") {
-      cat("Laplace's method cannot yet handle ordinal data, so VA method is used instead. \n")
+    if (method == "LA") {
+      cat("Laplace's method cannot handle the quadratic model, so VA method is used instead. \n")
       method <- "VA"
     }
-    if (family == "ordinal" && TMB) {
-      TMB <- FALSE
-      cat("TMB implementation method cannot handle", family, " data, so 'TMB = FALSE' is used instead. \n")
-    }
 
-    if (method == "LA" && !TMB) {
-      cat("Laplace's method is not implemented without TMB, so 'TMB = TRUE' is used instead. \n")
-      TMB = TRUE
-    }
-    if (method == "VA" && (family == "tweedie" || family == "ZIP")) {
-      cat("VA method cannot handle", family, " family, so LA method is used instead. \n")
-      method <- "LA"
-    }
     if (p < 3 && !is.null(TR)) {
       stop("Fourth corner model can not be fitted with less than three response variables.\n")
     }
@@ -402,12 +386,11 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
       TMB <- TRUE
     }
 
-
     if (!is.null(start.fit)) {
       if (class(start.fit) != "gllvm")
         stop("Only object of class 'gllvm' can be given as a starting parameters.")
 
-      if (!(family %in% c("poisson", "negative.binomial", "ZIP")))
+      if (!(family %in% c("poisson", "negative.binomial")))
         stop("Starting parameters can be given only for count data.")
 
     }
@@ -435,15 +418,11 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
         sd = FALSE, Lambda.struc = Lambda.struc, TMB = TMB, terms = term)
 
     if (family == "binomial") {
-      if (method == "LA")
-        out$link <- la.link.bin
       if (method == "VA")
         out$link <- "probit"
     }
     out$offset <- offset
-
-
-    if (TMB) {
+    
       trace = FALSE
       if (row.eff == TRUE)
         row.eff <- "fixed"
@@ -480,7 +459,7 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
         out$TR <- fitg$TR
 
       } else {
-        fitg <- gllvm.TMB(
+        fitg <- gllvm.TMB.quadratic(
             y,
             X = X,
             formula = formula,
@@ -520,9 +499,6 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
       if (sd.errors) {
         out$sd <- fitg$sd
       }
-      if (family == "tweedie") {
-        out$Power <- fitg$Power
-      }
       if (method == "VA") {
         out$A <- fitg$A
         out$Ar <- fitg$Ar
@@ -533,51 +509,7 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
       }
       out$start <- fitg$start
 
-    } else {
-      if (row.eff == "fixed")
-        row.eff <- TRUE
-
-      fitg <- gllvm.VA(
-          y,
-          X = X,
-          TR = TR,
-          family = family,
-          formula = formula,
-          num.lv = num.lv,
-          max.iter = max.iter,
-          eps = reltol,
-          row.eff = row.eff,
-          Lambda.struc = Lambda.struc,
-          trace = trace,
-          plot = plot,
-          sd.errors = sd.errors,
-          start.lvs = start.lvs,
-          offset = O,
-          maxit = maxit,
-          diag.iter = diag.iter,
-          seed = seed,
-          n.init = n.init,
-          restrict = restrict,
-          constrOpt = constrOpt,
-          start.params = start.fit,
-          starting.val = starting.val,
-          Lambda.start = Lambda.start,
-          jitter.var = jitter.var
-        )
-      out$logL <- fitg$logLik
-      if (num.lv > 0)
-        out$lvs <- fitg$lvs
-      out$X <- fitg$X
-      out$TR <- fitg$TR
-      out$X.design <- fitg$X.design
-      out$params <- fitg$coef
-      if (sd.errors) {
-        out$sd <- fitg$sd
-      }
-      out$Lambda.struc <- fitg$Lambda.struc
-      out$A <- fitg$Lambda
-      out$start <- fitg$start
-    }
+    
     if (family == "negative.binomial")
       out$params$inv.phi <- 1 / out$params$phi
     if (is.infinite(out$logL)){
@@ -602,6 +534,6 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
 
     out$prediction.errors = fitg$prediction.errors
     out$call <- match.call()
-    class(out) <- "gllvm"
+    class(out) <- "gllvm.quadratic"
     return(out)
   }

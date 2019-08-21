@@ -1,6 +1,6 @@
 #'@export
 
-print.gllvm <- function(x, ...) {
+print.gllvm.quadratic <- function(x, ...) {
   cat("Call: \n")
   print(x$call)
   cat("family: \n")

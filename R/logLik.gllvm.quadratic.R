@@ -17,7 +17,7 @@
 #'
 #'@export
 
-logLik.gllvm <- function(object, ...)
+logLik.gllvm.quadratic <- function(object, ...)
 {
   logL <- object$logL
   if (!is.null(object$params$inv.phi)) {

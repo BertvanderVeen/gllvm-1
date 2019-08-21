@@ -35,11 +35,11 @@
 #'}
 #'@aliases coefplot coefplot.gllvm
 #'@export
-#'@export coefplot.gllvm
-coefplot.gllvm <- function(object, y.label = TRUE, which.Xcoef = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4,6,2,1), xlim.list = NULL, ...)
+#'@export coefplot.gllvm.quadratic
+coefplot.gllvm.quadratic <- function(object, y.label = TRUE, which.Xcoef = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4,6,2,1), xlim.list = NULL, ...)
 {
 
-  if (any(class(object) != "gllvm"))
+  if (any(class(object) != "gllvm.quadratic"))
     stop("Class of the object isn't 'gllvm'.")
 
   if (is.null(object$X))

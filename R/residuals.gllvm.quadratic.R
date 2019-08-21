@@ -38,7 +38,7 @@
 #'@export
 
 
-residuals.gllvm <- function(object, ...) {
+residuals.gllvm.quadratic <- function(object, ...) {
   n <- NROW(object$y)
   p <- NCOL(object$y)
 
@@ -77,15 +77,13 @@ residuals.gllvm <- function(object, ...) {
   if (object$row.eff != FALSE)
     eta.mat <- eta.mat + matrix(object$params$row.params, n, p, byrow = FALSE)
   if (num.lv > 0)
-    eta.mat <- eta.mat  + object$lvs %*% t(object$params$theta)
+    eta.mat <- eta.mat  + object$lvs %*% t(object$params$theta[,1:num.lv]) + object$lvs^2 %*% t(object$params$theta[,-c(1:num.lv)])
   mu <- exp(eta.mat)
   if (any(mu == 0))
     mu <- mu + 1e-10
   if (object$family == "binomial")
     mu <- binomial(link = object$link)$linkinv(eta.mat)
-  if (object$family == "gaussian")
-    mu <- (eta.mat)
-  
+
   ds.res <- matrix(NA, n, p)
   rownames(ds.res) <- rownames(y)
   colnames(ds.res) <- colnames(y)
@@ -94,7 +92,11 @@ residuals.gllvm <- function(object, ...) {
       if (object$family == "poisson") {
         a <- ppois(as.vector(unlist(y[i, j])) - 1, mu[i, j])
         b <- ppois(as.vector(unlist(y[i, j])), mu[i, j])
-        u <- runif(n = 1, min = a, max = b)
+        if(a>b){
+          u <- runif(n = 1, min = b, max = a) #temporary bug fix, if a>b which sometimes happens apparently?
+        }else{
+          u <- runif(n = 1, min = a, max = b)
+        }
         if(u==1) u=1-1e-16
         if(u==0) u=1e-16
         ds.res[i, j] <- qnorm(u)
@@ -103,23 +105,24 @@ residuals.gllvm <- function(object, ...) {
         phis <- object$params$phi + 1e-05
         a <- pnbinom(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], size = 1 / phis[j])
         b <- pnbinom(as.vector(unlist(y[i, j])), mu = mu[i, j], size = 1 / phis[j])
-        u <- runif(n = 1, min = a, max = b)
+        if(a>b){
+          u <- runif(n = 1, min = b, max = a) #temporary bug fix, if a>b which sometimes happens apparently?
+        }else{
+          u <- runif(n = 1, min = a, max = b)
+        }
         if(u==1) u=1-1e-16
         if(u==0) u=1e-16
         ds.res[i, j] <- qnorm(u)
       }
-      if (object$family == "gaussian") {
-        a <- pnorm(as.vector(unlist(y[i, j])) - 1, mu[i, j])
-        b <- pnorm(as.vector(unlist(y[i, j])), mu[i, j])
-        u <- runif(n = 1, min = a, max = b)
-        if(u==1) u=1-1e-16
-        if(u==0) u=1e-16
-        ds.res[i, j] <- qnorm(u)
-      }
+
       if (object$family == "ZIP") {
         a <- pzip(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], sigma = object$params$phi[j])
         b <- pzip(as.vector(unlist(y[i, j])), mu = mu[i, j], sigma = object$params$phi[j])
-        u <- runif(n = 1, min = a, max = b)
+        if(a>b){
+          u <- runif(n = 1, min = b, max = a) #temporary bug fix, if a>b which sometimes happens apparently?
+        }else{
+          u <- runif(n = 1, min = a, max = b)
+        }
         if(u==1) u=1-1e-16
         if(u==0) u=1e-16
         ds.res[i, j] <- qnorm(u)
@@ -127,24 +130,17 @@ residuals.gllvm <- function(object, ...) {
       if (object$family == "binomial") {
         a <- pbinom(as.vector(unlist(y[i, j])) - 1, 1, mu[i, j])
         b <- pbinom(as.vector(unlist(y[i, j])), 1, mu[i, j])
-        u <- runif(n = 1, min = a, max = b)
+        if(a>b){
+          u <- runif(n = 1, min = b, max = a) #temporary bug fix, if a>b which sometimes happens apparently?
+        }else{
+          u <- runif(n = 1, min = a, max = b)
+        }
         if(u==1) u=1-1e-16
         if(u==0) u=1e-16
         ds.res[i, j] <- qnorm(u)
       }
 
-      if (object$family == "tweedie") {
-        phis <- object$params$phi + 1e-05
-        a <- fishMod::pTweedie(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], phi = phis[j], p = object$Power);
-        if((as.vector(unlist(y[i, j])) - 1)<0)
-          a<-0
-        b <- fishMod::pTweedie(as.vector(unlist(y[i, j])), mu = mu[i, j], phi = phis[j], p = object$Power)
-        u <- runif(n = 1, min = a, max = b)
-        if(u==1) u=1-1e-16
-        if(u==0) u=1e-16
-        ds.res[i, j] <- qnorm(u)
-      }
-      if (object$family == "ordinal") {
+        if (object$family == "ordinal") {
 
         probK <- NULL
         probK[1] <- pnorm(object$params$zeta[j, 1] - eta.mat[i, j], log.p = FALSE)
