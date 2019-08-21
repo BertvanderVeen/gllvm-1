@@ -57,7 +57,7 @@
 #'@export getResidualCov.gllvm.quadratic
 getResidualCov.gllvm.quadratic = function(object, adjust = 1)
 {
-  ResCov <- object$params$theta[,1:test$num.lv] %*% t(object$params$theta[,1:test$num.lv]) + 2*object$params$theta[,-c(1:test$num.lv)] %*% t(object$params$theta[,-c(1:test$num.lv)]) 
+  ResCov <- object$params$theta[,1:object$num.lv] %*% t(object$params$theta[,1:object$num.lv]) + 2*object$params$theta[,-c(1:object$num.lv)] %*% t(object$params$theta[,-c(1:object$num.lv)]) 
   if(adjust > 0 && object$family %in% c("negative.binomial", "binomial")){
   if(object$family == "negative.binomial"){ 
     if(adjust == 1) ResCov <- ResCov + diag(log(object$params$phi + 1))
