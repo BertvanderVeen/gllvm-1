@@ -121,7 +121,7 @@
 #'
 #' Warton, D. I., Guillaume Blanchet, F., O'Hara, R. B., Ovaskainen, O., Taskinen, S., Walker, S. C. and Hui, F. K. C. (2015). So many variables: Joint modeling in community ecology. Trends in Ecology & Evolution, 30:766-779.
 #'
-#'@seealso  \code{\link{coefplot.gllvm}}, \code{\link{confint.gllvm}}, \code{\link{ordiplot.gllvm}}, \code{\link{plot.gllvm}}, \code{\link{residuals.gllvm}}, \code{\link{summary.gllvm}}.
+#'@seealso  \code{\link{coefplot.gllvm.quadratic}}, \code{\link{plot.gllvm.quadratic}}, \code{\link{residuals.gllvm.quadratic}}, \code{\link{summary.gllvm.quadratic}}.
 #' @examples
 #'## Load a dataset from the mvabund package
 #'data(antTraits)

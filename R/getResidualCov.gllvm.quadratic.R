@@ -51,8 +51,8 @@
 #'# Trace of the covariance matrix
 #'rescov$tr
 #'
-#'@aliases getResidualCov getResidualCov.gllvm
-#'@method getResidualCov gllvm
+#'@aliases getResidualCov getResidualCov.gllvm.quadratic
+#'@method getResidualCov gllvm.quadratic
 #'@export
 #'@export getResidualCov.gllvm.quadratic
 getResidualCov.gllvm.quadratic = function(object, adjust = 1)

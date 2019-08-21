@@ -26,8 +26,8 @@
 #'   type = "lower", method = "square", tl.cex = 0.8, tl.srt = 45, tl.col = "red")
 #'   }
 #'
-#'@aliases getResidualCor getResidualCor.gllvm
-#'@method getResidualCor gllvm
+#'@aliases getResidualCor getResidualCor.gllvm.quadratic
+#'@method getResidualCor gllvm.quadratic
 #'@export
 #'@export getResidualCor.gllvm.quadratic
 getResidualCor.gllvm.quadratic = function(object, adjust = 1)
