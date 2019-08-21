@@ -229,311 +229,311 @@
 #'@importFrom mvtnorm rmvnorm
 
 gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
-                  num.lv = 2, family, method = "VA", row.eff = FALSE,
-                  offset = NULL, sd.errors = TRUE, Lambda.struc = "unstructured",
-                  diag.iter = 5, trace = FALSE, plot = FALSE, la.link.bin = "probit",
-                  n.init = 1, Power = 1.5, reltol = 1e-8, seed = NULL,
-                  max.iter = 200, maxit = 1000, start.fit = NULL,
-                  starting.val = "res", TMB = TRUE, optimizer = "optim",
-                  Lambda.start = c(0.1,0.5), jitter.var = 0) {
-    constrOpt <- FALSE
-    restrict <- 30
-    randomX <- NULL
-    term <- NULL
-    datayx <- NULL
-
-    if (!is.null(y)) {
-      y <- as.matrix(y)
-      if (is.null(X) && is.null(TR)) {
-        datayx <- list(y)
-        m1 <- model.frame(y ~ NULL, data = datayx)
-        term <- terms(m1)
-      } else if (is.null(TR)) {
-        if (is.null(formula)) {
-          ff <- formula(paste("~", "0", paste("+", colnames(X), collapse = "")))
-          if (is.data.frame(X)) {
-            datayx <- list(y = y, X = model.matrix(ff, X))
-          } else {
-            datayx <- list(y = y, X = X)
-          }
-          m1 <- model.frame(y ~ X, data = datayx)
-          term <- terms(m1)
+                           num.lv = 2, family, method = "VA", row.eff = FALSE,
+                           offset = NULL, sd.errors = TRUE, Lambda.struc = "unstructured",
+                           diag.iter = 5, trace = FALSE, plot = FALSE, la.link.bin = "probit",
+                           n.init = 1, Power = 1.5, reltol = 1e-8, seed = NULL,
+                           max.iter = 200, maxit = 1000, start.fit = NULL,
+                           starting.val = "res", TMB = TRUE, optimizer = "optim",
+                           Lambda.start = c(0.1,0.5), jitter.var = 0) {
+  constrOpt <- FALSE
+  restrict <- 30
+  randomX <- NULL
+  term <- NULL
+  datayx <- NULL
+  
+  if (!is.null(y)) {
+    y <- as.matrix(y)
+    if (is.null(X) && is.null(TR)) {
+      datayx <- list(y)
+      m1 <- model.frame(y ~ NULL, data = datayx)
+      term <- terms(m1)
+    } else if (is.null(TR)) {
+      if (is.null(formula)) {
+        ff <- formula(paste("~", "0", paste("+", colnames(X), collapse = "")))
+        if (is.data.frame(X)) {
+          datayx <- list(y = y, X = model.matrix(ff, X))
         } else {
-          datayx <- data.frame(y, X)
-          m1 <- model.frame(formula, data = datayx)
+          datayx <- list(y = y, X = X)
         }
+        m1 <- model.frame(y ~ X, data = datayx)
         term <- terms(m1)
       } else {
-        term <- NULL
+        datayx <- data.frame(y, X)
+        m1 <- model.frame(formula, data = datayx)
       }
-      p <- NCOL(y)
-      n <- NROW(y)
-      if (p == 1)
-        y <- as.matrix(y)
+      term <- terms(m1)
     } else {
-      if (!is.null(data)) {
-        if (is.null(formula))
-          stop("Define formula when 'data' attribute is used.")
-        if ("id" %in% colnames(data)) {
-          id <- data[, "id"]
-          n <- max(id)
-          p <- dim(data)[1] / n
-        } else {
-          n <- NROW(data)
-          p <- 1
-          id <- 1:n
-        }
-      }
-
-      cl <- match.call()
-      mf <- match.call(expand.dots = FALSE)
-      m <- match(c("formula", "data", "na.action"), names(mf), 0)
-      mf <- mf[c(1, m)]
-      mf$drop.unused.levels <- TRUE
-      mf[[1]] <- as.name("model.frame")
-      mf <- eval(mf, parent.frame())
-      term <- attr(mf, "terms")
-      abundances <- model.response(mf, "numeric")
-      if (any(is.na(abundances)))
-        stop("There are NA values in the response.")
-      y <- abundances
-      #
-      X <- model.matrix(term, mf)
-
-      atr <- c(attr(X, "assign"))
-      if (sum(atr) > 0) {
-        X <- X[, (atr > 0) * 1:ncol(X)]
-      } else{
-        X <- NULL
-      }
-
-      if (NCOL(y) == 1 &&
-          !is.null(data)) {
-        y <- matrix(y, n, p)
-        colnames(y) <- paste("y", 1:p, sep = "")
-      }
-      try(
-      if (is.null(X)) {
-        datayx <- data.frame(y = y)
-      } else {
-        datayx <- data.frame(y = y, X = X)
-      }, silent = TRUE)
-
-      if (!is.null(data)) {
-        frame1 <- mf
-        X <- TR <- NULL
-        if (length(attr(term, "term.labels")) > 0) {
-          datax <- frame1[, colnames(frame1)!="y"]
-          colnames(datax) <- colnames(frame1)[colnames(frame1)!="y"]
-          #datax <- frame1[, attr(term, "term.labels")[attr(term, "order") == 1]]
-          # colnames(datax) <- attr(term, "term.labels")[attr(term, "order") == 1]
-
-          for (k in 1:ncol(datax)) {
-            lngth <- NULL
-            namek <- colnames(datax)[k]
-            for (i in 1:n) {
-              lngth <- c(lngth, length(unique(datax[(id == i), k])))
-            }
-            if (max(lngth) == 1) {
-              if (!is.null(X))
-                X <- data.frame(X, datax[1:n, k])
-              else
-                X <- data.frame(datax[1:n, k])
-
-              colnames(X)[ncol(X)] <- namek
-            } else {
-              if (!is.null(TR)){
-                TR <- data.frame(TR, datax[id == 1, k])
-              } else{
-                TR <- data.frame(datax[id == 1, k])
-                }
-              colnames(TR)[ncol(TR)] <- namek
-            }
-          }
-        }
-      }
+      term <- NULL
     }
     p <- NCOL(y)
     n <- NROW(y)
     if (p == 1)
       y <- as.matrix(y)
-
-    if (class(family) == "family") {
-      la.link.bin <- family$link
-      family <- family$family
-    }
-
-    if(any(colSums(y)==0))
-      stop("There are responses full of zeros, model can not be fitted. \n");
-
-    if(row.eff %in% c("fixed", "random", TRUE)){
-      if(p<2)
-        stop("There must be at least two responses in order to include row effects. \n");
-      if(any(rowSums(y)==0))
-          stop("There are rows full of zeros in y, model can not be fitted. \n");
-      }
-
-    if (method == "LA") {
-      cat("Laplace's method cannot handle the quadratic model, so VA method is used instead. \n")
-      method <- "VA"
-    }
-
-    if (p < 3 && !is.null(TR)) {
-      stop("Fourth corner model can not be fitted with less than three response variables.\n")
-    }
-    if (row.eff == "random" && !TMB) {
-      cat("Random row effect model is not implemented without TMB, so 'TMB = TRUE' is used instead. \n")
-      TMB <- TRUE
-    }
-
-    if (!is.null(start.fit)) {
-      if (class(start.fit) != "gllvm")
-        stop("Only object of class 'gllvm' can be given as a starting parameters.")
-
-      if (!(family %in% c("poisson", "negative.binomial")))
-        stop("Starting parameters can be given only for count data.")
-
-    }
-    #  if(num.lv>=p){ stop("Number of latent variables (",num.lv,") must be less than number of response variables (",p,").");}
-
-
-    if (is.null(offset))
-      O <- matrix(0, nrow = n, ncol = p)
-    else if (NCOL(offset) == 1)
-      O <- matrix(rep(offset), nrow = n, ncol = p)
-    else
-      O <- as.matrix(offset)
-
-    start.lvs = NULL
-    if (is.matrix(starting.val)) {
-      start.lvs <- starting.val
-      starting.val <- "random"
-      if (ncol(start.lvs) != num.lv || nrow(start.lvs) != n)
-        stop("Given starting value matrix for latent variables has a wrong dimension.")
-    }
-    n.i <- 1
-
-    out <- list( y = y, X = X, TR = TR, data = datayx, num.lv = num.lv,
-        method = method, family = family, row.eff = row.eff, n.init = n.init,
-        sd = FALSE, Lambda.struc = Lambda.struc, TMB = TMB, terms = term)
-
-    if (family == "binomial") {
-      if (method == "VA")
-        out$link <- "probit"
-    }
-    out$offset <- offset
-    
-      trace = FALSE
-      if (row.eff == TRUE)
-        row.eff <- "fixed"
-      if (!is.null(TR)) {
-        fitg <- trait.TMB(
-            y,
-            X = X,
-            TR = TR,
-            formula = formula,
-            num.lv = num.lv,
-            family = family,
-            Lambda.struc = Lambda.struc,
-            row.eff = row.eff,
-            reltol = reltol,
-            seed = seed,
-            maxit = maxit,
-            start.lvs = start.lvs,
-            offset = O,
-            sd.errors = sd.errors,
-            trace = trace,
-            link = la.link.bin,
-            n.init = n.init,
-            start.params = start.fit,
-            optimizer = optimizer,
-            starting.val = starting.val,
-            method = method,
-            randomX = randomX,
-            Power = Power,
-            diag.iter = diag.iter,
-            Lambda.start = Lambda.start,
-            jitter.var = jitter.var
-          )
-        out$X <- fitg$X
-        out$TR <- fitg$TR
-
+  } else {
+    if (!is.null(data)) {
+      if (is.null(formula))
+        stop("Define formula when 'data' attribute is used.")
+      if ("id" %in% colnames(data)) {
+        id <- data[, "id"]
+        n <- max(id)
+        p <- dim(data)[1] / n
       } else {
-        fitg <- gllvm.TMB.quadratic(
-            y,
-            X = X,
-            formula = formula,
-            num.lv = num.lv,
-            family = family,
-            method = method,
-            Lambda.struc = Lambda.struc,
-            row.eff = row.eff,
-            reltol = reltol,
-            seed = seed,
-            maxit = maxit,
-            start.lvs = start.lvs,
-            offset = O,
-            sd.errors = sd.errors,
-            trace = trace,
-            link = la.link.bin,
-            n.init = n.init,
-            restrict = restrict,
-            start.params = start.fit,
-            optimizer = optimizer,
-            starting.val = starting.val,
-            Power = Power,
-            diag.iter = diag.iter,
-            Lambda.start = Lambda.start,
-            jitter.var = jitter.var
-          )
+        n <- NROW(data)
+        p <- 1
+        id <- 1:n
       }
-
-      out$X.design <- fitg$X.design
-      out$TMBfn = fitg$TMBfn
-      out$logL <- fitg$logL
-      if (num.lv > 0)
-        out$lvs <- fitg$lvs
-      out$X <- fitg$X
-
-      out$params <- fitg$params
-      if (sd.errors) {
-        out$sd <- fitg$sd
-      }
-      if (method == "VA") {
-        out$A <- fitg$A
-        out$Ar <- fitg$Ar
-      }
-      if (!is.null(randomX)) {
-        out$corr <- fitg$corr
-        out$Xrandom <- fitg$Xrandom
-      }
-      out$start <- fitg$start
-
+    }
     
-    if (family == "negative.binomial")
-      out$params$inv.phi <- 1 / out$params$phi
-    if (is.infinite(out$logL)){
-      warning("Algorithm converged to infinity, try other starting values or different method.")
-      cat("Algorithm converged to infinity, try other starting values or different method. \n")
-      }
-    out$formula <- fitg$formula
-    if (is.null(out$terms))
-      out$terms <- fitg$terms
-    if (is.finite(out$logL) && !is.null(TR) && NCOL(out$TR)>0 && NCOL(out$X)>0) {
-      out$fourth.corner <- try(getFourthCorner(out),silent = TRUE)
+    cl <- match.call()
+    mf <- match.call(expand.dots = FALSE)
+    m <- match(c("formula", "data", "na.action"), names(mf), 0)
+    mf <- mf[c(1, m)]
+    mf$drop.unused.levels <- TRUE
+    mf[[1]] <- as.name("model.frame")
+    mf <- eval(mf, parent.frame())
+    term <- attr(mf, "terms")
+    abundances <- model.response(mf, "numeric")
+    if (any(is.na(abundances)))
+      stop("There are NA values in the response.")
+    y <- abundances
+    #
+    X <- model.matrix(term, mf)
+    
+    atr <- c(attr(X, "assign"))
+    if (sum(atr) > 0) {
+      X <- X[, (atr > 0) * 1:ncol(X)]
+    } else{
+      X <- NULL
     }
-    if (is.finite(out$logL) && row.eff == "random"){
-      if(method == "LA"){
-        if(abs(out$params$sigma)<0.02)
-          cat("Random row effects ended up to almost zero. Might be a false convergence or local maxima. You can try simpler model, less latent variables or change the optimizer. \n")
-      } else{
-        if(abs(out$params$sigma)<0.02 && max(abs(out$params$sigma-sqrt(out$Ar))) < 1e-3)
-          cat("Random row effects ended up to almost zero. Might be a false convergence or local maxima. You can try simpler model, less latent variables or change the optimizer. \n")
+    
+    if (NCOL(y) == 1 &&
+        !is.null(data)) {
+      y <- matrix(y, n, p)
+      colnames(y) <- paste("y", 1:p, sep = "")
+    }
+    try(
+      if (is.null(X)) {
+        datayx <- data.frame(y = y)
+      } else {
+        datayx <- data.frame(y = y, X = X)
+      }, silent = TRUE)
+    
+    if (!is.null(data)) {
+      frame1 <- mf
+      X <- TR <- NULL
+      if (length(attr(term, "term.labels")) > 0) {
+        datax <- frame1[, colnames(frame1)!="y"]
+        colnames(datax) <- colnames(frame1)[colnames(frame1)!="y"]
+        #datax <- frame1[, attr(term, "term.labels")[attr(term, "order") == 1]]
+        # colnames(datax) <- attr(term, "term.labels")[attr(term, "order") == 1]
+        
+        for (k in 1:ncol(datax)) {
+          lngth <- NULL
+          namek <- colnames(datax)[k]
+          for (i in 1:n) {
+            lngth <- c(lngth, length(unique(datax[(id == i), k])))
+          }
+          if (max(lngth) == 1) {
+            if (!is.null(X))
+              X <- data.frame(X, datax[1:n, k])
+            else
+              X <- data.frame(datax[1:n, k])
+            
+            colnames(X)[ncol(X)] <- namek
+          } else {
+            if (!is.null(TR)){
+              TR <- data.frame(TR, datax[id == 1, k])
+            } else{
+              TR <- data.frame(datax[id == 1, k])
+            }
+            colnames(TR)[ncol(TR)] <- namek
+          }
+        }
       }
     }
-
-    out$prediction.errors = fitg$prediction.errors
-    out$call <- match.call()
-    class(out) <- "gllvm.quadratic"
-    return(out)
   }
+  p <- NCOL(y)
+  n <- NROW(y)
+  if (p == 1)
+    y <- as.matrix(y)
+  
+  if (class(family) == "family") {
+    la.link.bin <- family$link
+    family <- family$family
+  }
+  
+  if(any(colSums(y)==0))
+    stop("There are responses full of zeros, model can not be fitted. \n");
+  
+  if(row.eff %in% c("fixed", "random", TRUE)){
+    if(p<2)
+      stop("There must be at least two responses in order to include row effects. \n");
+    if(any(rowSums(y)==0))
+      stop("There are rows full of zeros in y, model can not be fitted. \n");
+  }
+  
+  if (method == "LA") {
+    cat("Laplace's method cannot handle the quadratic model, so VA method is used instead. \n")
+    method <- "VA"
+  }
+  
+  if (p < 3 && !is.null(TR)) {
+    stop("Fourth corner model can not be fitted with less than three response variables.\n")
+  }
+  if (row.eff == "random" && !TMB) {
+    cat("Random row effect model is not implemented without TMB, so 'TMB = TRUE' is used instead. \n")
+    TMB <- TRUE
+  }
+  
+  if (!is.null(start.fit)) {
+    if (class(start.fit) != "gllvm")
+      stop("Only object of class 'gllvm' can be given as a starting parameters.")
+    
+    if (!(family %in% c("poisson", "negative.binomial")))
+      stop("Starting parameters can be given only for count data.")
+    
+  }
+  #  if(num.lv>=p){ stop("Number of latent variables (",num.lv,") must be less than number of response variables (",p,").");}
+  
+  
+  if (is.null(offset))
+    O <- matrix(0, nrow = n, ncol = p)
+  else if (NCOL(offset) == 1)
+    O <- matrix(rep(offset), nrow = n, ncol = p)
+  else
+    O <- as.matrix(offset)
+  
+  start.lvs = NULL
+  if (is.matrix(starting.val)) {
+    start.lvs <- starting.val
+    starting.val <- "random"
+    if (ncol(start.lvs) != num.lv || nrow(start.lvs) != n)
+      stop("Given starting value matrix for latent variables has a wrong dimension.")
+  }
+  n.i <- 1
+  
+  out <- list( y = y, X = X, TR = TR, data = datayx, num.lv = num.lv,
+               method = method, family = family, row.eff = row.eff, n.init = n.init,
+               sd = FALSE, Lambda.struc = Lambda.struc, TMB = TMB, terms = term)
+  
+  if (family == "binomial") {
+    if (method == "VA")
+      out$link <- "probit"
+  }
+  out$offset <- offset
+  
+  trace = FALSE
+  if (row.eff == TRUE)
+    row.eff <- "fixed"
+  if (!is.null(TR)) {
+    fitg <- trait.TMB(
+      y,
+      X = X,
+      TR = TR,
+      formula = formula,
+      num.lv = num.lv,
+      family = family,
+      Lambda.struc = Lambda.struc,
+      row.eff = row.eff,
+      reltol = reltol,
+      seed = seed,
+      maxit = maxit,
+      start.lvs = start.lvs,
+      offset = O,
+      sd.errors = sd.errors,
+      trace = trace,
+      link = la.link.bin,
+      n.init = n.init,
+      start.params = start.fit,
+      optimizer = optimizer,
+      starting.val = starting.val,
+      method = method,
+      randomX = randomX,
+      Power = Power,
+      diag.iter = diag.iter,
+      Lambda.start = Lambda.start,
+      jitter.var = jitter.var
+    )
+    out$X <- fitg$X
+    out$TR <- fitg$TR
+    
+  } else {
+    fitg <- gllvm.TMB.quadratic(
+      y,
+      X = X,
+      formula = formula,
+      num.lv = num.lv,
+      family = family,
+      method = method,
+      Lambda.struc = Lambda.struc,
+      row.eff = row.eff,
+      reltol = reltol,
+      seed = seed,
+      maxit = maxit,
+      start.lvs = start.lvs,
+      offset = O,
+      sd.errors = sd.errors,
+      trace = trace,
+      link = la.link.bin,
+      n.init = n.init,
+      restrict = restrict,
+      start.params = start.fit,
+      optimizer = optimizer,
+      starting.val = starting.val,
+      Power = Power,
+      diag.iter = diag.iter,
+      Lambda.start = Lambda.start,
+      jitter.var = jitter.var
+    )
+  }
+  
+  out$X.design <- fitg$X.design
+  out$TMBfn = fitg$TMBfn
+  out$logL <- fitg$logL
+  if (num.lv > 0)
+    out$lvs <- fitg$lvs
+  out$X <- fitg$X
+  
+  out$params <- fitg$params
+  if (sd.errors) {
+    out$sd <- fitg$sd
+  }
+  if (method == "VA") {
+    out$A <- fitg$A
+    out$Ar <- fitg$Ar
+  }
+  if (!is.null(randomX)) {
+    out$corr <- fitg$corr
+    out$Xrandom <- fitg$Xrandom
+  }
+  out$start <- fitg$start
+  
+  
+  if (family == "negative.binomial")
+    out$params$inv.phi <- 1 / out$params$phi
+  if (is.infinite(out$logL)){
+    warning("Algorithm converged to infinity, try other starting values or different method.")
+    cat("Algorithm converged to infinity, try other starting values or different method. \n")
+  }
+  out$formula <- fitg$formula
+  if (is.null(out$terms))
+    out$terms <- fitg$terms
+  if (is.finite(out$logL) && !is.null(TR) && NCOL(out$TR)>0 && NCOL(out$X)>0) {
+    out$fourth.corner <- try(getFourthCorner(out),silent = TRUE)
+  }
+  if (is.finite(out$logL) && row.eff == "random"){
+    if(method == "LA"){
+      if(abs(out$params$sigma)<0.02)
+        cat("Random row effects ended up to almost zero. Might be a false convergence or local maxima. You can try simpler model, less latent variables or change the optimizer. \n")
+    } else{
+      if(abs(out$params$sigma)<0.02 && max(abs(out$params$sigma-sqrt(out$Ar))) < 1e-3)
+        cat("Random row effects ended up to almost zero. Might be a false convergence or local maxima. You can try simpler model, less latent variables or change the optimizer. \n")
+    }
+  }
+  
+  out$prediction.errors = fitg$prediction.errors
+  out$call <- match.call()
+  class(out) <- "gllvm.quadratic"
+  return(out)
+}
