@@ -217,7 +217,7 @@
 #'}
 #' @export
 #'
-#'@useDynLib gllvm, .registration = TRUE
+#'@useDynLib gllvm2, .registration = TRUE
 #'@importFrom TMB MakeADFun
 #'@importFrom mvabund manyglm
 #'@importFrom graphics abline axis par plot segments text points boxplot panel.smooth lines polygon
@@ -228,7 +228,7 @@
 #'@importFrom mgcv gam predict.gam
 #'@importFrom mvtnorm rmvnorm
 
-gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
+gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
                   num.lv = 2, family, method = "VA", row.eff = FALSE,
                   offset = NULL, sd.errors = TRUE, Lambda.struc = "unstructured",
                   diag.iter = 5, trace = FALSE, plot = FALSE, la.link.bin = "probit",
