@@ -121,7 +121,7 @@
 #'
 #' Warton, D. I., Guillaume Blanchet, F., O'Hara, R. B., Ovaskainen, O., Taskinen, S., Walker, S. C. and Hui, F. K. C. (2015). So many variables: Joint modeling in community ecology. Trends in Ecology & Evolution, 30:766-779.
 #'
-#'@seealso  \code{\link{coefplot.gllvm.quadratic}}, \code{\link{plot.gllvm.quadratic}}, \code{\link{residuals.gllvm.quadratic}}, \code{\link{summary.gllvm.quadratic}}.
+#'@seealso  \code{\link{predict.gllvm.quadratic}}, \code{\link{coefplot.gllvm.quadratic}}, \code{\link{ordiplot.gllvm.quadratic}}, \code{\link{plot.gllvm.quadratic}}, \code{\link{residuals.gllvm.quadratic}}, \code{\link{summary.gllvm.quadratic}}.
 #' @examples
 #'## Load a dataset from the mvabund package
 #'data(antTraits)
@@ -219,10 +219,11 @@
 #'
 #'@useDynLib gllvm2, .registration = TRUE
 #'@importFrom TMB MakeADFun
+#'@importFrom zetadiv glm.cons
 #'@importFrom mvabund manyglm
 #'@importFrom graphics abline axis par plot segments text points boxplot panel.smooth lines polygon
 #'@importFrom grDevices rainbow
-#'@importFrom stats AIC binomial constrOptim dbinom dnorm factanal glm model.extract model.frame model.matrix model.response nlminb optim optimHess pbinom pnbinom pnorm ppois qnorm reshape residuals rnorm runif terms BIC qqline qqnorm sd pchisq formula ppoints quantile qchisq
+#'@importFrom stats AIC binomial dbinom dnorm factanal glm model.extract model.frame model.matrix model.response nlminb optim optimHess pbinom pnbinom pnorm ppois qnorm reshape residuals rnorm runif terms BIC qqline qqnorm sd pchisq formula ppoints quantile qchisq
 #'@importFrom Matrix bdiag chol2inv diag
 #'@importFrom MASS ginv polr
 #'@importFrom mgcv gam predict.gam
