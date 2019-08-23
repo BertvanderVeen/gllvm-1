@@ -159,7 +159,7 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
   if(object$num.lv > 0) {
     theta <- object$params$theta
     if(is.null(newLV) && is.null(newdata) && is.null(newTR))
-      eta <- eta + object$lvs[,which.lvs] %*% t(theta[,-c(1:object$num.lv+object$num.lv)][,which.lvs]) + object$lvs[,which.lvs]^2 %*% t(theta[,-c(1:object$num.lv),drop=F][,which.lvs])
+      eta <- eta + object$lvs[,which.lvs,drop=F] %*% t(theta[,-c(1:object$num.lv+object$num.lv)][,which.lvs,drop=F]) + object$lvs[,which.lvs,drop=F]^2 %*% t(theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F])
     if(!is.null(newLV)) {
       #if(ncol(newLV) != object$num.lv) stop("Number of latent variables in input doesn't equal to the number of latent variables in the model.")
       if(!is.null(newdata)) 
@@ -167,7 +167,7 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
         if(nrow(newLV) != nrow(Xnew)) stop("Number of rows in newLV must equal to the number of rows in newX, if newX is included, otherwise same as number of rows in the response matrix.") 
       }
       lvs <- newLV
-      eta <- eta + lvs %*% t(theta[,-c(1:object$num.lv+object$num.lv)][,which.lvs]) + lvs^2 %*% t(theta[,-c(1:object$num.lv),drop=F][,which.lvs])
+      eta <- eta + object$lvs[,which.lvs,drop=F] %*% t(theta[,-c(1:object$num.lv+object$num.lv)][,which.lvs,drop=F]) + object$lvs[,which.lvs,drop=F]^2 %*% t(theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F])
     }
   }
   
