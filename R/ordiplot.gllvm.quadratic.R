@@ -155,17 +155,17 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
        
         mu <- predict(object,newLV = newLV, LVonly = T, which.lvs = which.lvs)
         
-        plot(NA,xlim=range(z.new),ylim=range(mu),ylab="(marginal) Predicted ",xlab=paste("LV",which.lvs,sep=" "),xaxs="i")
+        plot(NA,xlim=range(newLV),ylim=range(mu),ylab="(marginal) Predicted ",xlab=paste("LV",which.lvs,sep=" "),xaxs="i")
         cols <- (grDevices::rainbow(ncol(mu) + 1)[2:(ncol(mu) + 1)])
         for(j in 1:ncol(mu)){
-          lines(x=sort(z.new[,1]),y=mu[order(z.new[,1]),j],col=cols[j])
+          lines(x=sort(newLV[,1]),y=mu[order(newLV[,1]),j],col=cols[j])
           col<-col2rgb(cols[j], alpha=TRUE)
           col[4]<-127
           col<-rgb(col[1],col[2],col[3],col[4],maxColorValue = 255)
-          text(x=max(z.new[,1]),y=tail(mu[order(z.new[,1]),j])[1],labels = colnames(mu)[j],col=cols[j], adj=0)
+          text(x=max(newLV[,1]),y=tail(mu[order(newLV[,1]),j])[1],labels = colnames(mu)[j],col=cols[j], adj=0)
           #lines(x=sort(z_new[,1]),y=testCIU[order(z_new[,1]),i],col=i,lty="dashed")
           #lines(x=sort(z_new[,1]),y=testCIL[order(z_new[,1]),i],col=i,lty="dashed")
-        #  polygon(c(sort(z.new[,1]),rev(sort(z.new[,1]))),y=c(testCIU[order(z.new[,1]),i],testCIL[rev(order(z.new[,1])),i]),col=col,lty="dashed",border=col,lwd=2)
+        #  polygon(c(sort(newLV[,1]),rev(sort(newLV[,1]))),y=c(testCIU[order(newLV[,1]),i],testCIL[rev(order(newLV[,1])),i]),col=col,lty="dashed",border=col,lwd=2)
         }
         abline(v=0,h=1,col="black",lty="dashed")
         text(x=object$lvs[,which.lvs], y=range(mu)[1], labels=1:nrow(object$y), col = "grey")

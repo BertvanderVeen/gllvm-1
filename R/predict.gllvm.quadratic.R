@@ -7,7 +7,7 @@
 #' @param newTR A new data frame of traits for each response taxon. If omitted, the original matrix of traits is used.
 #' @param newLV A new matrix of latent variables.  If omitted, the original matrix of latent variables is used.
 #' @param LVonly (logical) ignore fixed and site-specific effects, makihng predictions only using the latent variables.
-#' @param which.lv Specify which LV(s) to predict with, default is all
+#' @param which.lvs Specify which LV(s) to predict with, default is all
 #' @param ... not used.
 #'
 #' @details
