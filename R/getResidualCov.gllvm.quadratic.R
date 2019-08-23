@@ -55,7 +55,7 @@
 #'@method getResidualCov gllvm.quadratic
 #'@export
 #'@export getResidualCov.gllvm.quadratic
-getResidualCov.gllvm.quadratic = function(object)
+getResidualCov.gllvm.quadratic = function(object,adjust = 1)
 {
   ResCov <- object$params$theta[,1:object$num.lv] %*% t(object$params$theta[,1:object$num.lv]) + 2*object$params$theta[,-c(1:object$num.lv)] %*% t(object$params$theta[,-c(1:object$num.lv)]) 
   ResCov.q <- sapply(1:object$num.lv,function(q)object$params$theta[,q]%*%t(object$params$theta[,q])+2*object$params$theta[,q+object$num.lv]%*%t(object$params$theta[,q+object$num.lv]),simplify=F)

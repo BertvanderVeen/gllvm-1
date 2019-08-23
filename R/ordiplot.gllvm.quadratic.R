@@ -12,7 +12,8 @@
 #' @param s.colors colors for sites
 #' @param symbols logical, if \code{TRUE} sites are plotted using symbols, if \code{FALSE} (default) site numbers are used
 #' @param cex.spp size of species labels in biplot
-#' @param hill if TRUE and \code{bell = TRUE} scales optima and tolerances by the average standard tolerance per LV
+#' @param hill logical, if TRUE and \code{bell = TRUE} scales optima and tolerances by the average standard tolerance per LV
+#' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with predicted optima and distributions (2D)
 #' @param ...	additional graphical arguments.
 #'
 #' @details
