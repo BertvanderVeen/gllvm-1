@@ -40,7 +40,7 @@
 #'
 #'@aliases ordiplot ordiplot.gllvm.quadratic
 #'@export
-#'@export ordiplot.gllvm
+#'@export ordiplot.gllvm.quadratic
 ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL,
                            jitter = FALSE, jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = T, ...) {
     if (any(class(object) != "gllvm.quadratic"))

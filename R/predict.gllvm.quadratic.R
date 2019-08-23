@@ -52,7 +52,7 @@
 #'@aliases predict predict.gllvm.quadratic
 #'@method predict gllvm.quadratic
 #'@export
-#'@export predict.gllvm
+#'@export predict.gllvm.quadratic
 
 predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = NULL, type ="link", LVonly = FALSE, which.lvs = 1:object$num.lv,  ...){
   newdata <- newX
