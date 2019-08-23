@@ -167,7 +167,7 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
         if(nrow(newLV) != nrow(Xnew)) stop("Number of rows in newLV must equal to the number of rows in newX, if newX is included, otherwise same as number of rows in the response matrix.") 
       }
       lvs <- newLV
-      eta <- eta + object$lvs[,which.lvs,drop=F] %*% t(theta[,-c(1:object$num.lv+object$num.lv)][,which.lvs,drop=F]) + object$lvs[,which.lvs,drop=F]^2 %*% t(theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F])
+      eta <- eta +lvs[,which.lvs,drop=F] %*% t(theta[,-c(1:object$num.lv+object$num.lv)][,which.lvs,drop=F]) + lvs[,which.lvs,drop=F]^2 %*% t(theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F])
     }
   }
   
