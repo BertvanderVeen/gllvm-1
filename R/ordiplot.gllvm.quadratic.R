@@ -149,13 +149,11 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         quadr.coef[round(object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F],3)==0,drop=F] <- 0
        
         newLV<-matrix(NA,nrow=1000,ncol=length(which.lvs))
-        for(q in 1:length(which.lvs)){
-          newLV[,q]<-seq(from=min(object$lvs[,which.lvs[q]]),max(object$lvs[,which.lvs[q]]),length.out=1000)
-        }
+        newLV[,1]<-seq(from=min(object$lvs[,which.lvs[q]]),max(object$lvs[,which.lvs[q]]),length.out=1000)
        
         mu <- predict(object,newLV = newLV, LVonly = T, which.lvs = which.lvs)
         
-        plot(NA,xlim=range(newLV),ylim=range(mu),ylab="(marginal) Predicted ",xlab=paste("LV",which.lvs,sep=" "),xaxs="i")
+        plot(NA,xlim=c(min(newLV),max(newLV)+1),ylim=range(mu),ylab="(marginal) Predicted ",xlab=paste("LV",which.lvs,sep=" "),xaxs="i")
         cols <- (grDevices::rainbow(ncol(mu) + 1)[2:(ncol(mu) + 1)])
         for(j in 1:ncol(mu)){
           lines(x=sort(newLV[,1]),y=mu[order(newLV[,1]),j],col=cols[j])
