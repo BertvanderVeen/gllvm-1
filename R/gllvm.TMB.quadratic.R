@@ -27,7 +27,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   if (is.null(colnames(y)))
     colnames(y) <- paste("Col", 1:p, sep = "")
   
-  
+  if(num.lv==0){
+    stop("Can't fit the species packing model without latent variables")
+  }
   num.X <- 0;
   if(!is.null(X)){
     

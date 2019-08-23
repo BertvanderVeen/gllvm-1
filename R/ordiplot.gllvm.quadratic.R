@@ -149,7 +149,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         quadr.coef[round(object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F],3)==0,drop=F] <- 0
        
         newLV<-matrix(NA,nrow=1000,ncol=length(which.lvs))
-        newLV[,1]<-seq(from=min(object$lvs[,which.lvs[q]]),max(object$lvs[,which.lvs[q]]),length.out=1000)
+        newLV[,1]<-seq(from=min(object$lvs[,which.lvs]),max(object$lvs[,which.lvs]),length.out=1000)
        
         mu <- predict(object,newLV = newLV, LVonly = T, which.lvs = which.lvs)
         
@@ -170,7 +170,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       }else if (length(which.lvs) > 1 & object$num.lv > 1) {
         optima <- -object$params$theta[,1:object$num.lv,drop=F][,which.lvs,drop=F]/(2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F])
         quadr.coef <- object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]
-        quadr.coef[which(round(quadr.coef[,which.lvs],4)==0)]<-0
+        quadr.coef[which(round(quadr.coef,4)==0)]<-0
         excl <- which(sapply(1:nrow(quadr.coef),function(j)any(quadr.coef[j,]==0)))
         
         if(any(excl)){
