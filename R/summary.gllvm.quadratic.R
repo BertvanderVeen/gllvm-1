@@ -25,6 +25,9 @@ summary.gllvm.quadratic <- function(object, ...) {
   family <- object$family
 
   M <- cbind(object$params$beta0, object$params$theta)
+  opt <- -object$params$theta[,1:object$num.lv,drop=F]/(2*object$params$theta[,-c(1:object$num.lv),drop=F])
+  tol <- 1/sqrt(-2*object$params$theta[,-c(1:object$num.lv),drop=F])
+    
   sumry <- list()
   sumry$'log-likelihood' <- object$logL
   crit <- inf.criteria(object)
@@ -33,17 +36,15 @@ summary.gllvm.quadratic <- function(object, ...) {
   sumry$AICc <- crit$AICc
   sumry$BIC <- crit$BIC
 
-  crit <-
-    newnams <- c("Intercept")
-
-  if (num.lv > 0)
-    newnams <- c(newnams, c(paste("theta.LV", 1:num.lv, sep = ""),paste("theta.LV^2", 1:num.lv, sep = "")))
+  newnams <- c("Intercept", c(paste("theta.LV", 1:num.lv, sep = ""),paste("theta.LV^2", 1:num.lv, sep = "")))
   colnames(M) <- newnams
   rownames(M) <- colnames(object$y)
   sumry$Call <- object$call
   sumry$family <- object$family
   sumry$Coefficients <- M
-
+  sumry$Optima <- opt
+  sumry$Tolerances <- tol
+  
   if (!is.null(object$TR)) {
     if (!is.null(object$X)) {
       sumry$'Covariate coefficients' <- object$params$B
@@ -65,15 +66,6 @@ summary.gllvm.quadratic <- function(object, ...) {
 
   if (object$family == "negative.binomial") {
     sumry$'Dispersion parameters' <- object$params$phi
-  }
-  if (object$family == "tweedie") {
-    sumry$'Dispersion parameters' <- object$params$phi
-  }
-  if (object$family == "ZIP") {
-    sumry$'Zero inflation p' <- object$params$phi
-  }
-  if(object$family == "gaussian"){
-    sumry$'Standard deviations' <- object$params$phi
   }
   class(sumry) <- "summary.gllvm.quadratic"
   return(sumry)
