@@ -27,7 +27,8 @@ summary.gllvm.quadratic <- function(object, ...) {
   M <- cbind(object$params$beta0, object$params$theta)
   opt <- -object$params$theta[,1:object$num.lv,drop=F]/(2*object$params$theta[,-c(1:object$num.lv),drop=F])
   tol <- 1/sqrt(-2*object$params$theta[,-c(1:object$num.lv),drop=F])
-    
+  colnames(tol) <- paste("theta.LV", 1:num.lv, sep = "")
+  
   sumry <- list()
   sumry$'log-likelihood' <- object$logL
   crit <- inf.criteria(object)
