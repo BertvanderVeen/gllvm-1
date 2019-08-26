@@ -25,7 +25,7 @@
 #'
 #'
 #'@aliases getPredictErr simulate.gllvm.quadratic
-#'@method getPredictErr gllvm
+#'@method getPredictErr gllvm.quadratic
 #'@export
 #'@export simulate.gllvm.quadratic
 getPredictErr.gllvm.quadratic = function(object)
