@@ -183,12 +183,12 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         if(hill==T){
           optima <- optima/tolerances
           lvs <- object$lvs/apply(tolerances,2,mean)
-          tolerances <- tolerances / tolerances
+          tolerances <- tolerances/tolerances
         }else{
           lvs <- object$lvs
         }
-        env.lower <- optima - tolerances*1.96
-        env.upper <- optima + tolerances*1.96
+        env.lower <- optima - 3*tolerances
+        env.upper <- optima + 3*tolerances
         
           plot(
             rbind(rbind(env.lower,env.upper), rbind(env.lower,env.upper)),
