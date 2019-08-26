@@ -24,10 +24,10 @@
 #'getPredictErr(fit)
 #'
 #'
-#'@aliases getPredictErr getPredictErr.gllvm
+#'@aliases getPredictErr simulate.gllvm.quadratic
 #'@method getPredictErr gllvm
 #'@export
-#'@export getPredictErr.gllvm
+#'@export simulate.gllvm.quadratic
 getPredictErr.gllvm.quadratic = function(object)
 {
   if(object$method == "VA"){
