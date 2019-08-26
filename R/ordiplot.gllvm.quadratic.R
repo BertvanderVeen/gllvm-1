@@ -12,8 +12,8 @@
 #' @param s.colors colors for sites
 #' @param symbols logical, if \code{TRUE} sites are plotted using symbols, if \code{FALSE} (default) site numbers are used
 #' @param cex.spp size of species labels in biplot
-#' @param hill logical, if TRUE and \code{bell = TRUE} scales optima and tolerances by the average standard tolerance per LV
-#' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with predicted optima and distributions (2D)
+#' @param hill logical, if TRUE and \code{bell = TRUE} scales optima by tolerances latent scores by the average standard tolerance per LV
+#' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with predicted optima and 95% of the predicted environmental ranges (2D)
 #' @param ...	additional graphical arguments.
 #'
 #' @details
@@ -181,14 +181,15 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         }
         tolerances <- 1/sqrt(-2*quadr.coef)
         if(hill==T){
-          optima <- optima/apply(tolerances,2,mean)
+          optima <- optima/tolerances
           lvs <- object$lvs/apply(tolerances,2,mean)
-          tolerances <- tolerances / apply(tolerances, 2, mean)
+          tolerances <- tolerances / tolerances
         }else{
           lvs <- object$lvs
         }
-        env.lower <- optima - tolerances
-        env.upper <- optima + tolerances
+        env.lower <- optima - tolerances*1.96
+        env.upper <- optima + tolerances*1.96
+        
           plot(
             rbind(rbind(env.lower,env.upper), rbind(env.lower,env.upper)),
             xlab = paste("Latent variable ", which.lvs[1]),
