@@ -33,7 +33,7 @@ anova.gllvm.quadratic <- function(object, ...) {
   objects <- list(object, ...)
   if (length(objects) < 2)
     stop("At least two objects are needed for tests.")
-  if (any(!(sapply(objects, class) %in% c("gllvm.quadratic"))))
+  if (any(!(sapply(objects, class) %in% c("gllvm.quadratic","gllvm"))))
     stop("The function 'anova.gllvm' can only be used for a gllvm object.")
 
   tt <- sapply(objects, function(x)
