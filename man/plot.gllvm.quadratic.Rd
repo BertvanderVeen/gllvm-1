@@ -63,7 +63,7 @@ Dunn, P. K., and Smyth, G. K. (1996). Randomized quantile residuals. Journal of 
 Hui, F. K. C., Taskinen, S., Pledger, S., Foster, S. D., and Warton, D. I. (2015).  Model-based approaches to unconstrained ordination. Methods in Ecology and Evolution, 6:399-411.
 }
 \seealso{
-\code{\link{gllvm.quadratic}}, \code{\link{residuals.gllvm.quadratiic}}
+\code{\link{gllvm.quadratic}}, \code{\link{residuals.gllvm.quadratic}}
 }
 \author{
 Jenni Niku <jenni.m.e.niku@jyu.fi>
