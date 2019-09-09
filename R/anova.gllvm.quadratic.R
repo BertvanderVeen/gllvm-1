@@ -29,7 +29,7 @@
 #'
 #'@export
 
-anova.gllvm.quadratic <- function(object, ...) {
+anova2.gllvm.quadratic <- function(object, ...) {
   objects <- list(object, ...)
   if (length(objects) < 2)
     stop("At least two objects are needed for tests.")

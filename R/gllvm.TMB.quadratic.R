@@ -244,7 +244,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             inner.control=list(mgcmax = 1e+200,maxit = maxit),
             DLL = "gllvm2")##GLLVM
         }
-      }
       if(optimizer=="nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit)),silent = TRUE))
       }
