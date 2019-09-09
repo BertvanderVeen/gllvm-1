@@ -19,8 +19,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   
   if (!is.numeric(y))
     stop( "y must a numeric. If ordinal data, please convert to numeric with lowest level equal to 1. Thanks")
-  if ((family %in% c("tweedie", "ZIP")) && method == "VA")
-    stop("family=\"", family, "\" : family not implemented")
   if (is.null(rownames(y)))
     rownames(y) <- paste("Row", 1:n, sep = "")
   if (is.null(colnames(y)))

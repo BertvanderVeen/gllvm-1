@@ -138,14 +138,6 @@
 #'fitl0 <- gllvm(y, family = "negative.binomial", method = "LA")
 #'ordiplot(fitl0)
 #'
-#'# Poisson family:
-#'fit.p <- gllvm(y, family = poisson(), method = "LA")
-#'ordiplot(fit.p)
-#'# Use poisson model as a starting parameters for ZIP-model, this line may take few minutes to run
-#'fit.z <- gllvm(y, family = "ZIP", method = "LA", start.fit = fit.p)
-#'ordiplot(fit.z)
-#'
-#'
 #'## Example 2: gllvm with environmental variables
 #'# Fit model with two latent variables and all environmental covariates,
 #'fitvX <- gllvm(formula = y ~ X, family = "negative.binomial")
@@ -191,19 +183,7 @@
 #'ordiplot(fitF2)
 #'coefplot(fitF2)
 #'
-#'## Example 5: Fit Tweedie model
-#'# Load coral data
-#'data(tikus)
-#'ycoral <- tikus$abund
-#'# Let's consider only years 1981 and 1983
-#'ycoral <- ycoral[((tikus$x$time == 81) + (tikus$x$time == 83)) > 0, ]
-#'# Exclude species which have observed at less than 4 sites
-#'ycoral <- ycoral[-17, (colSums(ycoral > 0) > 3)]
-#'# Fit Tweedie model for coral data (this line may take few minutes to run)
-#'fit.twe <- gllvm(y = ycoral, family = "tweedie", method = "LA")
-#'ordiplot(fit.twe)
-#'
-#'## Example 6: Random row effects
+#'## Example 5: Random row effects
 #'fitRand <- gllvm(y, family = "negative.binomial", row.eff = "random")
 #'ordiplot(fitRand, biplot = TRUE)
 #'}
@@ -471,6 +451,7 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
   out$X.design <- fitg$X.design
   out$TMBfn = fitg$TMBfn
   out$logL <- fitg$logL
+  out$method <- "VA"
   if (num.lv > 0)
     out$lvs <- fitg$lvs
   out$X <- fitg$X
