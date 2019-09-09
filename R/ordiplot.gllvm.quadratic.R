@@ -163,9 +163,6 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
           col[4]<-127
           col<-rgb(col[1],col[2],col[3],col[4],maxColorValue = 255)
           text(x=max(newLV[,1]),y=tail(mu[order(newLV[,1]),j])[1],labels = colnames(mu)[j],col=cols[j], adj=0)
-          #lines(x=sort(z_new[,1]),y=testCIU[order(z_new[,1]),i],col=i,lty="dashed")
-          #lines(x=sort(z_new[,1]),y=testCIL[order(z_new[,1]),i],col=i,lty="dashed")
-        #  polygon(c(sort(newLV[,1]),rev(sort(newLV[,1]))),y=c(testCIU[order(newLV[,1]),i],testCIL[rev(order(newLV[,1])),i]),col=col,lty="dashed",border=col,lwd=2)
         }
         abline(v=0,h=1,col="black",lty="dashed")
         text(x=object$lvs[,which.lvs], y=range(mu)[1], labels=1:nrow(object$y), col = "grey")
@@ -196,16 +193,16 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             rbind(rbind(env.lower,env.upper), rbind(env.lower,env.upper)),
             xlab = paste("Latent variable ", which.lvs[1]),
             ylab = paste("Latent variable ", which.lvs[2]),
-            main = main, type = "n",... )
+            main = main, type = "n", ... )
           
-          
+          col <- grDevices::rainbow(nrow(tolerances))
           text(lvs,labels=row.names(object$y))
-          text(optima,labels=row.names(optima), col="red")
+          text(optima,labels=row.names(optima), col=col)
           
           env.range <- env.upper-env.lower
           for(j in 1:nrow(optima)){
             s=diag(2)
-            car::ellipse(c(optima[j,1],optima[j,2]), s,env.range[j,], center.pch=NULL, col="red",lty="dashed")
+            car::ellipse(c(optima[j,1],optima[j,2]), s,env.range[j,], center.pch=NULL, col=col[j],lty="dashed")
           }
           
           
