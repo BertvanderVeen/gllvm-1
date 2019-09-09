@@ -1,4 +1,4 @@
-#' @title Analysis Of Deviance for gllvm
+#' @title Analysis Of Deviance for quadratic and linear gllvms
 #' @description  Computes an analysis of deviance table for two generalized linear latent variable model fits.
 #'
 #' @param object   an object of class 'gllvm'.
