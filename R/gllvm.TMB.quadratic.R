@@ -3,10 +3,10 @@
 ## Original author: Jenni Niku
 ##########################################################################################
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
-                      method="VA",Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6,
+                      Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6,
                       seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
-                      trace=TRUE,link="logit",n.init=1,restrict=30,start.params=NULL,
-                      optimizer="optim",starting.val="res",Power=1.5,diag.iter=1,
+                      trace=TRUE,n.init=1,restrict=30,start.params=NULL,
+                      optimizer="optim",starting.val="res",diag.iter=1,
                       Lambda.start=c(0.1,0.5), jitter.var=0) {
   ignore.u=FALSE
   n <- dim(y)[1]
@@ -16,21 +16,23 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   num.lv <- num.lv
   y <- as.matrix(y)
   formula1 <- formula
-  if(method=="VA"){ link="probit"}
   
   if (!is.numeric(y))
     stop( "y must a numeric. If ordinal data, please convert to numeric with lowest level equal to 1. Thanks")
   if ((family %in% c("tweedie", "ZIP")) && method == "VA")
-    stop("family=\"", family, "\" : family not implemented with VA method, change the method to 'LA'")
+    stop("family=\"", family, "\" : family not implemented")
   if (is.null(rownames(y)))
     rownames(y) <- paste("Row", 1:n, sep = "")
   if (is.null(colnames(y)))
     colnames(y) <- paste("Col", 1:p, sep = "")
-  
+  if(family=="binomial"){
+    link="probit"
+  }
   if(num.lv==0){
     stop("Can't fit the species packing model without latent variables")
   }
   num.X <- 0;
+
   if(!is.null(X)){
     
     if (!is.null(formula)) {
@@ -81,7 +83,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(n.init > 1 && trace)
       cat("Initial run ", n.i, "\n")
     
-    fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, power = Power, jitter.var = jitter.var, row.eff = row.eff, TMB=TRUE, link=link)
+    fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, TMB=TRUE, link=link)
     
     sigma <- 1
     if (is.null(start.params)) {
@@ -191,9 +193,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     se <- NULL
     
     
-    if(method=="VA" && (num.lv>0 || row.eff=="random")){
+    if((num.lv>0 || row.eff=="random")){
       if(num.lv>0){
-        if(is.null(start.params) || start.params$method!="VA"){
+        if(is.null(start.params)){
           if(Lambda.struc=="diagonal" || diag.iter>0){
             Au <- log(rep(Lambda.start[1],num.lv*n)) #1/2, 1
           } else{
@@ -221,30 +223,30 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(family == "negative.binomial") { familyn <- 1}
       if(family == "binomial") { familyn <- 2}
       if(family == "ordinal") { familyn <- 3}
-      
-      if(row.eff=="random"){
-        if(num.lv>0){
-          objr <- TMB::MakeADFun(
-            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,method=0,model=0,random=1), silent=TRUE,
-            parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
-            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-            DLL = "gllvm2")
+        if(row.eff=="random"){
+          if(num.lv>0){
+            objr <- TMB::MakeADFun(
+              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1), silent=TRUE,
+              parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
+              inner.control=list(mgcmax = 1e+200,maxit = maxit),
+              DLL = "gllvm2")
+          } else {
+            objr <- TMB::MakeADFun(
+              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1), silent=TRUE,
+              parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = 0, lambda2 = 0, u = matrix(0),lg_phi=log(phi),log_sigma=log(sigma),Au=0,lg_Ar=log(Ar),zeta=zeta),
+              inner.control=list(mgcmax = 1e+200,maxit = maxit),
+              DLL = "gllvm2")##GLLVM
+          }
         } else {
           objr <- TMB::MakeADFun(
-            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,method=0,model=0,random=1), silent=TRUE,
-            parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = 0, lambda2 = 0, u = matrix(0),lg_phi=log(phi),log_sigma=log(sigma),Au=0,lg_Ar=log(Ar),zeta=zeta),
+            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0), silent=TRUE,
+            parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta),
             inner.control=list(mgcmax = 1e+200,maxit = maxit),
             DLL = "gllvm2")##GLLVM
         }
-      } else {
-        objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,method=0,model=0,random=0), silent=TRUE,
-          parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta),
-          inner.control=list(mgcmax = 1e+200,maxit = maxit),
-          DLL = "gllvm2")##GLLVM
       }
       if(optimizer=="nlminb") {
-        timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol)),silent = TRUE))
+        timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit)),silent = TRUE))
       }
       if(optimizer=="optim") {
         timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit),hessian = FALSE),silent = TRUE))
@@ -271,26 +273,26 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         if(row.eff == "random"){
           if(num.lv>0){
             objr <- TMB::MakeADFun(
-              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,method=0,model=0,random=1), silent=TRUE,
+              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1), silent=TRUE,
               parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
               inner.control=list(mgcmax = 1e+200,maxit = maxit),
               DLL = "gllvm2")
           } else {
             objr <- TMB::MakeADFun(
-              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,method=0,model=0,random=1), silent=TRUE,
+              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1), silent=TRUE,
               parameters = list(r0=r1, b = b1,B=matrix(0),lambda = 0, lambda2 = 0,  u = matrix(0),lg_phi=lg_phi1,log_sigma=log_sigma1,Au=0,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
               inner.control=list(mgcmax = 1e+200,maxit = maxit),
               DLL = "gllvm2")
           }
         } else {
           objr <- TMB::MakeADFun(
-            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,method=0,model=0,random=0), silent=TRUE,
+            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0), silent=TRUE,
             parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
             inner.control=list(mgcmax = 1e+200,maxit = maxit),
             DLL = "gllvm2")#GLLVM#
         }
         if(optimizer=="nlminb") {
-          timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol)),silent = TRUE))
+          timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit)),silent = TRUE))
         }
         if(optimizer=="optim") {
           timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit),hessian = FALSE),silent = TRUE))
@@ -374,7 +376,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       out$time <- timeo
       pars <- optr$par
       
-      if(method=="VA"){
+      
         param <- objr$env$last.par.best
         if(num.lv>0){
           Au <- param[names(param)=="Au"]
@@ -402,7 +404,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         if(row.eff=="random"){
           Ar <- exp(param[names(param)=="lg_Ar"])
           out$Ar <- Ar^2
-        }}
+        }
     }
     
     n.i <- n.i+1;
@@ -487,11 +489,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   out$TMBfn$par <- objr$env$last.par.best #optr$par #ensure params in this fn take final values
   out$logL <- -out$logL
   
-  if(method == "VA"){
     #if(num.lv > 0) out$logL = out$logL + n*0.5*num.lv
     if(row.eff == "random") out$logL = out$logL + n*0.5
     #if(!is.null(randomX)) out$logL = out$logL + p*0.5*ncol(xb)
-  }
   return(out)
 }
 

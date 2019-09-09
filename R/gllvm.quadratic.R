@@ -1,6 +1,6 @@
 #' @title Generalized Linear Latent Variable Models
-#' @description Fits generalized linear latent variable model for multivariate data. The model can be fitted using Laplace approximation method or variational
-#' approximation method.
+#' @description Fits a generalized linear latent variable model for multivariate data, with quadratic latent variables. The model is fitted with variational
+#' approximations.
 #'
 #' @param y (n x m) matrix of responses.
 #' @param X matrix or data.frame of environmental covariates.
@@ -29,11 +29,11 @@
 #' @param jitter.var jitter variance for starting values of latent variables. Defaults to 0, meaning no jittering.
 #'
 #' @details
-#' Fits generalized linear latent variable models as in Hui et al. (2015 and 2017) and Niku et al. (2017).
+#' Fits the species packing model by generalized linear latent variable models with quadratic latent variables.
 #' Method can be used with two types of latent variable models depending on covariates. If only
 #' site related environmental covariates are used, the expectation of response \eqn{Y_{ij}} is determined by
 #'
-#' \deqn{g(\mu_{ij}) = \eta_{ij} = \alpha_i + \beta_{0j} + x_i'\beta_j + u_i'\theta_j,}
+#' \deqn{g(\mu_{ij}) = \eta_{ij} = \alpha_i + \beta_{0j} + x_i'\beta_j + u_i'\theta_j + u_i'\D_{j}u_i,}
 #'
 #' where \eqn{g(.)} is a known link function, \eqn{u_i} are \eqn{d}-variate latent variables (\eqn{d}<<\eqn{m}), \eqn{\alpha_i} is an optional row effect
 #' at site \eqn{i}, and it can be fixed or random effect, \eqn{\beta_{0j}} is an intercept term for species \eqn{j}, \eqn{\beta_j} and \eqn{\theta_j} are column
@@ -42,7 +42,7 @@
 #' An alternative model is the fourth corner model (Brown et al., 2014, Warton et al., 2015) which will be fitted if also trait covariates
 #' are included. The expectation of response \eqn{Y_{ij}} is
 #'
-#' \deqn{g(\mu_{ij}) = \alpha_i + \beta_{0j} + x_i'\beta_x + TR_j'\beta_t + vec(B)*kronecker(TR_j,X_i) + u_i'\theta_j}
+#' \deqn{g(\mu_{ij}) = \alpha_i + \beta_{0j} + x_i'\beta_x + TR_j'\beta_t + vec(B)*kronecker(TR_j,X_i) + u_i'\theta_j + u_i'\D_{j}u_i}
 #'
 #' where g(.), \eqn{u_i}, \eqn{\beta_{0j}} and \eqn{\theta_j} are defined as above. Vectors \eqn{\beta_x} and \eqn{\beta_t} are the main effects
 #' or coefficients related to environmental and trait covariates, respectively, matrix \eqn{B} includes interaction terms.
@@ -54,9 +54,8 @@
 #' However, sometimes this is computationally too demanding, and default option
 #' \code{starting.val = "res"} is recommended. For more details on different starting value methods, see Niku et al., (2018).
 #'
-#' Models are implemented using TMB (Kristensen et al., 2015) applied to variational approximation (Hui et al., 2017) and Laplace approximation (Niku et al., 2017).
+#' Models are implemented using TMB (Kristensen et al., 2015) applied to variational approximation (Hui et al., 2017).
 #'
-#' An exception is ordinal family which is not implemented with TMB and therefore also \code{row.eff = "random"} does not work.
 #' With ordinal family response classes must start from 0 or 1.
 #'
 #' \subsection{Distributions}{
@@ -64,16 +63,13 @@
 #'   Mean and variance for distributions are defined as follows.
 #'\itemize{
 #'   \item{For count data \code{family = poisson()}:} {Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(\mu_{ij}) = \mu_{ij}}, or}
-#'   \item{ \code{family = "negative.binomial"}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(\mu_{ij}) = \mu_{ij}+\phi_j*\mu_{ij}^2}, or}
-#'   \item{ \code{family = "ZIP"}:}{ Expectation \eqn{E[Y_{ij}] = (1-p)\mu_{ij}}, variance \eqn{V(\mu_{ij}) = \mu_{ij}(1-p)(1+\mu_{ij}p)}.}
+#'   \item{ \code{family = "negative.binomial"}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(\mu_{ij}) = \mu_{ij}+\phi_j*\mu_{ij}^2}}
 #'
 #'   \item{For binary data \code{family = binomial()}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(\mu_{ij}) = \mu_{ij}(1-\mu_{ij})}.}
 #'
-#'   \item{For biomass data \code{family = "tweedie"}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(\mu_{ij}) = \phi_j*\mu_{ij}^\nu}, where \eqn{\nu} is a power parameter of Tweedie distribution. See details Dunn and Smyth (2005).}
-#'
 #'   \item{For ordinal data \code{family = "ordinal"}:}{ Cumulative probit model, see Hui et.al. (2016).}
 #'   
-#'   \item{For normal distributed data \code{family = gaussian()}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(y_{ij}) = \phi_j^2.}}
+#'   \item{For normal distributed data \code{family = gaussian()}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(y_{ij}) = \frac{\mu_{ij}}{\phi_j} + \mu_{ij}.}}
 #' }
 #' }
 #'
@@ -92,10 +88,9 @@
 #'    \item{Xcoef }{ coefficients related to environmental covariates X}
 #'    \item{B }{ coefficients in fourth corner model}
 #'    \item{row.params }{ row-specific intercepts}
-#'    \item{phi }{ dispersion parameters \eqn{\phi} for negative binomial or Tweedie family, probability of zero inflation for ZIP family or standard deviation for gaussian family}
+#'    \item{phi }{ dispersion parameters \eqn{\phi} for negative binomial or standard deviation for gaussian family}
 #'    \item{inv.phi }{ dispersion parameters \eqn{1/\phi} for negative binomial}
 #'    }}
-#'  \item{Power }{ power parameter \eqn{\nu} for Tweedie family}
 #'  \item{sd }{ list of standard errors of parameters}
 #'  \item{prediction.errors }{ list of prediction covariances for latent variables and variances for random row effects when method \code{"LA"} is used}
 #'  \item{A, Ar }{ covariance matrices for variational densities of latent variables and variances for random row effects}
@@ -227,10 +222,10 @@
 #'@importFrom mvtnorm rmvnorm
 
 gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
-                           num.lv = 2, family, method = "VA", row.eff = FALSE,
+                           num.lv = 2, family, row.eff = FALSE,
                            offset = NULL, sd.errors = TRUE, Lambda.struc = "unstructured",
-                           diag.iter = 5, trace = FALSE, plot = FALSE, la.link.bin = "probit",
-                           n.init = 1, Power = 1.5, reltol = 1e-8, seed = NULL,
+                           diag.iter = 5, trace = FALSE, plot = FALSE,
+                           n.init = 1, reltol = 1e-8, seed = NULL,
                            max.iter = 200, maxit = 1000, start.fit = NULL,
                            starting.val = "res", TMB = TRUE, optimizer = "optim",
                            Lambda.start = c(0.1,0.5), jitter.var = 0) {
@@ -357,7 +352,6 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
     y <- as.matrix(y)
   
   if (class(family) == "family") {
-    la.link.bin <- family$link
     family <- family$family
   }
   
@@ -369,11 +363,6 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
       stop("There must be at least two responses in order to include row effects. \n");
     if(any(rowSums(y)==0))
       stop("There are rows full of zeros in y, model can not be fitted. \n");
-  }
-  
-  if (method == "LA") {
-    cat("Laplace's method cannot handle the quadratic model, so VA method is used instead. \n")
-    method <- "VA"
   }
   
   if (p < 3 && !is.null(TR)) {
@@ -412,11 +401,10 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
   n.i <- 1
   
   out <- list( y = y, X = X, TR = TR, data = datayx, num.lv = num.lv,
-               method = method, family = family, row.eff = row.eff, n.init = n.init,
+               family = family, row.eff = row.eff, n.init = n.init,
                sd = FALSE, Lambda.struc = Lambda.struc, TMB = TMB, terms = term)
   
   if (family == "binomial") {
-    if (method == "VA")
       out$link <- "probit"
   }
   out$offset <- offset
@@ -441,14 +429,11 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
       offset = O,
       sd.errors = sd.errors,
       trace = trace,
-      link = la.link.bin,
       n.init = n.init,
       start.params = start.fit,
       optimizer = optimizer,
       starting.val = starting.val,
-      method = method,
       randomX = randomX,
-      Power = Power,
       diag.iter = diag.iter,
       Lambda.start = Lambda.start,
       jitter.var = jitter.var
@@ -463,7 +448,6 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
       formula = formula,
       num.lv = num.lv,
       family = family,
-      method = method,
       Lambda.struc = Lambda.struc,
       row.eff = row.eff,
       reltol = reltol,
@@ -473,13 +457,11 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
       offset = O,
       sd.errors = sd.errors,
       trace = trace,
-      link = la.link.bin,
       n.init = n.init,
       restrict = restrict,
       start.params = start.fit,
       optimizer = optimizer,
       starting.val = starting.val,
-      Power = Power,
       diag.iter = diag.iter,
       Lambda.start = Lambda.start,
       jitter.var = jitter.var
@@ -497,10 +479,9 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
   if (sd.errors) {
     out$sd <- fitg$sd
   }
-  if (method == "VA") {
     out$A <- fitg$A
     out$Ar <- fitg$Ar
-  }
+
   if (!is.null(randomX)) {
     out$corr <- fitg$corr
     out$Xrandom <- fitg$Xrandom
@@ -521,13 +502,9 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
     out$fourth.corner <- try(getFourthCorner(out),silent = TRUE)
   }
   if (is.finite(out$logL) && row.eff == "random"){
-    if(method == "LA"){
-      if(abs(out$params$sigma)<0.02)
-        cat("Random row effects ended up to almost zero. Might be a false convergence or local maxima. You can try simpler model, less latent variables or change the optimizer. \n")
-    } else{
       if(abs(out$params$sigma)<0.02 && max(abs(out$params$sigma-sqrt(out$Ar))) < 1e-3)
         cat("Random row effects ended up to almost zero. Might be a false convergence or local maxima. You can try simpler model, less latent variables or change the optimizer. \n")
-    }
+    
   }
   
   out$prediction.errors = fitg$prediction.errors
