@@ -12,20 +12,22 @@
 #' @param s.colors colors for sites
 #' @param symbols logical, if \code{TRUE} sites are plotted using symbols, if \code{FALSE} (default) site numbers are used
 #' @param cex.spp size of species labels in biplot
-#' @param hill logical, if TRUE and \code{bell = TRUE} scales optima by tolerances latent scores by the average standard tolerance per LV
+#' @param hill logical, if TRUE and \code{bell = TRUE} scales optima by tolerances per lV (i.e. gives bell-curves of unit variance)
 #' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with predicted optima and 95% of the predicted environmental ranges (2D)
 #' @param ...	additional graphical arguments.
 #'
 #' @details
 #' Function constructs a scatter plot of two latent variables, i.e. an ordination plot. If only one latent
-#' variable is in the fitted model, latent variables are plotted against their corresponding row indices.
-#' The latent variables are labeled using the row index of the response matrix y.
+#' variable is in the fitted model, latent variables are plotted against their row indices \code{bell=F}.
+#' or if \code{bell=T} against their marginal predictions on the link scale.
 #'
 #' Coefficients related to latent variables are plotted in the same figure with the latent
-#' variables if \code{biplot = TRUE}. They are labeled using the column names of y. The number
+#' variables if \code{biplot = TRUE, bell = F}. They are labeled using the column names of y. The number
 #' of latent variable coefficients to be plotted can be controlled by ind.spp. An argument alpha
 #' is used to control the relative scaling of the latent variables and their coefficients.
 #' If \code{alpha = 0.5}, the latent variables and their coefficients are on the same scale.
+#'
+#' If \code{bell=T} and two latent variables are selected (which.lvs), species optima are plotted with predicted environmental ranges.
 #'
 #' @author Jenni Niku <jenni.m.e.niku@@jyu.fi>, Francis K.C. Hui
 #'

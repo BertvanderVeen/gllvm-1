@@ -29,7 +29,6 @@
 #'@aliases getResidualCor getResidualCor.gllvm.quadratic
 #'@method getResidualCor gllvm.quadratic
 #'@export
-#'@export getResidualCor.gllvm.quadratic
 getResidualCor.gllvm.quadratic = function(object, adjust = 1)
 {
   ResCov <- getResidualCov.gllvm.quadratic(object, adjust = adjust)$cov

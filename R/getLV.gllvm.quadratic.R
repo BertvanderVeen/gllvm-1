@@ -6,7 +6,6 @@
 #'@aliases getLV getLV.gllvm.quadratic
 #'@method getLV gllvm.quadratic
 #'
-#'@export getLV.gllvm.quadratic
 
 getLV.gllvm.quadratic <- function(object)
 {

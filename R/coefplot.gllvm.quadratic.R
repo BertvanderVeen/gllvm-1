@@ -35,7 +35,6 @@
 #'}
 #'@aliases coefplot coefplot.gllvm.quadratic
 #'@export
-#'@export coefplot.gllvm.quadratic
 coefplot.gllvm.quadratic <- function(object, y.label = TRUE, which.Xcoef = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4,6,2,1), xlim.list = NULL, ...)
 {
 

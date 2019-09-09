@@ -27,6 +27,8 @@
 #'# better using likelihood-ratio test:
 #'anova(fit1, fit2)
 #'
+#'@aliases anova2 anova2.gllvm.quadratic
+#'@method anova2 gllvm.quadratic
 #'@export
 
 anova2.gllvm.quadratic <- function(object, ...) {
@@ -74,4 +76,10 @@ anova2.gllvm.quadratic <- function(object, ...) {
     cat("Model ", i, ": ", formchar, "\n")
   }
   return(result)
+}
+
+#' @export anova2
+anova2 <- function(object, ...)
+{
+  UseMethod(generic = "anova2")
 }

@@ -25,10 +25,9 @@
 #'# Simulate data
 #'newdata <- simulate(fit)
 #'}
-#'@aliases simulate simulate.gllvm.quadratic
+#'@aliases simulate
 #'@method simulate gllvm.quadratic
 #'@export
-#'@export simulate.gllvm.quadratic
 
 simulate.gllvm.quadratic = function (object, nsim = 1, seed = NULL, ...) 
 {
