@@ -2,6 +2,13 @@
 ## GLLVM, with estimation done via Variational approximation using TMB-package
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
+X = NULL; formula = NULL; num.lv = 2; family = "poisson";
+Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-6;
+seed = NULL;maxit = 1000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
+trace=TRUE;n.init=1;restrict=30;start.params=NULL;
+optimizer="optim";starting.val="res";diag.iter=1;
+Lambda.start=c(0.1,0.5); jitter.var=0
+
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6,
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
@@ -108,7 +115,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         if(!is.null(X)){
           lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
           lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
-        }else if(is.null(X)&is.null(TR)){
+        }else if(is.null(X)){
           lambdas <- fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)]
           lambda2 <- fit$params[,-c(1:(num.lv+1))]  
         }
