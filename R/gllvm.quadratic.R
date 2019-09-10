@@ -388,7 +388,7 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
   if (row.eff == TRUE)
     row.eff <- "fixed"
   if (!is.null(TR)) {
-    fitg <- trait.TMB(
+    fitg <- gllvm.TMB.trait.quadratic(
       y,
       X = X,
       TR = TR,
