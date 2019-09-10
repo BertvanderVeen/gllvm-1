@@ -476,7 +476,7 @@ inf.criteria <- function(fit)
   abund=fit$y
   num.lv=fit$num.lv
   n <- dim(abund)[1]
-  k<-attributes(logLik.gllvm(fit))$df
+  k<-attributes(logLik(fit))$df
   
   BIC <- -2*fit$logL + (k) * log(n)
   # AIC
