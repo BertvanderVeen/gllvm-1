@@ -1,9 +1,8 @@
-
 start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family, 
-                                   offset= NULL, trial.size = 1, num.lv = 0, start.lvs = NULL, 
-                                   seed = NULL,power=NULL,starting.val="res",formula=NULL, 
-                                   jitter.var=0,yXT=NULL, row.eff=FALSE, TMB=TRUE, 
-                                   link = "probit", randomX = NULL) {
+                                             offset= NULL, trial.size = 1, num.lv = 0, start.lvs = NULL, 
+                                             seed = NULL,power=NULL,starting.val="res",formula=NULL, 
+                                             jitter.var=0,yXT=NULL, row.eff=FALSE, 
+                                             link = "probit", randomX = NULL) {
   if(!is.null(seed)) set.seed(seed)
   N<-n <- nrow(y); p <- ncol(y); y <- as.matrix(y)
   num.T <- 0; if(!is.null(TR)) num.T <- dim(TR)[2]
@@ -48,7 +47,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
   if(!(family %in% c("poisson","negative.binomial","binomial","ordinal")))
     stop("inputed family not allowed...sorry =(")
   
-  if(num.lv > 0) {
+
     unique.ind <- which(!duplicated(y))
     if(is.null(start.lvs)) {
       index <- mvtnorm::rmvnorm(N, rep(0, num.lv));
@@ -59,9 +58,6 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
       index <- as.matrix(start.lvs)
       unique.index <- as.matrix(index[unique.ind,])
     }
-  }
-  
-  if(num.lv == 0) { index <- NULL }
   
   y <- as.matrix(y)
   
@@ -75,7 +71,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
   
   options(warn = -1)
   
-  if(family != "tweedie" && family!="ordinal") { ## Using logistic instead of prbit regession here for binomial, but whatever...
+  if(family!="ordinal") { ## Using logistic instead of prbit regession here for binomial, but whatever...
     if(starting.val=="res" && is.null(start.lvs) ){# && num.lv>0
       if(is.null(TR)){
         if(family!="gaussian") {
@@ -91,11 +87,9 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           fit.mva$phi <- apply(fit.mva$residuals,2,sd)
         }
         gamma=NULL
-        if(num.lv>0){
           lastart <- FAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)
           gamma<-lastart$gamma
           index<-lastart$index
-        }
       } else {
         n1 <- colnames(X)
         n2 <- colnames(TR)
@@ -110,12 +104,11 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           }
           formula=form1
         }
-        if(!TMB) fit.mva <- gllvm.VA(y, X = X, TR = TR, formula=formula(formula), family = family, num.lv = 0, Lambda.struc = "diagonal", trace = FALSE, plot = FALSE, sd.errors = FALSE, maxit = 1000, seed=seed,n.init=1,starting.val="zero",yXT=yXT)
-        if(TMB) {
+          trait.TMB <- getFromNamespace("trait.TMB","gllvm") ##THIS LINE NEEDS TO BE CHANGED ON MERGE
           fit.mva <- trait.TMB(y, X = X, TR = TR, formula=formula(formula), family = family, num.lv = 0, Lambda.struc = "diagonal", trace = FALSE, sd.errors = FALSE, maxit = 1000, seed=seed,n.init=1,starting.val="zero",yXT = yXT, row.eff = row.eff, diag.iter = 0, optimizer = "nlminb", randomX = randomX);
           fit.mva$coef=fit.mva$params
           if(row.eff=="random") sigma=fit.mva$params$sigma
-        }
+
         out$fitstart <- fit.mva
         if(!is.null(form1)){
           if(!is.null(fit.mva$coef$row.params)) row.params=fit.mva$coef$row.params
@@ -148,11 +141,9 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
         }
         
         gamma=NULL
-        if(num.lv>0){
           lastart <- FAstart(mu, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)
           gamma<-lastart$gamma
           index<-lastart$index
-        } 
       }
       
       if(is.null(TR)){params <- cbind(coef,gamma)
@@ -160,13 +151,10 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     } else {
       if(family!="gaussian") {
         if(is.null(TR)){
-          if(!is.null(X) & num.lv > 0) fit.mva <- mvabund::manyglm(y ~ X + index, family = family, K = trial.size)
-          if(is.null(X) & num.lv > 0) fit.mva <- mvabund::manyglm(y ~ index, family = family, K = trial.size)
-          if(!is.null(X) & num.lv == 0) fit.mva <- mvabund::manyglm(y ~ X, family = family, K = trial.size)
-          if(is.null(X) & num.lv == 0) fit.mva <- mvabund::manyglm(y ~ 1, family = family, K = trial.size)
+          if(!is.null(X)) fit.mva <- mvabund::manyglm(y ~ X + index, family = family, K = trial.size)
+          if(is.null(X)) fit.mva <- mvabund::manyglm(y ~ index, family = family, K = trial.size)
         } else {
-          if(num.lv > 0) fit.mva <- mvabund::manyglm(y ~ index, family = family, K = trial.size)
-          if(num.lv == 0) fit.mva <- mvabund::manyglm(y ~ 1, family = family, K = trial.size)
+           fit.mva <- mvabund::manyglm(y ~ index, family = family, K = trial.size)
           env  <-  rep(0,num.X)
           trait  <-  rep(0,num.T)
           inter <- rep(0, num.T * num.X)
@@ -174,13 +162,10 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
         }
       } else {
         if(is.null(TR)){
-          if(!is.null(X) & num.lv > 0) fit.mva <- mvabund::manylm(y ~ X + index)
-          if(is.null(X) & num.lv > 0) fit.mva <- mvabund::manylm(y ~ index)
-          if(!is.null(X) & num.lv == 0) fit.mva <- mvabund::manylm(y ~ X)
-          if(is.null(X) & num.lv == 0) fit.mva <- mvabund::manylm(y ~ 1)
+          if(!is.null(X)) fit.mva <- mvabund::manylm(y ~ X + index)
+          if(is.null(X)) fit.mva <- mvabund::manylm(y ~ index)
         } else {
-          if(num.lv > 0) fit.mva <- mvabund::manylm(y ~ index)
-          if(num.lv == 0) fit.mva <- mvabund::manylm(y ~ 1)
+          fit.mva <- mvabund::manylm(y ~ index)
           env  <-  rep(0,num.X)
           trait  <-  rep(0,num.T)
           inter <- rep(0, num.T * num.X)
@@ -197,28 +182,6 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
   } else if(family == "gaussian") {
     phi <- fit.mva$phi
   } else { phi <- NULL }
-  
-  if(family == "tweedie") {
-    if(is.null(TR)){
-      indeX <- cbind(index, X)
-    }else{indeX <- cbind(index)}
-    if(num.lv == 0) indeX <- X
-    
-    phi0<-NULL
-    coefs0<-NULL
-    for(j in 1:p){
-      fitj <- try(glm( y[,j] ~ indeX, family=statmod::tweedie(var.power=power, link.power=0) ),silent = TRUE)
-      if(is.null(X) && num.lv == 0) fitj<-try(glm( y[,j] ~ 1, family=statmod::tweedie(var.power=power, link.power=0) ),silent = TRUE)
-      if(!inherits(fitj, "try-error")){
-        coefs0<-rbind(coefs0,fitj$coefficients)
-        phi0<-c(phi0,summary(fitj)$dispersion)
-      } else {coefs0<-rbind(coefs0,rnorm(num.lv+dim(X)[2]+1)); phi0<-c(phi0,runif(1,0.2,3));}
-    }
-    
-    if(!is.null(TR)) B=rep(0,num.X+num.T+num.X*num.T)
-    params <- as.matrix(coefs0)
-    phi <- phi0
-  }
   
   if(family == "ordinal") {
     max.levels <- length(unique(c(y)))
@@ -297,12 +260,38 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     #add lambda2 here
     #lambda2
     lambda2<-matrix(-1e-5,nrow=p,ncol=num.lv)
+  
+    if(!is.null(X) & !is.null(TR)){
+      yX <- reshape(data.frame(cbind(y, X)), direction = "long", varying = colnames(y), v.names = "y")
+      
+      TR2 <- data.frame(time = 1:p, TR)
+      yXT2 <- merge(yX, TR2, by = "time")
+      
+      data <- yXT2
+      formula<-formula(formula)
+      m1 <- model.frame(formula, data = data)
+      term <- terms(m1)
+      
+      Xd <- as.matrix(model.matrix(formula, data = data))
+      
+      quadratic.start.offset <- cbind(index)%*%t(params[,-1]) + matrix(Xd%*%matrix(c(1,B),ncol=1),n,p)
+      
+      
+    }else if(!is.null(X)&is.null(TR)){
+      quadratic.start.offset <- cbind(1,X,index)%*%t(params)
+    }else if(is.null(X)&is.null(TR)){
+      quadratic.start.offset <- cbind(1,index)%*%t(params)
+    }
+      if(!is.null(offset)){
+      quadratic.start.offset <- quadratic.start.offset + offset
+    }
+    lambda2<-matrix(0,nrow=p,ncol=num.lv)
     if(family!="ordinal"){
       for(j in 1:p){
         if(family!="negative.binomial"){
-          lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~-1+index^2+offset((cbind(1,index)%*%t(params))[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family=family))  #first coefficient the packages thinks is the intercept
+          lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~-1+index^2+offset(quadratic.start.offset[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family=family))  #first coefficient the packages thinks is the intercept
         }else{
-          lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~-1+index^2+offset((cbind(1,index)%*%t(params))[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family="poisson"))  
+          lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~-1+index^2+offset(quadratic.start.offset[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family="poisson"))  
         }
       }
     }
@@ -338,6 +327,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
   }
   return(out)
 }
+
 
 
 FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL, 
@@ -453,13 +443,40 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
   return(list(index = index, gamma = gamma))
 }
 
+calc.quad <- function(lambda,theta,Lambda.struc) {
+  if(Lambda.struc == "diagonal") out <- 0.5 * (lambda) %*% t(theta^2)
+  if(Lambda.struc == "unstructured") {
+    if(class(lambda) == "array") { n <- dim(lambda)[1]; num.lv <- dim(lambda)[2] }
+    if(class(lambda) == "matrix") { num.lv <- dim(lambda)[2]; n <- 1 }
+    if(class(theta) == "matrix") { p <- dim(theta)[1] }
+    if(class(theta) == "numeric") { p <- 1; theta <- matrix(theta,1) }
+    
+    out <- matrix(NA,n,p)
+    
+    if(n == 1) {
+      for(j in 1:p) { out[1,j] <- 0.5 * t(theta[j,]) %*% lambda %*% theta[j,] }
+    }
+    
+    if(n > 1) {
+      if(n <= p) out <- t(sapply(1:n, function(x) 0.5 * rowSums(theta * (theta %*% lambda[x,,]))))
+      if(n > p) {
+        lambda.mat <- aperm(lambda,c(3,2,1)); dim(lambda.mat) <- c(num.lv,num.lv * n)
+        f <- function(x) 0.5 * rowSums(matrix((t(lambda.mat) * theta[x,]) %*% theta[x,],ncol=num.lv,byrow=TRUE))
+        out <- sapply(1:p,f)
+      }
+    }
+  }
+  return(list(mat = out, mat.sum = sum(out)))
+}
+
+
 inf.criteria <- function(fit)
 {
   family=fit$family
   abund=fit$y
   num.lv=fit$num.lv
   n <- dim(abund)[1]
-  k<-attributes(logLik.gllvm.quadratic(fit))$df
+  k<-attributes(logLik.gllvm(fit))$df
   
   BIC <- -2*fit$logL + (k) * log(n)
   # AIC
@@ -537,8 +554,8 @@ ellipse<-function(center, covM, rad){
 
 gamEnvelope <- function(x, y,line.col = "red", envelope.col = c("blue","lightblue"), col = 1, envelopes = TRUE, ...){
   xSort <- sort(x, index.return = TRUE)
-  gam.yx <- mgcv::gam(y[xSort$ix] ~ xSort$x)
-  pr.y <- mgcv::predict.gam(gam.yx, se.fit = TRUE)
+  gam.yx <- gam(y[xSort$ix] ~ xSort$x)
+  pr.y <- predict.gam(gam.yx, se.fit = TRUE)
   n.obs <- length(xSort$ix)
   prHi <- pr.y$fit + 1.96*pr.y$se.fit
   prLow <- pr.y$fit - 1.96*pr.y$se.fit

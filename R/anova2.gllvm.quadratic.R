@@ -35,9 +35,11 @@ anova2.gllvm.quadratic <- function(object, ...) {
   objects <- list(object, ...)
   if (length(objects) < 2)
     stop("At least two objects are needed for tests.")
+  if (!any((sapply(objects, class) %in% c("gllvm.quadratic"))))
+    stop("The function 'anova.gllvm.quadratic' needs to include at least one object of class gllvm.quadratic.")
   if (any(!(sapply(objects, class) %in% c("gllvm.quadratic","gllvm"))))
-    stop("The function 'anova.gllvm' can only be used for a gllvm object.")
-
+    stop("Unknown class object in function.")
+  
   tt <- sapply(objects, function(x)
     x$method)
   if (!(all(tt == "VA") == !all(tt == "LA")))

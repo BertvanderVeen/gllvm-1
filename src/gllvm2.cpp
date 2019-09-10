@@ -3,7 +3,7 @@
 #include<math.h>
 //--------------------------------------------------------
 //GLLVM
-//Author: Jenni Niku
+//Author: Jenni Niku, Bert van der Veen
 //------------------------------------------------------------
 template<class Type>
 Type objective_function<Type>::operator() ()

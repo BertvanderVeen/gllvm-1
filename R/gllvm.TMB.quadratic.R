@@ -1,13 +1,13 @@
 ########################################################################################
 ## GLLVM, with estimation done via Variational approximation using TMB-package
-## Original author: Jenni Niku
+## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
-                      Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6,
-                      seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
-                      trace=TRUE,n.init=1,restrict=30,start.params=NULL,
-                      optimizer="optim",starting.val="res",diag.iter=1,
-                      Lambda.start=c(0.1,0.5), jitter.var=0) {
+                                Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6,
+                                seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
+                                trace=TRUE,n.init=1,restrict=30,start.params=NULL,
+                                optimizer="optim",starting.val="res",diag.iter=1,
+                                Lambda.start=c(0.1,0.5), jitter.var=0) {
   ignore.u=FALSE
   n <- dim(y)[1]
   p <- dim(y)[2]
@@ -30,7 +30,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     stop("Can't fit the species packing model without latent variables")
   }
   num.X <- 0;
-
+  
   if(!is.null(X)){
     
     if (!is.null(formula)) {
@@ -81,7 +81,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(n.init > 1 && trace)
       cat("Initial run ", n.i, "\n")
     
-    fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, TMB=TRUE, link=link)
+    fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, link=link)
     
     sigma <- 1
     if (is.null(start.params)) {
@@ -91,12 +91,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         betas <- c(fit$params[, 2:(num.X + 1)])
       lambdas <- NULL
       
-      if (num.lv > 0) {
         lambdas <- as.matrix(fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)])
-        if (num.lv > 0)
           lambdas[upper.tri(lambdas)] <- 0
         covM.lvs <- array(NA, dim = c(n, num.lv, num.lv))
-      }
+      
       row.params <- NULL
       
       if (row.eff != FALSE) {
@@ -106,12 +104,16 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         }
       }#rep(0,n)
       lvs <- NULL
-      if (num.lv > 0)
         lvs <- matrix(fit$index, ncol = num.lv)
-      if (num.lv > 0){
-        lambdas <- as.matrix(fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)])
-        lambda2 <- fit$params[,-c(1:(num.lv+1))]
-      }
+        if(!is.null(X)){
+          lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
+          lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
+        }else if(is.null(X)&is.null(TR)){
+          lambdas <- fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)]
+          lambda2 <- fit$params[,-c(1:(num.lv+1))]  
+        }
+        
+      
       #subtract a fraction from the 0 quadratic scores, otherwise the optimization can't get away from the 0s where necessary.
     } else{
       if (dim(start.params$y) == dim(y) &&
@@ -124,9 +126,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         betas <- c(start.params$params$Xcoef) ## covariates coefficients
         lambdas <- NULL
         lambda2 <- NULL
-        if (num.lv > 0){
           lambdas <- start.params$params$theta
-          lambdas[upper.tri(lambdas)] <- 0}
+          lambdas[upper.tri(lambdas)] <- 0
         lambda2 <- start.params$params$lambda2
         row.params <- NULL
         if (start.params$row.eff != FALSE) {
@@ -137,10 +138,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             sigma <- start.params$params$sigma
         }## row parameters
         lvs <- NULL
-        if (num.lv > 0) {
           lvs <- matrix(start.params$lvs, ncol = num.lv)
           covM.lvs <- array(NA, dim = c(n, num.lv, num.lv))
-        }## LVs
       } else {
         stop( "Model which is set as starting parameters isn't the suitable for the one you are trying to fit. Check that attributes y, X and row.eff match to each other.")
       }
@@ -168,15 +167,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       offset <- matrix(0, nrow = n, ncol = p)
     
     current.loglik <- -1e6; iter <- 1; err <- 10;
-    ## LA-likelihood
     if(!is.null(row.params)){ r0 <- row.params} else {r0 <- rep(0,n)}
     a <- c(beta0)
     b <- NULL; if(!is.null(X)) b <- matrix(betas, ncol(X), p,byrow = TRUE)
-    if(num.lv > 0) {
       # diag(lambdas) <- log(diag(lambdas)) !!!
       lambda <- lambdas[lower.tri(lambdas,diag = TRUE)]
       u <- lvs
-    }
+    
     if(!is.null(phis)) { 
       phi <- phis 
     } else { 
@@ -190,9 +187,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     timeo<-NULL
     se <- NULL
     
-    
-    if((num.lv>0 || row.eff=="random")){
-      if(num.lv>0){
         if(is.null(start.params)){
           if(Lambda.struc=="diagonal" || diag.iter>0){
             Au <- log(rep(Lambda.start[1],num.lv*n)) #1/2, 1
@@ -211,7 +205,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           if(Lambda.struc!="diagonal" && diag.iter==0){
             Au <- c(Au,rep(0,num.lv*(num.lv-1)/2*n))
           }
-        }} else { Au <- 0}
+        } 
       if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
       
       if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
@@ -221,27 +215,19 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(family == "negative.binomial") { familyn <- 1}
       if(family == "binomial") { familyn <- 2}
       if(family == "ordinal") { familyn <- 3}
-        if(row.eff=="random"){
-          if(num.lv>0){
-            objr <- TMB::MakeADFun(
-              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1), silent=TRUE,
-              parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
-              inner.control=list(mgcmax = 1e+200,maxit = maxit),
-              DLL = "gllvm2")
-          } else {
-            objr <- TMB::MakeADFun(
-              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1), silent=TRUE,
-              parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = 0, lambda2 = 0, u = matrix(0),lg_phi=log(phi),log_sigma=log(sigma),Au=0,lg_Ar=log(Ar),zeta=zeta),
-              inner.control=list(mgcmax = 1e+200,maxit = maxit),
-              DLL = "gllvm2")##GLLVM
-          }
-        } else {
+      if(row.eff=="random"){
           objr <- TMB::MakeADFun(
-            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0), silent=TRUE,
-            parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta),
+            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1), silent=TRUE,
+            parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
             inner.control=list(mgcmax = 1e+200,maxit = maxit),
-            DLL = "gllvm2")##GLLVM
-        }
+            DLL = "gllvm2")
+      } else {
+        objr <- TMB::MakeADFun(
+          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0), silent=TRUE,
+          parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta),
+          inner.control=list(mgcmax = 1e+200,maxit = maxit),
+          DLL = "gllvm2")##GLLVM
+      }
       if(optimizer=="nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit)),silent = TRUE))
       }
@@ -268,19 +254,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         }
         
         if(row.eff == "random"){
-          if(num.lv>0){
             objr <- TMB::MakeADFun(
               data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1), silent=TRUE,
               parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
               inner.control=list(mgcmax = 1e+200,maxit = maxit),
               DLL = "gllvm2")
-          } else {
-            objr <- TMB::MakeADFun(
-              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1), silent=TRUE,
-              parameters = list(r0=r1, b = b1,B=matrix(0),lambda = 0, lambda2 = 0,  u = matrix(0),lg_phi=lg_phi1,log_sigma=log_sigma1,Au=0,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
-              inner.control=list(mgcmax = 1e+200,maxit = maxit),
-              DLL = "gllvm2")
-          }
         } else {
           objr <- TMB::MakeADFun(
             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0), silent=TRUE,
@@ -319,7 +297,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       betaM <- matrix(param[bi],p,num.X+1,byrow=TRUE)
       beta0 <- betaM[,1]
       if(!is.null(X)) betas <- betaM[,-1]
-      if(num.lv > 0){
         lvs<-(matrix(param[ui],n,q))
         theta <- matrix(0,p,num.lv)
         if(p>1) {
@@ -329,7 +306,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         theta<-cbind(theta,matrix(param[l2i],ncol=num.lv))}
         # diag(theta) <- exp(diag(theta)) !!!
         
-      }
+      
       new.loglik <- objr$env$value.best[1]
       if(family %in% c("negative.binomial","gaussian")) {
         phis <- exp(param[names(param)=="lg_phi"])
@@ -337,14 +314,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(family == "ordinal"){
         zetas<-matrix(param[names(param)=="zeta"],nrow=p, ncol=K-2)
       }
-    }
+    
     
     
     if(((n.i==1 || out$logL > abs(new.loglik)) && new.loglik>0) && !inherits(optr, "try-error")){
       out$start <- fit
       objr1 <- objr; optr1=optr;
       out$logL <- new.loglik
-      if(num.lv > 0) {
         out$lvs <- lvs
         out$params$theta <- theta
         rownames(out$lvs) <- rownames(out$y);
@@ -352,7 +328,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           colnames(out$lvs) <- paste("LV", 1:num.lv, sep="")
           colnames(out$params$theta) <- c(paste("LV", 1:num.lv, sep=""),paste("LV", 1:num.lv, "^2", sep=""))
           rownames(out$params$theta) <- colnames(out$y)}
-      }
+      
       names(beta0) <- colnames(out$y); out$params$beta0 <- beta0;
       if(!is.null(X)){betas <- matrix(betas,ncol=ncol(X)); out$params$Xcoef <- betas;
       rownames(out$params$Xcoef) <- colnames(out$y); colnames(out$params$Xcoef) <- colnames(X); }
@@ -374,34 +350,33 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       pars <- optr$par
       
       
-        param <- objr$env$last.par.best
-        if(num.lv>0){
-          Au <- param[names(param)=="Au"]
-          A <- array(0,dim=c(n,num.lv,num.lv))
-          for (d in 1:num.lv){
-            for(i in 1:n){
-              A[i,d,d] <- exp(Au[(d-1)*n+i]);
-            }
+      param <- objr$env$last.par.best
+        Au <- param[names(param)=="Au"]
+        A <- array(0,dim=c(n,num.lv,num.lv))
+        for (d in 1:num.lv){
+          for(i in 1:n){
+            A[i,d,d] <- exp(Au[(d-1)*n+i]);
           }
-          if(length(Au)>num.lv*n){
-            k <- 0;
-            for (c1 in 1:num.lv){
-              r <- c1+1;
-              while (r <=num.lv){
-                for(i in 1:n){
-                  A[i,r,c1] <- Au[num.lv*n+k*n+i];
-                  A[i,c1,r] <- A[i,r,c1];
-                }
-                k <- k; r <- r+1;
+        }
+        if(length(Au)>num.lv*n){
+          k <- 0;
+          for (c1 in 1:num.lv){
+            r <- c1+1;
+            while (r <=num.lv){
+              for(i in 1:n){
+                A[i,r,c1] <- Au[num.lv*n+k*n+i];
+                A[i,c1,r] <- A[i,r,c1];
               }
+              k <- k; r <- r+1;
             }
           }
-          out$A <- A
         }
-        if(row.eff=="random"){
-          Ar <- exp(param[names(param)=="lg_Ar"])
-          out$Ar <- Ar^2
-        }
+        out$A <- A
+      
+      if(row.eff=="random"){
+        Ar <- exp(param[names(param)=="lg_Ar"])
+        out$Ar <- Ar^2
+      }
     }
     
     n.i <- n.i+1;
@@ -424,16 +399,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(row.eff=="fixed") {incl[1] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
       if(row.eff==FALSE) {incl[names(objr$par)=="r0"] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
       
-      if(num.lv>0){
         inclr[names(objr$par)=="u"] <- TRUE;
         incl[names(objr$par)=="u"] <- FALSE;
         incld[names(objr$par)=="u"] <- TRUE;
         incld[names(objr$par)=="Au"] <- TRUE;
-      } else {
-        incl[names(objr$par)=="u"] <- FALSE;
-        incl[names(objr$par)=="lambda"] <- FALSE;
-        incl[names(objr$par)=="lambda2"] <- FALSE;
-      }
+
       if(familyn!=1) incl[names(objr$par)=="lg_phi"] <- FALSE
       if(familyn!=3) incl[names(objr$par)=="zeta"] <- FALSE
       A.mat <- -sdr[incl, incl] # a x a
@@ -445,7 +415,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       if(row.eff=="fixed") { se.row.params <- c(0,se[1:(n-1)]); names(se.row.params) <- rownames(out$y); se <- se[-(1:(n-1))] }
       sebetaM <- matrix(se[1:((num.X+1)*p)],p,num.X+1,byrow=TRUE);  se <- se[-(1:((num.X+1)*p))]
-      if(num.lv>0) {
         se.lambdas <- matrix(0,p,num.lv); se.lambdas[lower.tri(se.lambdas, diag = TRUE)] <- se[1:(p * num.lv - sum(0:(num.lv-1)))];
         colnames(se.lambdas) <- paste("LV", 1:num.lv, sep="");
         rownames(se.lambdas) <- colnames(out$y)
@@ -455,7 +424,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
         rownames(se.lambdas2) <- colnames(out$y);
         out$sd$theta <- cbind(out$sd$theta,se.lambdas2); se <- se[-(1:(p * num.lv))]
-      }
+      
       out$sd$beta0 <- sebetaM[,1]; names(out$sd$beta0) <- colnames(out$y);
       if(!is.null(X)){
         out$sd$Xcoef <- matrix(sebetaM[,-1],nrow = nrow(sebetaM));
@@ -486,9 +455,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   out$TMBfn$par <- objr$env$last.par.best #optr$par #ensure params in this fn take final values
   out$logL <- -out$logL
   
-    #if(num.lv > 0) out$logL = out$logL + n*0.5*num.lv
-    if(row.eff == "random") out$logL = out$logL + n*0.5
-    #if(!is.null(randomX)) out$logL = out$logL + p*0.5*ncol(xb)
+  #if(num.lv > 0) out$logL = out$logL + n*0.5*num.lv
+  if(row.eff == "random") out$logL = out$logL + n*0.5
+  #if(!is.null(randomX)) out$logL = out$logL + p*0.5*ncol(xb)
   return(out)
 }
 

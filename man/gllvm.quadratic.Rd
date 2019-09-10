@@ -94,7 +94,7 @@ site related environmental covariates are used, the expectation of response \eqn
 \deqn{g(\mu_{ij}) = \eta_{ij} = \alpha_i + \beta_{0j} + x_i'\beta_j + u_i'\theta_j + u_i'\D_{j}u_i,}
 
 where \eqn{g(.)} is a known link function, \eqn{u_i} are \eqn{d}-variate latent variables (\eqn{d}<<\eqn{m}), \eqn{\alpha_i} is an optional row effect
-at site \eqn{i}, and it can be fixed or random effect, \eqn{\beta_{0j}} is an intercept term for species \eqn{j}, \eqn{\beta_j}, \eqn{\theta_j} and \eqn{\D_j}  are column
+at site \eqn{i}, and it can be fixed or random effect, \eqn{\beta_{0j}} is an intercept term for species \eqn{j}, \eqn{\beta_j}, \eqn{\theta_j} and \eqn{D_j}  are column
 specific coefficients related to covariates and the latent variables, respectively.
 
 An alternative model is the fourth corner model (Brown et al., 2014, Warton et al., 2015) which will be fitted if also trait covariates

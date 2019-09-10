@@ -9,7 +9,7 @@
 #'  \item{trace }{trace of the residual covariance matrix}
 #'
 #' @details 
-#' Residual covariance matrix, storing information on species co-occurrence that is not explained by the environmental variables (if included), is calculated using the matrix of latent variables loadings, that is,  \Sigma_{j,k} =\eqn{\Theta_j\Theta_k' + 2diag(\D_j)diag(\D_k)'} + .
+#' Residual covariance matrix, storing information on species co-occurrence that is not explained by the environmental variables (if included), is calculated using the matrix of latent variables loadings, that is,  \Sigma_{j,k} =\eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'} + .
 #' 
 #' When the responses are modelled using the negative binomial distribution, the residual variances for each species must be adjusted for overdispersion. This is done by the term \eqn{\psi^{(1)}(1/\phi_j)} (\code{adjust = 1}), where \eqn{\psi^{(1)}} is the trigamma function.
 #' 
@@ -17,7 +17,7 @@
 #' The residual covariance matrix with \code{adjust = 1} can be obtained by using Poisson-Gamma parametrization
 #' \deqn{Y_{ij} \sim Poisson(\mu_{ij} \lambda_j),}
 #' where \eqn{\lambda_j \sim Gamma(\phi_j, \phi_j)} and \eqn{\mu_{ij}} is as above. The mean and the variance are of similar form as above and we have that
-#' \deqn{V(log(\mu_{ij} \lambda_j)) = V(log\mu_{ij}) + V(log\lambda_j) = \theta_j'\theta_j + 2\D_j\D_j' + \psi^{(1)}(\phi_j),}
+#' \deqn{V(log(\mu_{ij} \lambda_j)) = V(log\mu_{ij}) + V(log\lambda_j) = \theta_j'\theta_j + 2D_jD_j' + \psi^{(1)}(\phi_j),}
 #' where \eqn{\psi^{(1)}} is the trigamma function.
 #' 
 #' In the case of binomial distribution, the adjustment terms (\code{adjust = 1}) are 1 for probit link.
@@ -28,7 +28,7 @@
 #' Now we have that \eqn{\mu_{ij} = P(Y_{ij} = 1) = P(Y^*_{ij} > 0) = P(\eta_{ij} > -e_{ij}) = P(e_{ij} <= \eta_{ij})} which leads to the probit model.
 #' On linear predictor scale we then have that
 #' \deqn{V(\eta_{ij} + e_{ij}) = V(\eta_{ij}) + V(e_{ij}).}
-#' For the probit model, j,k = 1\ldotsp \Sigma_{j,k} \eqn{\Theta_j\Theta_k' + 2diag(\D_j)diag(\D_k)'+ I_m}.
+#' For the probit model, j,k = 1\ldots p \Sigma_{j,k} \eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'+ I_m}.
 #'
 #' @author Francis K.C. Hui, Jenni Niku, David I. Warton
 #'
