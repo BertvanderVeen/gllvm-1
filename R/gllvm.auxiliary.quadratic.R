@@ -42,12 +42,9 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
   if(!is.numeric(y))
     stop("y must a numeric. If ordinal data, please convert to numeric with lowest level equal to 1. Thanks")
   
-  if(family=="ZIP") family="poisson"
-  
   if(!(family %in% c("poisson","negative.binomial","binomial","ordinal")))
     stop("inputed family not allowed...sorry =(")
   
-
     unique.ind <- which(!duplicated(y))
     if(is.null(start.lvs)) {
       index <- mvtnorm::rmvnorm(N, rep(0, num.lv));
@@ -104,11 +101,10 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           }
           formula=form1
         }
-          trait.TMB <- getFromNamespace("trait.TMB","gllvm") ##THIS LINE NEEDS TO BE CHANGED ON MERGE
+        trait.TMB<-getFromNamespace("trait.TMB","gllvm") ##CHANGE THIS LINE ON MERGE
           fit.mva <- trait.TMB(y, X = X, TR = TR, formula=formula(formula), family = family, num.lv = 0, Lambda.struc = "diagonal", trace = FALSE, sd.errors = FALSE, maxit = 1000, seed=seed,n.init=1,starting.val="zero",yXT = yXT, row.eff = row.eff, diag.iter = 0, optimizer = "nlminb", randomX = randomX);
           fit.mva$coef=fit.mva$params
           if(row.eff=="random") sigma=fit.mva$params$sigma
-
         out$fitstart <- fit.mva
         if(!is.null(form1)){
           if(!is.null(fit.mva$coef$row.params)) row.params=fit.mva$coef$row.params
@@ -154,7 +150,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           if(!is.null(X)) fit.mva <- mvabund::manyglm(y ~ X + index, family = family, K = trial.size)
           if(is.null(X)) fit.mva <- mvabund::manyglm(y ~ index, family = family, K = trial.size)
         } else {
-           fit.mva <- mvabund::manyglm(y ~ index, family = family, K = trial.size)
+          fit.mva <- mvabund::manyglm(y ~ index, family = family, K = trial.size)
           env  <-  rep(0,num.X)
           trait  <-  rep(0,num.T)
           inter <- rep(0, num.T * num.X)
@@ -191,36 +187,24 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     for(j in 1:p) {
       y.fac <- factor(y[,j])
       if(length(levels(y.fac)) > 2) {
-        if(starting.val%in%c("zero","res") || num.lv==0){
+        if(starting.val%in%c("zero","res")){
           if(is.null(X) || !is.null(TR)) cw.fit <- MASS::polr(y.fac ~ 1, method = "probit")
           if(!is.null(X) & is.null(TR) ) cw.fit <- MASS::polr(y.fac ~ X, method = "probit")
         } else {
           if(is.null(X) || !is.null(TR)) cw.fit <- MASS::polr(y.fac ~ index, method = "probit")
-          if(!is.null(X) & is.null(TR) & num.lv > 0) cw.fit <- MASS::polr(y.fac ~ X+index, method = "probit")
         }
         params[j,1:ncol(cbind(1,X))] <- c(cw.fit$zeta[1],-cw.fit$coefficients)
         zeta[j,2:length(cw.fit$zeta)] <- cw.fit$zeta[-1]-cw.fit$zeta[1]
       }
       if(length(levels(y.fac)) == 2) {
-        if(starting.val%in%c("zero","res") || num.lv==0){
+        if(starting.val%in%c("zero","res")){
           if(is.null(X) || !is.null(TR)) cw.fit <- glm(y.fac ~ 1, family = binomial(link = "probit"))
           if(!is.null(X) & is.null(TR) ) cw.fit <- glm(y.fac ~ X, family = binomial(link = "probit"))
         } else {
           if(is.null(X) || !is.null(TR)) cw.fit <- glm(y.fac ~ index, family = binomial(link = "probit"))
-          if(!is.null(X) & is.null(TR) & num.lv > 0) cw.fit <- glm(y.fac ~ X+index, family = binomial(link = "probit"))
         }
         params[j,] <- cw.fit$coef
       }
-    }
-    if(starting.val%in%c("res") && num.lv>0){
-      eta.mat <- matrix(params[,1],n,p,byrow=TRUE)
-      if(!is.null(X) && is.null(TR)) eta.mat <- eta.mat + (X %*% matrix(params[,2:(1+num.X)],num.X,p))
-      mu <- eta.mat
-      
-      lastart <- FAstart(eta.mat, family=family, y=y, num.lv = num.lv, zeta = zeta)
-      gamma<-lastart$gamma
-      index<-lastart$index
-      params[,(ncol(cbind(1,X))+1):ncol(params)]=gamma
     }
     env <- rep(0,num.X)
     trait <- rep(0,num.T)
@@ -242,15 +226,12 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     trait <- rep(0,num.T)
     inter <- rep(0, num.T * num.X)
     B=c(env,trait,inter)
-    if(num.lv > 0) {
       gamma <- matrix(1,p,num.lv)
       gamma[upper.tri(gamma)]=0
       params[,(ncol(params) - num.lv + 1):ncol(params)] <- gamma
       index <- matrix(0,n,num.lv)
-    }
     phi <- rep(1,p)
   }
-  if(num.lv > 0) {
     index <- index+mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);
     try({
       gamma.new <- as.matrix(params[,(ncol(params) - num.lv + 1):ncol(params)]);
@@ -260,21 +241,9 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     #add lambda2 here
     #lambda2
     lambda2<-matrix(-1e-5,nrow=p,ncol=num.lv)
-  
+    
     if(!is.null(X) & !is.null(TR)){
-      yX <- reshape(data.frame(cbind(y, X)), direction = "long", varying = colnames(y), v.names = "y")
-      
-      TR2 <- data.frame(time = 1:p, TR)
-      yXT2 <- merge(yX, TR2, by = "time")
-      
-      data <- yXT2
-      formula<-formula(formula)
-      m1 <- model.frame(formula, data = data)
-      term <- terms(m1)
-      
-      Xd <- as.matrix(model.matrix(formula, data = data))
-      
-      quadratic.start.offset <- cbind(index)%*%t(params[,-1]) + matrix(Xd%*%matrix(c(1,B),ncol=1),n,p)
+      quadratic.start.offset <- cbind(1,index)%*%t(params) + matrix(fit.mva$D%*%matrix(B,ncol=1),n,p)
       
       
     }else if(!is.null(X)&is.null(TR)){
@@ -282,7 +251,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     }else if(is.null(X)&is.null(TR)){
       quadratic.start.offset <- cbind(1,index)%*%t(params)
     }
-      if(!is.null(offset)){
+    if(!is.null(offset)){
       quadratic.start.offset <- quadratic.start.offset + offset
     }
     lambda2<-matrix(0,nrow=p,ncol=num.lv)
@@ -307,13 +276,12 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     #subtract a fraction from the 0 quadratic scores, otherwise the optimization can't get away from the 0s where necessary.
     lambda2[lambda2==0]<--1e-5
     params <- cbind(params,lambda2)
-  }
   
   out$params <- params
   out$phi <- phi
   out$mu <- mu
   if(!is.null(TR)) { out$B <- B}
-  if(num.lv > 0) out$index <- index
+  out$index <- index
   if(family == "ordinal") out$zeta <- zeta
   options(warn = 0)
   if(row.eff!=FALSE) {
@@ -326,7 +294,9 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     out$sigmaij <- sigmaij
   }
   return(out)
-}
+}                                        
+
+
 
 
 

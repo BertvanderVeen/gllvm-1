@@ -1,4 +1,4 @@
-########################################################################################
+##########################################################################################
 ## GLLVM fourth corner model, with estimation done via Laplace and Variational approximation using TMB-package
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
@@ -15,9 +15,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
   y <- as.data.frame(y)
   formula1 <- formula
   if(family=="binomial"){ link <- "probit"}
-  if(num.lv==0){
-    stop("Can't fit the species packing model without latent variables")
-  }
+  
   
   if(NCOL(X) < 1) stop("No covariates in the model, fit the model using gllvm(y,family=",family,"...)")
   
@@ -41,6 +39,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
     X.new <- data.frame(X.new);
   }
   if(!is.null(randomX)){
+    method <- "LA"
     xb <- as.matrix(model.matrix(randomX,data = X.new))
     xb <- as.matrix(xb[,!(colnames(xb) %in% c("(Intercept)"))])
     Br <- matrix(0, ncol(xb), p)
@@ -119,7 +118,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
   }
   
   
-  if(!(family %in% c("poisson","negative.binomial","binomial", "ordinal")))
+  if(!(family %in% c("poisson","negative.binomial","binomial","tweedie","ZIP", "gaussian", "ordinal")))
     stop("Selected family not permitted...sorry!")
   if(!(Lambda.struc %in% c("unstructured","diagonal")))
     stop("Lambda matrix (covariance of vartiational distribution for latent variable) not permitted...sorry!")
@@ -144,7 +143,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
     num.T <- dim(TR)[2]
     
     if(n.init > 1 && trace) cat("initial run ",n.i,"\n");
-    res <- start.values.gllvm.TMB.quadratic(y = y, X = X1, TR = TR1, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, link=link, yXT=yXT)
+    res <- start.values.gllvm.TMB.quadratic(y = y, X = X1, TR = TR1, family = family, offset=offset, trial.size = trial.size, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i],starting.val=starting.val,formula = formula, jitter.var=jitter.var,yXT=yXT, row.eff = row.eff, link=link)
     if(is.null(start.params)){
       beta0 <- res$params[,1]
       # common env params or different env response for each spp
@@ -164,7 +163,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
       
 
         vameans <- res$index
-        theta <- as.matrix(res$params[,(ncol(res$params) - num.lv + 1):ncol(res$params)])#fts$coef$theta#
+        theta <- matrix(res$params[,(ncol(res$params) - num.lv + 1-num.lv):ncol(res$params)],ncol=num.lv*2)#fts$coef$theta#
         theta[,1:num.lv][upper.tri(theta[,1:num.lv])] <- 0
         if(Lambda.struc == "unstructured") {
           lambda <- array(NA,dim=c(n,num.lv,num.lv))
@@ -219,13 +218,14 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
     a <- c(beta0)
       # diag(theta) <- log(diag(theta)) !!!
       theta2<-theta[,-c(1:num.lv)]
-      theta <- theta[,1:num.lv][lower.tri(theta, diag = TRUE)]
+      theta<<-theta
+      theta <- theta[,1:num.lv][lower.tri(theta[,1:num.lv], diag = TRUE)]
+      
       u <- vameans
     if(!is.null(phis)) {phi=(phis)} else {phi <- rep(1,p)}
     q <- num.lv
     sigma <- 1
     
- 
       if(is.null(start.params) || start.params$method!="VA"){
         if(Lambda.struc=="diagonal" || diag.iter>0){
           Au <- log(rep(Lambda.start[1],num.lv*n)) #
@@ -243,8 +243,6 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
         }
       }
     if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
-    
-    
     optr<-NULL
     timeo<-NULL
     se <- NULL
@@ -259,7 +257,6 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
       if(link=="probit") extra <- 1
     }
     if(family == "ordinal") {familyn=6}
-    
     
     if(row.eff=="random"){# || !is.null(randomX)
       
@@ -294,12 +291,12 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
       r1 <- matrix(param1[nam=="r0"])
       b1 <- rbind(param1[nam=="b"])
       B1 <- matrix(param1[nam=="B"])
+      
       lambda1 <- param1[nam=="lambda"]
       lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv)
       u1 <- matrix(param1[nam=="u"],n,num.lv)
       lg_phi1 <- param1[nam=="lg_phi"]
       lg_sigma1 <- param1[nam=="log_sigma"]
-      
       Au1<- c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0,num.lv*(num.lv-1)/2*n))
       Ar1 <- c(param1[nam=="lg_Ar"])
       if(family=="ordinal"){
@@ -418,7 +415,6 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
       out$row.eff <- row.eff
       out$time <- timeo
       out$start<-res
-      out$Power <- Power
       pars <- optr$par
 
         param <- objr$env$last.par.best
