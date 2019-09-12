@@ -91,7 +91,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         betas <- c(fit$params[, 2:(num.X + 1)])
       lambdas <- NULL
       
-        lambdas <- as.matrix(fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)])
+        lambdas <- as.matrix(fit$params[,(ncol(fit$params)-num.lv*2+1):(ncol(fit$params)-num.lv)])
           lambdas[upper.tri(lambdas)] <- 0
         covM.lvs <- array(NA, dim = c(n, num.lv, num.lv))
       
@@ -109,7 +109,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
           lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
         }else if(is.null(X)){
-          lambdas <- fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)]
+          lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
           lambda2 <- fit$params[,-c(1:(num.lv+1))]  
         }
         
@@ -217,7 +217,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(family == "ordinal") { familyn <- 3}
       if(row.eff=="random"){
         if(ridge==T){
-          if(ride.quadratic==F){
+          if(ridge.quadratic==F){
           objr <- TMB::MakeADFun(
             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=0), silent=TRUE,
             parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
@@ -413,7 +413,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           theta[lower.tri(theta,diag=TRUE)] <- param[li];
           theta<-cbind(theta,-1*abs(matrix(param[l2i],ncol=num.lv)))
         } else {theta <- param[li]
-        theta<-cbind(theta,matrix(param[l2i],ncol=num.lv))}
+        theta<-c(theta,param[l2i])}
         # diag(theta) <- exp(diag(theta)) !!!
         
       

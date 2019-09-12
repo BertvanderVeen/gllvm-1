@@ -165,7 +165,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL,TR=NULL,formula=NULL, num.lv =
       
 
         vameans <- res$index
-        theta <- matrix(res$params[,(ncol(res$params) - num.lv + 1-num.lv):ncol(res$params)],ncol=num.lv*2)#fts$coef$theta#
+        theta <- matrix(res$params[,(ncol(res$params) - num.lv*2 + 1):ncol(res$params)],ncol=num.lv*2)#fts$coef$theta#
         theta[,1:num.lv][upper.tri(theta[,1:num.lv])] <- 0
         if(Lambda.struc == "unstructured") {
           lambda <- array(NA,dim=c(n,num.lv,num.lv))
