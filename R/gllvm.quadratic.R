@@ -18,14 +18,13 @@
 #' @param Lambda.struc  covariance structure of VA distributions for latent variables when \code{method = "VA"}, "unstructured" or "diagonal".
 #' @param diag.iter  non-negative integer which is used to speed up the updating of variational (covariance) parameters in VA method. Defaults to 5.
 #' @param Lambda.start starting values for variances in VA distributions for latent variables in variational approximation method. Defaults to 0.1.
-#' @param plot  logical, if \code{TRUE} ordination plots will be printed in each iteration step when \code{TMB = FALSE}. Defaults to \code{FALSE}.
 #' @param reltol  convergence criteria for log-likelihood, defaults to 1e-6.
 #' @param maxit maximum number of iterations within \code{optim} function, defaults to 1000.
 #' @param seed a single seed value, defaults to \code{NULL}.
 #' @param optimizer if \code{TMB=TRUE}, log-likelihood can be optimized using \code{"\link{optim}"} (default) or \code{"\link{nlminb}"}.
 #' @param jitter.var jitter variance for starting values of latent variables. Defaults to 0, meaning no jittering.
 #' @param ridge \code{TRUE} fits a ridge penalty to shrink the latent variable (linear and quadratic effects)
-#' @param ridge.quadratic \code{TRUE} fits a ridge penalty to additionally shrink the quadratic effect of the latent variable, only with \code{ridge = TRUE}
+#' @param ridge.quadratic \code{TRUE} fits a ridge penalty to shrink the quadratic effect of the latent variable
 #'
 #' @details
 #' Fits the species packing model by generalized linear latent variable models with quadratic latent variables.
@@ -200,7 +199,7 @@
 gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
                            num.lv = 2, family, row.eff = FALSE,
                            offset = NULL, sd.errors = TRUE, Lambda.struc = "unstructured",
-                           diag.iter = 5, plot = FALSE,
+                           diag.iter = 5, trace = FALSE,
                            n.init = 1, reltol = 1e-8, seed = NULL, maxit = 1000, start.fit = NULL,
                            starting.val = "res", TMB = TRUE, optimizer = "optim",
                            Lambda.start = c(0.1,0.5), jitter.var = 0, ridge=T, ridge.quadratic=F) {
@@ -407,6 +406,7 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
       starting.val = starting.val,
       randomX = randomX,
       diag.iter = diag.iter,
+      trace = trace,
       Lambda.start = Lambda.start,
       jitter.var = jitter.var,
       ridge = ridge,
@@ -436,6 +436,7 @@ gllvm.quadratic<- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula =
       optimizer = optimizer,
       starting.val = starting.val,
       diag.iter = diag.iter,
+      trace = trace,
       Lambda.start = Lambda.start,
       jitter.var = jitter.var,
       ridge = ridge,

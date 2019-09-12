@@ -3,7 +3,7 @@
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
-                                Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6,
+                                Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6, trace = trace,
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                 n.init=1,restrict=30,start.params=NULL,
                                 optimizer="optim",starting.val="res",diag.iter=1,
@@ -28,9 +28,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   }
   if(num.lv==0){
     stop("Can't fit the species packing model without latent variables")
-  }
-  if(ridge==F&ridge.quadratic==T){
-    stop("Cannot only shrink linear a effect.")
   }
   num.X <- 0;
   
@@ -234,12 +231,21 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
               DLL = "gllvm2")
           }
         }else{
-          objr <- TMB::MakeADFun(
-            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0), silent=TRUE,
-            parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
-            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-            DLL = "gllvm2")
-        }
+          if(ridge.quadratic==F){
+            objr <- TMB::MakeADFun(
+              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0), silent=TRUE,
+              parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+              inner.control=list(mgcmax = 1e+200,maxit = maxit),
+              DLL = "gllvm2")
+            }else{
+              objr <- TMB::MakeADFun(
+                data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1), silent=TRUE,
+                parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                DLL = "gllvm2")   
+                
+              }
+          }
           
       } else {
        if(ridge==T){
@@ -257,13 +263,22 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
              DLL = "gllvm2")##GLLVM
          }
        }else{
-         objr <- TMB::MakeADFun(
-           data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge.quadratic=0), silent=TRUE,
-           parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma=rep(0,num.lv)),
-           inner.control=list(mgcmax = 1e+200,maxit = maxit),
-           DLL = "gllvm2")##GLLVM
-       }
-       }
+         if(ridge.quadratic==F){
+           objr <- TMB::MakeADFun(
+             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=0), silent=TRUE,
+             parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+             inner.control=list(mgcmax = 1e+200,maxit = maxit),
+             DLL = "gllvm2")##GLLVM
+         }else{
+           objr <- TMB::MakeADFun(
+             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=1), silent=TRUE,
+             parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+             inner.control=list(mgcmax = 1e+200,maxit = maxit),
+             DLL = "gllvm2")##GLLVM
+         }
+         }
+         }
+       
   
       if(optimizer=="nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit)),silent = TRUE))
@@ -308,11 +323,19 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                 DLL = "gllvm2")
             }
           }else{
-            objr <- TMB::MakeADFun(
-              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0), silent=TRUE,
-              parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-              inner.control=list(mgcmax = 1e+200,maxit = maxit),
-              DLL = "gllvm2")
+            if(ridge.quadratic==F){
+              objr <- TMB::MakeADFun(
+                data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0), silent=TRUE,
+                parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                DLL = "gllvm2")
+            }else{
+              objr <- TMB::MakeADFun(
+                data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1), silent=TRUE,
+                parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                DLL = "gllvm2")
+            }
           }
             
         } else {
@@ -331,11 +354,19 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                 DLL = "gllvm2")#GLLVM#
             }
           }else{
-            objr <- TMB::MakeADFun(
-              data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=0), silent=TRUE,
-              parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-              inner.control=list(mgcmax = 1e+200,maxit = maxit),
-              DLL = "gllvm2")#GLLVM#
+            if(ridge.quadratic==F){
+              objr <- TMB::MakeADFun(
+                data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=0), silent=TRUE,
+                parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                DLL = "gllvm2")#GLLVM#
+            }else{
+              objr <- TMB::MakeADFun(
+                data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=1), silent=TRUE,
+                parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                DLL = "gllvm2")#GLLVM#
+            }
           }
         }
         if(optimizer=="nlminb") {
@@ -359,9 +390,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       }
       if(ridge==T){
         gi <- names(param)=="lg_gamma"
-        if(ridge.quadratic==T){
-          gi2 <- names(param)=="lg_gamma2"
-        }
+      }
+      if(ridge.quadratic==T){
+        gi2 <- names(param)=="lg_gamma2"
       }
       
       bi <- names(param)=="b"
@@ -406,10 +437,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         if(ridge==T){
           out$params$gamma <- exp(param[gi])
           names(out$params$gamma) <- paste("LV",1:num.lv,sep="")
-          if(ridge.quadratic==T){
-            out$params$gamma2 <- exp(param[gi2])
-            names(out$params$gamma2) <- paste("LV",1:num.lv,"^2",sep="")
-          }
+        }
+        if(ridge.quadratic==T){
+          out$params$gamma2 <- exp(param[gi2])
+          names(out$params$gamma2) <- paste("LV",1:num.lv,"^2",sep="")
         }
         if(num.lv>1) {
           colnames(out$lvs) <- paste("LV", 1:num.lv, sep="")

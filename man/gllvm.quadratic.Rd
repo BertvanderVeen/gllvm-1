@@ -7,7 +7,7 @@
 gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
   formula = NULL, num.lv = 2, family, row.eff = FALSE,
   offset = NULL, sd.errors = TRUE, Lambda.struc = "unstructured",
-  diag.iter = 5, plot = FALSE, n.init = 1, reltol = 1e-08,
+  diag.iter = 5, trace = FALSE, n.init = 1, reltol = 1e-08,
   seed = NULL, maxit = 1000, start.fit = NULL,
   starting.val = "res", TMB = TRUE, optimizer = "optim",
   Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = T,
@@ -38,8 +38,6 @@ gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
 
 \item{diag.iter}{non-negative integer which is used to speed up the updating of variational (covariance) parameters in VA method. Defaults to 5.}
 
-\item{plot}{logical, if \code{TRUE} ordination plots will be printed in each iteration step when \code{TMB = FALSE}. Defaults to \code{FALSE}.}
-
 \item{n.init}{number of initial runs. Uses multiple runs and picks up the one giving highest log-likelihood value. Defaults to 1.}
 
 \item{reltol}{convergence criteria for log-likelihood, defaults to 1e-6.}
@@ -60,7 +58,7 @@ gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
 
 \item{ridge}{\code{TRUE} fits a ridge penalty to shrink the latent variable (linear and quadratic effects)}
 
-\item{ridge.quadratic}{\code{TRUE} fits a ridge penalty to additionally shrink the quadratic effect of the latent variable, only with \code{ridge = TRUE}}
+\item{ridge.quadratic}{\code{TRUE} fits a ridge penalty to shrink the quadratic effect of the latent variable}
 }
 \value{
 An object of class "gllvm" includes the following components:

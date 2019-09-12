@@ -254,18 +254,19 @@ Type objective_function<Type>::operator() ()
       }
       nll += penal*gamma(q);
     //Additional shrinkage quadratic effect
-    if(ridge_quadratic>0){
+    
+    
+    }  
+  }
+  if(ridge_quadratic>0){
     for (int q=0; q<num_lv; q++) {
       Type penal = 0.0;
       for (int q2=q; q2<num_lv; q2++) {
         penal += pow((newlam2.row(q2).array()*newlam2.row(q2).array()).sum(),0.5);
       }
-
+      
       nll += penal*gamma2(q);
     }
-    }
-    
-    }  
   }
   
   
