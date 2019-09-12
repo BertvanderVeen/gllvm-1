@@ -24,7 +24,8 @@ Type objective_function<Type>::operator() ()
   PARAMETER_MATRIX(u);
   PARAMETER_VECTOR(lg_phi);
   PARAMETER(log_sigma);// log(SD for row effect)
-  
+  PARAMETER_VECTOR(lg_gamma);
+  PARAMETER_VECTOR(lg_gamma2);
   DATA_INTEGER(num_lv);
   DATA_INTEGER(family);
   
@@ -34,12 +35,16 @@ Type objective_function<Type>::operator() ()
   //DATA_SCALAR(extra);
   //DATA_INTEGER(method);// 0=VA, 1=LA
   DATA_INTEGER(model);
+  DATA_INTEGER(ridge);
+  DATA_INTEGER(ridge_quadratic);
   DATA_VECTOR(random);//random row
   
   int n = y.rows();
   int p = y.cols();
   
   vector<Type> iphi = exp(lg_phi);
+  vector<Type> gamma = exp(lg_gamma);
+  vector<Type> gamma2 = exp(lg_gamma2);
   vector<Type> Ar = exp(lg_Ar);
   Type sigma = exp(log_sigma);
   
@@ -148,9 +153,6 @@ Type objective_function<Type>::operator() ()
     for (int i=0; i<n; i++) {
       matrix <Type> Q = A.col(i).matrix().inverse();
       for (int j=0; j<p;j++){
-        //try to write this like a series of normal multiplication with arrays, -=, += and exp at the end?
-        //the problem is in e_eta since y*eta-exp(eta) works fine.
-        //its the determinants.
         B = (D.col(j).matrix()+Q);
         v = (newlam.col(j)+Q*u.row(i).transpose());
         Type detB = pow(B.determinant(),-0.5);
@@ -182,10 +184,8 @@ Type objective_function<Type>::operator() ()
     for (int i=0; i<n; i++) {
       for (int j=0; j<p;j++){
         mu(i,j) = pnorm(Type(eta(i,j)),Type(0),Type(1));
-        //y(i,j)*log(mu(i,j))+(1-y(i,j))*log(1-mu(i,j));
         nll -= dbinom(y(i,j),Type(1),mu(i,j),true);
-        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();   
-        //log(pow(mu(i,j),y(i,j))*pow(1-mu(i,j),(1-y(i,j))));// 
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
@@ -240,12 +240,35 @@ Type objective_function<Type>::operator() ()
         }
         
         nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();   
-        //log(pow(mu(i,j),y(i,j))*pow(1-mu(i,j),(1-y(i,j))));// 
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
     
   }
+  if(ridge>0){
+    //shrinks LVs
+    for (int q=0; q<num_lv; q++) {
+      Type penal = 0.0;
+      for (int q2=q; q2<num_lv; q2++) {
+        penal += pow((newlam.row(q2).array()*newlam.row(q2).array()+newlam2.row(q2).array()*newlam2.row(q2).array()).sum(),0.5);
+      }
+      nll += penal*gamma(q);
+    //Additional shrinkage quadratic effect
+    if(ridge_quadratic>0){
+    for (int q=0; q<num_lv; q++) {
+      Type penal = 0.0;
+      for (int q2=q; q2<num_lv; q2++) {
+        penal += pow((newlam2.row(q2).array()*newlam2.row(q2).array()).sum(),0.5);
+      }
+
+      nll += penal*gamma2(q);
+    }
+    }
+    
+    }  
+  }
+  
+  
   nll -= -0.5*(u.array()*u.array()).sum() - n*log(sigma)*random(0);// -0.5*t(u_i)*u_i
   
   

@@ -8,7 +8,7 @@
 \method{ordiplot}{gllvm.quadratic}(object, biplot = FALSE,
   ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL,
   jitter = FALSE, jitter.amount = 0.2, s.colors = 1,
-  symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = T, ...)
+  symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = F, ...)
 }
 \arguments{
 \item{object}{an object of class 'gllvm'.}
