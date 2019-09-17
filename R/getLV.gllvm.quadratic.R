@@ -7,14 +7,12 @@
 #'@method getLV gllvm.quadratic
 #'
 
-getLV.gllvm.quadratic <- function(object)
-{
-  return(object$lvs)
+getLV.gllvm.quadratic <- function(object) {
+    return(object$lvs)
 }
 
 #'@export getLV
 
-getLV <- function(object)
-{
-  UseMethod(generic = "getLV")
+getLV <- function(object) {
+    UseMethod(generic = "getLV")
 }

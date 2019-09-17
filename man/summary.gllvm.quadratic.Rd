@@ -9,7 +9,7 @@
 \arguments{
 \item{object}{an object of class 'gllvm'}
 
-\item{...}{not used.}
+\item{...\tnot}{used.}
 }
 \description{
 A summary of the fitted 'gllvm' object, including function call, distribution family and model parameters.

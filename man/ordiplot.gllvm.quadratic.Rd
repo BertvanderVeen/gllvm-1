@@ -37,7 +37,7 @@
 
 \item{hill}{logical, if TRUE and \code{bell = TRUE} scales optima by tolerances per lV (i.e. gives bell-curves of unit variance)}
 
-\item{...}{additional graphical arguments.}
+\item{...\tadditional}{graphical arguments.}
 }
 \description{
 Plots latent variables and their corresponding coefficients (biplot).

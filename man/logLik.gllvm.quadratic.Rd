@@ -9,7 +9,7 @@
 \arguments{
 \item{object}{an object of class 'gllvm'.}
 
-\item{...}{not used.}
+\item{...\tnot}{used.}
 }
 \description{
 Extracts Log-likelihood from 'gllvm' objects.

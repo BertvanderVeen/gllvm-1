@@ -19,30 +19,28 @@
 #'cr <- getResidualCor(fit)
 #'\dontrun{
 #'# Plot residual correlations:
-#'install.packages("corrplot", "gclus")
+#'install.packages('corrplot', 'gclus')
 #'library(corrplot)
 #'library(gclus)
 #'corrplot(cr[order.single(cr), order.single(cr)], diag = F,
-#'   type = "lower", method = "square", tl.cex = 0.8, tl.srt = 45, tl.col = "red")
+#'   type = 'lower', method = 'square', tl.cex = 0.8, tl.srt = 45, tl.col = 'red')
 #'   }
 #'
 #'@aliases getResidualCor getResidualCor.gllvm.quadratic
 #'@method getResidualCor gllvm.quadratic
 #'@export
-getResidualCor.gllvm.quadratic = function(object, adjust = 1)
-{
-  ResCov <- getResidualCov.gllvm.quadratic(object, adjust = adjust)$cov
-  Res.sd <- 1 / sqrt(diag(ResCov))
-  Res.Cor <- diag(Res.sd) %*% ResCov %*% diag(Res.sd)
-  colnames(Res.Cor) <- colnames(object$y)
-  rownames(Res.Cor) <- colnames(object$y)
-  Res.Cor[abs(Res.Cor) > 1] <- 1 * sign(Res.Cor[abs(Res.Cor) > 1])
-  out <- Res.Cor
-  return(out)
+getResidualCor.gllvm.quadratic = function(object, adjust = 1) {
+    ResCov <- getResidualCov.gllvm.quadratic(object, adjust = adjust)$cov
+    Res.sd <- 1/sqrt(diag(ResCov))
+    Res.Cor <- diag(Res.sd) %*% ResCov %*% diag(Res.sd)
+    colnames(Res.Cor) <- colnames(object$y)
+    rownames(Res.Cor) <- colnames(object$y)
+    Res.Cor[abs(Res.Cor) > 1] <- 1 * sign(Res.Cor[abs(Res.Cor) > 1])
+    out <- Res.Cor
+    return(out)
 }
 
 #'@export getResidualCor
-getResidualCor <- function(object, adjust)
-{
-  UseMethod(generic = "getResidualCor")
+getResidualCor <- function(object, adjust) {
+    UseMethod(generic = "getResidualCor")
 }

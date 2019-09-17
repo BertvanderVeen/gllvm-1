@@ -28,20 +28,21 @@
 #'@method getPredictErr gllvm.quadratic
 #'@export
 #'@export simulate.gllvm.quadratic
-getPredictErr.gllvm.quadratic = function(object)
-{
-  out<-list()
-  
-  if(object$method == "VA"){
-    if(object$num.lv>0) out$lvs <- sqrt(apply(object$A,1,diag))
-    if(object$row.eff == "random") out$row.effects <- sqrt(abs(object$Ar))
-  }
-  if(object$num.lv > 1) out$lvs <- t(out$lvs)
-  return(out)
+getPredictErr.gllvm.quadratic = function(object) {
+    out <- list()
+    
+    if (object$method == "VA") {
+        if (object$num.lv > 0) 
+            out$lvs <- sqrt(apply(object$A, 1, diag))
+        if (object$row.eff == "random") 
+            out$row.effects <- sqrt(abs(object$Ar))
+    }
+    if (object$num.lv > 1) 
+        out$lvs <- t(out$lvs)
+    return(out)
 }
 
 #'@export getPredictErr
-getPredictErr <- function(object)
-{
-  UseMethod(generic = "getPredictErr")
+getPredictErr <- function(object) {
+    UseMethod(generic = "getPredictErr")
 }

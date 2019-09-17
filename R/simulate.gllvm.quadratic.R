@@ -29,50 +29,42 @@
 #'@method simulate gllvm.quadratic
 #'@export
 
-simulate.gllvm.quadratic = function (object, nsim = 1, seed = NULL, ...) 
-{
-  # code chunk from simulate.lm to sort out the seed thing:
-  if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) 
-    runif(1)
-  if (is.null(seed)) 
-    RNGstate <- get(".Random.seed", envir = .GlobalEnv)
-  else {
-    R.seed <- get(".Random.seed", envir = .GlobalEnv)
-    set.seed(seed)
-    RNGstate <- structure(seed, kind = as.list(RNGkind()))
-    on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
-  }
-  
-  nRows = dim(object$lvs)[1]
-  nCols = dim(object$params$theta)[1]
-  # generate new latent variables
-  lvsNew = matrix(rnorm(nsim*nRows*object$num.lv),ncol=object$num.lv)
-  if(is.null(object$X)) 
-  {
-    prs = predict.gllvm.quadratic(object,newLV = lvsNew,type="response")
-  }
-  else
-    prs = predict.gllvm.quadratic(object,newX=object$X[rep(1:nRows,nsim),], newLV = lvsNew,type="response")
-  
-  # generate new data
-  nTot = nsim*nRows*nCols # total number of values to generate
-  if(object$family=="negative.binomial")
-    invPhis = matrix(rep(object$params$inv.phi,each=nsim*nRows), ncol=nCols)
-  if(object$family=="gaussian")
-    phis = matrix(rep(object$params$phi, each = nsim*nRows), ncol = nCols)
-  newDat = switch(object$family, "binomial"=rbinom(nTot, size = 1, prob = prs),
-                  "poisson" = rpois(nTot, prs),
-                  "negative.binomial" = rnbinom(nTot, size = invPhis, mu = prs),
-                  stop(gettextf("family '%s' not implemented ", object$family), domain = NA))
-  # reformat as data frame with the appropriate labels
-  newDat = as.data.frame(matrix(newDat,ncol=nCols))
-  dimnames(newDat)=dimnames(prs)
-  return(newDat)
+simulate.gllvm.quadratic = function(object, nsim = 1, seed = NULL, ...) {
+    # code chunk from simulate.lm to sort out the seed thing:
+    if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) 
+        runif(1)
+    if (is.null(seed)) 
+        RNGstate <- get(".Random.seed", envir = .GlobalEnv) else {
+        R.seed <- get(".Random.seed", envir = .GlobalEnv)
+        set.seed(seed)
+        RNGstate <- structure(seed, kind = as.list(RNGkind()))
+        on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
+    }
+    
+    nRows = dim(object$lvs)[1]
+    nCols = dim(object$params$theta)[1]
+    # generate new latent variables
+    lvsNew = matrix(rnorm(nsim * nRows * object$num.lv), ncol = object$num.lv)
+    if (is.null(object$X)) {
+        prs = predict.gllvm.quadratic(object, newLV = lvsNew, type = "response")
+    } else prs = predict.gllvm.quadratic(object, newX = object$X[rep(1:nRows, nsim), ], newLV = lvsNew, type = "response")
+    
+    # generate new data
+    nTot = nsim * nRows * nCols  # total number of values to generate
+    if (object$family == "negative.binomial") 
+        invPhis = matrix(rep(object$params$inv.phi, each = nsim * nRows), ncol = nCols)
+    if (object$family == "gaussian") 
+        phis = matrix(rep(object$params$phi, each = nsim * nRows), ncol = nCols)
+    newDat = switch(object$family, binomial = rbinom(nTot, size = 1, prob = prs), poisson = rpois(nTot, prs), negative.binomial = rnbinom(nTot, 
+        size = invPhis, mu = prs), stop(gettextf("family '%s' not implemented ", object$family), domain = NA))
+    # reformat as data frame with the appropriate labels
+    newDat = as.data.frame(matrix(newDat, ncol = nCols))
+    dimnames(newDat) = dimnames(prs)
+    return(newDat)
 }
 
 
 #' @export simulate
-simulate <- function(object, ...)
-{
-  UseMethod(generic = "simulate")
+simulate <- function(object, ...) {
+    UseMethod(generic = "simulate")
 }

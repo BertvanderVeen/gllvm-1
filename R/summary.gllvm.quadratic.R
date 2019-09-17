@@ -2,7 +2,7 @@
 #' @description A summary of the fitted 'gllvm' object, including function call, distribution family and model parameters.
 #'
 #' @param object   an object of class 'gllvm'
-#' @param ...	not used.
+#' @param ...\tnot used.
 #'
 #' @author Jenni Niku <jenni.m.e.niku@@jyu.fi>
 #'
@@ -17,57 +17,57 @@
 #'@export
 
 summary.gllvm.quadratic <- function(object, ...) {
-  n <- NROW(object$y)
-  p <- NCOL(object$y)
-  nX <- dim(object$X)[2]
-  nTR <- dim(object$TR)[2]
-  num.lv <- object$num.lv
-  family <- object$family
-
-  M <- cbind(object$params$beta0, object$params$theta)
-  opt <- -object$params$theta[,1:object$num.lv,drop=F]/(2*object$params$theta[,-c(1:object$num.lv),drop=F])
-  tol <- 1/sqrt(-2*object$params$theta[,-c(1:object$num.lv),drop=F])
-  colnames(tol) <- paste("theta.LV", 1:num.lv, sep = "")
-  
-  sumry <- list()
-  sumry$'log-likelihood' <- object$logL
-  crit <- inf.criteria(object)
-  sumry$df <- crit$k
-  sumry$AIC <- crit$AIC
-  sumry$AICc <- crit$AICc
-  sumry$BIC <- crit$BIC
-
-  newnams <- c("Intercept", c(paste("theta.LV", 1:num.lv, sep = ""),paste("theta.LV^2", 1:num.lv, sep = "")))
-  colnames(M) <- newnams
-  rownames(M) <- colnames(object$y)
-  sumry$Call <- object$call
-  sumry$family <- object$family
-  sumry$Coefficients <- M
-  sumry$Optima <- opt
-  sumry$Tolerances <- tol
-  
-  if (!is.null(object$TR)) {
-    if (!is.null(object$X)) {
-      sumry$'Covariate coefficients' <- object$params$B
+    n <- NROW(object$y)
+    p <- NCOL(object$y)
+    nX <- dim(object$X)[2]
+    nTR <- dim(object$TR)[2]
+    num.lv <- object$num.lv
+    family <- object$family
+    
+    M <- cbind(object$params$beta0, object$params$theta)
+    opt <- -object$params$theta[, 1:object$num.lv, drop = F]/(2 * object$params$theta[, -c(1:object$num.lv), drop = F])
+    tol <- 1/sqrt(-2 * object$params$theta[, -c(1:object$num.lv), drop = F])
+    colnames(tol) <- paste("theta.LV", 1:num.lv, sep = "")
+    
+    sumry <- list()
+    sumry$"log-likelihood" <- object$logL
+    crit <- inf.criteria(object)
+    sumry$df <- crit$k
+    sumry$AIC <- crit$AIC
+    sumry$AICc <- crit$AICc
+    sumry$BIC <- crit$BIC
+    
+    newnams <- c("Intercept", c(paste("theta.LV", 1:num.lv, sep = ""), paste("theta.LV^2", 1:num.lv, sep = "")))
+    colnames(M) <- newnams
+    rownames(M) <- colnames(object$y)
+    sumry$Call <- object$call
+    sumry$family <- object$family
+    sumry$Coefficients <- M
+    sumry$Optima <- opt
+    sumry$Tolerances <- tol
+    
+    if (!is.null(object$TR)) {
+        if (!is.null(object$X)) {
+            sumry$"Covariate coefficients" <- object$params$B
+        }
+    } else {
+        if (!is.null(object$X)) {
+            sumry$"Environmental coefficients" <- object$params$Xcoef
+        }
     }
-  } else {
-    if (!is.null(object$X)) {
-      sumry$'Environmental coefficients' <- object$params$Xcoef
+    if (!is.null(object$params$row.params)) {
+        sumry$"Row intercepts" <- object$params$row.params
     }
-  }
-  if (!is.null(object$params$row.params)) {
-    sumry$'Row intercepts' <- object$params$row.params
-  }
-
-  if (object$row.eff == "random") {
-    object$params$sigma2 = object$params$sigma ^ 2
-    names(object$params$sigma2) = "sigma^2"
-    sumry$'Variance of random row intercepts' <- object$params$sigma2
-  }
-
-  if (object$family == "negative.binomial") {
-    sumry$'Dispersion parameters' <- object$params$phi
-  }
-  class(sumry) <- "summary.gllvm.quadratic"
-  return(sumry)
+    
+    if (object$row.eff == "random") {
+        object$params$sigma2 = object$params$sigma^2
+        names(object$params$sigma2) = "sigma^2"
+        sumry$"Variance of random row intercepts" <- object$params$sigma2
+    }
+    
+    if (object$family == "negative.binomial") {
+        sumry$"Dispersion parameters" <- object$params$phi
+    }
+    class(sumry) <- "summary.gllvm.quadratic"
+    return(sumry)
 }

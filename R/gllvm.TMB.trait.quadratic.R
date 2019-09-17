@@ -264,7 +264,6 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
         a <- c(beta0)
         # diag(theta) <- log(diag(theta)) !!!
         theta2 <- theta[, -c(1:num.lv)]
-        theta2 <- matrix(c(theta2),ncol=num.lv,nrow=p,byrow=T)
         theta <- theta[, 1:num.lv][lower.tri(theta[, 1:num.lv], diag = TRUE)]
         
         u <- vameans

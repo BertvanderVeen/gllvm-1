@@ -28,11 +28,11 @@ fit <- gllvm(y = y, family = poisson())
 cr <- getResidualCor(fit)
 \dontrun{
 # Plot residual correlations:
-install.packages("corrplot", "gclus")
+install.packages('corrplot', 'gclus')
 library(corrplot)
 library(gclus)
 corrplot(cr[order.single(cr), order.single(cr)], diag = F,
-  type = "lower", method = "square", tl.cex = 0.8, tl.srt = 45, tl.col = "red")
+  type = 'lower', method = 'square', tl.cex = 0.8, tl.srt = 45, tl.col = 'red')
   }
 
 }

@@ -5,7 +5,7 @@
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6, trace = trace,
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
-                                n.init=1,restrict=30,start.params=NULL,
+                                n.init=1,start.params=NULL,
                                 optimizer="optim",starting.val="res",diag.iter=1,
                                 Lambda.start=c(0.1,0.5), jitter.var=0, ridge=ridge, ridge.quadratic = ridge.quadratic, start.method=start.method) {
   ignore.u=FALSE
@@ -107,11 +107,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         if(!is.null(X)){
           lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
           lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
-          lambda2 <- matrix(c(lambda2),nrow=p,ncol=num.lv,byrow=T)
         }else if(is.null(X)){
           lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
           lambda2 <- fit$params[,-c(1:(num.lv+1))]  
-          lambda2 <- matrix(c(lambda2),nrow=p,ncol=num.lv,byrow=T)
         }
         
       

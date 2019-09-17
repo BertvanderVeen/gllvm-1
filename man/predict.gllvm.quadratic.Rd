@@ -18,7 +18,7 @@
 
 \item{newLV}{A new matrix of latent variables.  If omitted, the original matrix of latent variables is used.}
 
-\item{type}{the type of prediction required. The default (\code{"link"}) is on the scale of the linear predictors; the alternative \code{"response"} is on the scale of the response variable. that is, the predictions for the binomial model are predicted probabilities. In case of ordinal data, \code{type = "response"} gives predicted probabilities for each level of ordinal variable.}
+\item{type}{the type of prediction required. The default (\code{'link'}) is on the scale of the linear predictors; the alternative \code{'response'} is on the scale of the response variable. that is, the predictions for the binomial model are predicted probabilities. In case of ordinal data, \code{type = 'response'} gives predicted probabilities for each level of ordinal variable.}
 
 \item{LVonly}{(logical) ignore fixed and site-specific effects, makihng predictions only using the latent variables.}
 
@@ -44,7 +44,7 @@ X <- scale(antTraits$env[, 1:3])
 # Fit gllvm model
 fit <- gllvm(y = y, X, family = poisson())
 # fitted values
-predfit <- predict(fit, type = "response")
+predfit <- predict(fit, type = 'response')
 
 \donttest{
 # linear predictors
@@ -53,7 +53,7 @@ predlin <- predict(fit)
 # Generate matrix of environmental variables for 10 new sites
 xnew <- cbind(rnorm(10), rnorm(10), rnorm(10))
 colnames(xnew) <- colnames(X)
-predfit <- predict(fit, newX = xnew, type = "response")
+predfit <- predict(fit, newX = xnew, type = 'response')
 
 TR <- (antTraits$tr[, 1:3])
 fitt <- gllvm(y = y, X, TR, family = poisson())
@@ -66,7 +66,7 @@ colnames(xnew) <- colnames(X)
 # Generate matrix of traits for species
 trnew <- data.frame(Femur.length = rnorm(41), No.spines = rnorm(41),
  Pilosity = factor(sample(0:3, 41, replace = TRUE)))
-predfit <- predict(fitt, newX = xnew, newTR = trnew, type = "response")
+predfit <- predict(fitt, newX = xnew, newTR = trnew, type = 'response')
 }
 }
 \author{

@@ -14,7 +14,7 @@
 
 \item{level}{the confidence level. Scalar between 0 and 1.}
 
-\item{...}{not used.}
+\item{...\tnot}{used.}
 }
 \description{
 Computes confidence intervals for  parameters in a fitted gllvm model.
@@ -27,7 +27,7 @@ X <- as.matrix(antTraits$env[,1:2])
 # Fit gllvm model
 fit <- gllvm(y = y, X = X, family = poisson())
 # 95 \% confidence intervals for coefficients of X variables
-confint(fit, level = 0.95, parm = "Xcoef")
+confint(fit, level = 0.95, parm = 'Xcoef')
 
 }
 \author{

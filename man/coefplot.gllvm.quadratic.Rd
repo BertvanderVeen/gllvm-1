@@ -24,7 +24,7 @@
 
 \item{xlim.list}{list of vectors with length of two to define the intervals for an x axis in each covariate plot. Defaults to NULL when the interval is defined by the range of point estimates and confidence intervals}
 
-\item{...}{additional graphical arguments.}
+\item{...\tadditional}{graphical arguments.}
 }
 \description{
 Plots covariate coefficients and their confidence intervals.
@@ -41,13 +41,13 @@ coefplot.gllvm(fit)
 
 \donttest{
 # Fit model with all environmental covariates
-fitx <- gllvm(y, X, family = "negative.binomial")
+fitx <- gllvm(y, X, family = 'negative.binomial')
 coefplot(fitx, mfrow = c(3,2))
 coefplot(fitx, which.Xcoef = 1:2)
 
 # Fit gllvm model with environmental and trait covariates
 TR <- antTraits$traits
-fitT <- gllvm(y = y, X = X, TR = TR, family = "negative.binomial")
+fitT <- gllvm(y = y, X = X, TR = TR, family = 'negative.binomial')
 coefplot(fitT)
 }
 }
