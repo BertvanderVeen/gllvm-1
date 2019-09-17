@@ -7,7 +7,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                 n.init=1,restrict=30,start.params=NULL,
                                 optimizer="optim",starting.val="res",diag.iter=1,
-                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=ridge, ridge.quadratic = ridge.quadratic) {
+                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=ridge, ridge.quadratic = ridge.quadratic, start.method=start.method) {
   ignore.u=FALSE
   n <- dim(y)[1]
   p <- dim(y)[2]
@@ -80,7 +80,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(n.init > 1 && trace)
       cat("Initial run ", n.i, "\n")
     
-    fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, link=link)
+    fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method)
     
     sigma <- 1
     if (is.null(start.params)) {
@@ -107,10 +107,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         if(!is.null(X)){
           lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
           lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
+          lambda2 <- matrix(c(lambda2),nrow=p,ncol=num.lv,byrow=T)
         }else if(is.null(X)){
           lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
           lambda2 <- fit$params[,-c(1:(num.lv+1))]  
-          lambda2 <- matrix(c(lambda2),nrow=n,ncol=num.lv)
+          lambda2 <- matrix(c(lambda2),nrow=p,ncol=num.lv,byrow=T)
         }
         
       
@@ -295,7 +296,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         r1 <- matrix(param1[nam=="r0"])
         b1 <- matrix(param1[nam=="b"],num.X+1,p)
         lambda1 <- param1[nam=="lambda"]
-        lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv,byrow=T)
+        lambda2 <- t(matrix(-1*abs(param1[nam=="lambda2"]),nrow=p,ncol=num.lv,byrow=T))
         u1 <- matrix(param1[nam=="u"],n,num.lv)
         lg_phi1 <- param1[nam=="lg_phi"]
         log_sigma1 <- param1[nam=="log_sigma"]

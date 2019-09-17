@@ -3,7 +3,7 @@
 gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, num.lv = 2, family = "poisson", Lambda.struc = "unstructured", 
     row.eff = FALSE, reltol = 1e-06, seed = NULL, maxit = 1000, start.lvs = NULL, offset = NULL, sd.errors = TRUE, trace = trace, 
     n.init = 1, start.params = NULL, start0 = FALSE, optimizer = "optim", starting.val = "res", randomX = NULL, diag.iter = 1, Lambda.start = c(0.1, 
-        0.5), jitter.var = 0, yXT = NULL, ridge = ridge, ridge.quadratic = ridge.quadratic) {
+        0.5), jitter.var = 0, yXT = NULL, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method) {
     if (is.null(X) && !is.null(TR)) 
         stop("Unable to fit a model that includes only trait covariates")
     
@@ -175,7 +175,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             cat("initial run ", n.i, "\n")
         res <- start.values.gllvm.TMB.quadratic(y = y, X = X1, TR = TR1, family = family, offset = offset, trial.size = trial.size, 
             num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, formula = formula, jitter.var = jitter.var, 
-            yXT = yXT, row.eff = row.eff, link = link)
+            yXT = yXT, row.eff = row.eff, start.method=start.method)
         if (is.null(start.params)) {
             beta0 <- res$params[, 1]
             # common env params or different env response for each spp
@@ -411,7 +411,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             B1 <- matrix(param1[nam == "B"])
             
             lambda1 <- param1[nam == "lambda"]
-            lambda2 <- matrix(-1 * abs(param1[nam == "lambda2"]), nrow = num.lv,byrow=T)
+            lambda2 <- t(matrix(-1*abs(param1[nam=="lambda2"]),nrow=p,ncol=num.lv,byrow=T))
             u1 <- matrix(param1[nam == "u"], n, num.lv)
             lg_phi1 <- param1[nam == "lg_phi"]
             lg_sigma1 <- param1[nam == "log_sigma"]

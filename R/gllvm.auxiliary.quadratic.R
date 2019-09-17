@@ -1,8 +1,7 @@
 start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family, 
                                              offset= NULL, trial.size = 1, num.lv = 0, start.lvs = NULL, 
                                              seed = NULL,power=NULL,starting.val="res",formula=NULL, 
-                                             jitter.var=0,yXT=NULL, row.eff=FALSE, 
-                                             link = "probit", randomX = NULL) {
+                                             jitter.var=0,yXT=NULL, row.eff=FALSE, randomX = NULL, start.method=start.method) {
   if(!is.null(seed)) set.seed(seed)
   N<-n <- nrow(y); p <- ncol(y); y <- as.matrix(y)
   num.T <- 0; if(!is.null(TR)) num.T <- dim(TR)[2]
@@ -18,9 +17,9 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     if(family=="binomial"){
       rmeany=1e-3+0.99*rmeany
       if(row.eff %in% c("fixed",TRUE)) {
-        row.params <-  binomial(link = link)$linkfun(rmeany) - binomial(link = link)$linkfun(rmeany[1])
+        row.params <-  binomial(link = "probit")$linkfun(rmeany) - binomial(link = "probit")$linkfun(rmeany[1])
       } else{
-        row.params <-  binomial(link = link)$linkfun(rmeany) - binomial(link = link)$linkfun(mean(rmeany))
+        row.params <-  binomial(link = "probit")$linkfun(rmeany) - binomial(link = "probit")$linkfun(mean(rmeany))
       }
     } else if(family=="gaussian"){
       rmeany=1e-3+0.99*rmeany
@@ -45,16 +44,16 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
   if(!(family %in% c("poisson","negative.binomial","binomial","ordinal")))
     stop("inputed family not allowed...sorry =(")
   
-    unique.ind <- which(!duplicated(y))
-    if(is.null(start.lvs)) {
-      index <- mvtnorm::rmvnorm(N, rep(0, num.lv));
-      unique.index <- as.matrix(index[unique.ind,])
-    }
-    
-    if(!is.null(start.lvs)) {
-      index <- as.matrix(start.lvs)
-      unique.index <- as.matrix(index[unique.ind,])
-    }
+  unique.ind <- which(!duplicated(y))
+  if(is.null(start.lvs)) {
+    index <- mvtnorm::rmvnorm(N, rep(0, num.lv));
+    unique.index <- as.matrix(index[unique.ind,])
+  }
+  
+  if(!is.null(start.lvs)) {
+    index <- as.matrix(start.lvs)
+    unique.index <- as.matrix(index[unique.ind,])
+  }
   
   y <- as.matrix(y)
   
@@ -84,9 +83,14 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           fit.mva$phi <- apply(fit.mva$residuals,2,sd)
         }
         gamma=NULL
-          lastart <- FAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)
-          gamma<-lastart$gamma
-          index<-lastart$index
+        if(start.method=="FA"){
+          lastart <- FAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)  
+        }else{
+          lastart <- CAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)
+        }
+        
+        gamma<-lastart$gamma
+        index<-lastart$index
       } else {
         n1 <- colnames(X)
         n2 <- colnames(TR)
@@ -102,9 +106,9 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           formula=form1
         }
         trait.TMB<-getFromNamespace("trait.TMB","gllvm") ##CHANGE THIS LINE ON MERGE
-          fit.mva <- trait.TMB(y, X = X, TR = TR, formula=formula(formula), family = family, num.lv = 0, Lambda.struc = "diagonal", trace = FALSE, sd.errors = FALSE, maxit = 1000, seed=seed,n.init=1,starting.val="zero",yXT = yXT, row.eff = row.eff, diag.iter = 0, optimizer = "nlminb", randomX = randomX);
-          fit.mva$coef=fit.mva$params
-          if(row.eff=="random") sigma=fit.mva$params$sigma
+        fit.mva <- trait.TMB(y, X = X, TR = TR, formula=formula(formula), family = family, num.lv = 0, Lambda.struc = "diagonal", trace = FALSE, sd.errors = FALSE, maxit = 1000, seed=seed,n.init=1,starting.val="zero",yXT = yXT, row.eff = row.eff, diag.iter = 0, optimizer = "nlminb", randomX = randomX);
+        fit.mva$coef=fit.mva$params
+        if(row.eff=="random") sigma=fit.mva$params$sigma
         out$fitstart <- fit.mva
         if(!is.null(form1)){
           if(!is.null(fit.mva$coef$row.params)) row.params=fit.mva$coef$row.params
@@ -133,13 +137,18 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           mu <- exp(mu)
         }
         if(family == "binomial") {
-          mu <-  binomial(link = link)$linkinv(mu)
+          mu <-  binomial(link = "probit")$linkinv(mu)
         }
         
         gamma=NULL
-          lastart <- FAstart(mu, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)
-          gamma<-lastart$gamma
-          index<-lastart$index
+        if(start.method=="FA"){
+          lastart <- FAstart(mu=mu, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)  
+        }else{
+          lastart <- CAstart(mu=mu, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)
+        }
+        
+        gamma<-lastart$gamma
+        index<-lastart$index
       }
       
       if(is.null(TR)){params <- cbind(coef,gamma)
@@ -226,56 +235,56 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     trait <- rep(0,num.T)
     inter <- rep(0, num.T * num.X)
     B=c(env,trait,inter)
-      gamma <- matrix(1,p,num.lv)
-      gamma[upper.tri(gamma)]=0
-      params[,(ncol(params) - num.lv + 1):ncol(params)] <- gamma
-      index <- matrix(0,n,num.lv)
+    gamma <- matrix(1,p,num.lv)
+    gamma[upper.tri(gamma)]=0
+    params[,(ncol(params) - num.lv + 1):ncol(params)] <- gamma
+    index <- matrix(0,n,num.lv)
     phi <- rep(1,p)
   }
-    index <- index+mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);
-    try({
-      gamma.new <- as.matrix(params[,(ncol(params) - num.lv + 1):ncol(params)]);
-      sig <- sign(diag(gamma.new));
-      params[,(ncol(params) - num.lv + 1):ncol(params)] <- t(t(gamma.new)*sig)
-      index <- t(t(index)*sig)}, silent = TRUE)
-    #add lambda2 here
-    #lambda2
-    lambda2<-matrix(-1e-5,nrow=p,ncol=num.lv)
+  index <- index+mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);
+  try({
+    gamma.new <- as.matrix(params[,(ncol(params) - num.lv + 1):ncol(params)]);
+    sig <- sign(diag(gamma.new));
+    params[,(ncol(params) - num.lv + 1):ncol(params)] <- t(t(gamma.new)*sig)
+    index <- t(t(index)*sig)}, silent = TRUE)
+  #add lambda2 here
+  #lambda2
+  lambda2<-matrix(-.5,nrow=p,ncol=num.lv)
+  
+  if(!is.null(X) & !is.null(TR)){
+    quadratic.start.offset <- cbind(1,index)%*%t(params) + matrix(fit.mva$D%*%matrix(B,ncol=1),n,p)
     
-    if(!is.null(X) & !is.null(TR)){
-      quadratic.start.offset <- cbind(1,index)%*%t(params) + matrix(fit.mva$D%*%matrix(B,ncol=1),n,p)
-      
-      
-    }else if(!is.null(X)&is.null(TR)){
-      quadratic.start.offset <- cbind(1,X,index)%*%t(params)
-    }else if(is.null(X)&is.null(TR)){
-      quadratic.start.offset <- cbind(1,index)%*%t(params)
-    }
-    if(!is.null(offset)){
-      quadratic.start.offset <- quadratic.start.offset + offset
-    }
-    lambda2<-matrix(0,nrow=p,ncol=num.lv)
-    if(family!="ordinal"){
-      for(j in 1:p){
-        if(family!="negative.binomial"){
-          lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~-1+index^2+offset(quadratic.start.offset[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family=family))  #first coefficient the packages thinks is the intercept
-        }else{
-          lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~-1+index^2+offset(quadratic.start.offset[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family="poisson"))  
-        }
+    
+  }else if(!is.null(X)&is.null(TR)){
+    quadratic.start.offset <- cbind(1,X,index)%*%t(params)
+  }else if(is.null(X)&is.null(TR)){
+    quadratic.start.offset <- cbind(1,index)%*%t(params)
+  }
+  if(!is.null(offset)){
+    quadratic.start.offset <- quadratic.start.offset + offset
+  }
+  lambda2<-matrix(0,nrow=p,ncol=num.lv)
+  if(family!="ordinal"){
+    for(j in 1:p){
+      if(family!="negative.binomial"){
+        lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~-1+index^2+offset(quadratic.start.offset[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family=family))  #first coefficient the packages thinks is the intercept
+      }else{
+        lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~-1+index^2+offset(quadratic.start.offset[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family="poisson"))  
       }
     }
-    # }else if(family=="ordinal"){
-    #   levels<-c(unique(y))
-    #   y.start <- y
-    #   y.start[y<mean.level] <- 0
-    #   y.start[y>=mean.level] <- 1
-    #   for(j in 1:p){
-    #       lambda2[j,]<-coef(zetadiv::glm.cons(y.start[,j]~-1+lvs^2+offset(beta0[j]+(lvs%*%t(lambdas))[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family="binomial"))  
-    #     }
-    # }
-    #subtract a fraction from the 0 quadratic scores, otherwise the optimization can't get away from the 0s where necessary.
-    lambda2[lambda2==0]<--1e-5
-    params <- cbind(params,lambda2)
+  }
+  # }else if(family=="ordinal"){
+  #   levels<-c(unique(y))
+  #   y.start <- y
+  #   y.start[y<mean.level] <- 0
+  #   y.start[y>=mean.level] <- 1
+  #   for(j in 1:p){
+  #       lambda2[j,]<-coef(zetadiv::glm.cons(y.start[,j]~-1+lvs^2+offset(beta0[j]+(lvs%*%t(lambdas))[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family="binomial"))  
+  #     }
+  # }
+  #subtract a fraction from the 0 quadratic scores, otherwise the optimization can't get away from the 0s where necessary.
+  lambda2[lambda2==0]<--.5
+  params <- cbind(params,lambda2)
   
   out$params <- params
   out$phi <- phi
@@ -301,7 +310,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
 
 
 FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL, 
-                    jitter.var = 0, resi = NULL){
+                    jitter.var = 0, resi = NULL, start.method=start.method){
   n<-NROW(y); p <- NCOL(y)
   
   if(is.null(resi)){
@@ -362,27 +371,123 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
   
   if(p>2 && n>2){
     if(any(is.nan(resi))){stop("Method 'res' for starting values can not be used, when glms fit too poorly to the data. Try other starting value methods 'zero' or 'random' or change the model.")}
-    
-    if(n>p){
-      fa  <-  try(factanal(resi,factors=num.lv,scores = "regression"))
-      if(inherits(fa,"try-error")) stop("Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
-      gamma<-matrix(fa$loadings,p,num.lv)
-      index <- fa$scores
-    } else if(n<p) {
-      fa  <-  try(factanal(t(resi),factors=num.lv,scores = "regression"))
-      if(inherits(fa,"try-error")) stop("Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
-      gamma<-fa$scores
-      index <- matrix(fa$loadings,n,num.lv)
-    } else {
-      tryfit <- TRUE; tryi <- 1
-      while(tryfit && tryi<5) {
-        fa  <-  try(factanal(rbind(resi,rnorm(p,0,0.01)),factors=num.lv,scores = "regression"), silent = TRUE)
-        tryfit <- inherits(fa,"try-error"); tryi <- tryi + 1;
+      if(n>p){
+        fa  <-  try(factanal(resi,factors=num.lv,scores = "regression"))
+        if(inherits(fa,"try-error")) stop("Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
+        gamma<-matrix(fa$loadings,p,num.lv)
+        index <- fa$scores
+      } else if(n<p) {
+        fa  <-  try(factanal(t(resi),factors=num.lv,scores = "regression"))
+        if(inherits(fa,"try-error")) stop("Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
+        gamma<-fa$scores
+        index <- matrix(fa$loadings,n,num.lv)
+      } else {
+        tryfit <- TRUE; tryi <- 1
+        while(tryfit && tryi<5) {
+          fa  <-  try(factanal(rbind(resi,rnorm(p,0,0.01)),factors=num.lv,scores = "regression"), silent = TRUE)
+          tryfit <- inherits(fa,"try-error"); tryi <- tryi + 1;
+        }
+        if(tryfit) stop(attr(fa,"condition")$message, "\n Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
+        gamma<-matrix(fa$loadings,p,num.lv)
+        index <- fa$scores[1:n,]
       }
-      if(tryfit) stop(attr(fa,"condition")$message, "\n Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
-      gamma<-matrix(fa$loadings,p,num.lv)
-      index <- fa$scores[1:n,]
+  } else {
+    gamma <- matrix(1,p,num.lv)
+    gamma[upper.tri(gamma)]=0
+    index <- matrix(0,n,num.lv)
+  }
+  
+  if(num.lv>1 && p>2){
+    qr.gamma <- qr(t(gamma))
+    gamma.new<-t(qr.R(qr.gamma))
+    sig <- sign(diag(gamma.new));
+    gamma <- t(t(gamma.new)*sig)
+    index<-(index%*%qr.Q(qr.gamma))
+    index <- t(t(index)*sig)
+  } else {
+    sig <- sign(diag(gamma));
+    gamma <- t(t(gamma)*sig)
+    index <- t(t(index)*sig)
+  }
+  if(p>n) {
+    sdi <- sqrt(diag(cov(index)))
+    sdt <- sqrt(diag(cov(gamma)))
+    indexscale <- diag(x = 0.8/sdi, nrow = length(sdi))
+    index <- index%*%indexscale
+    gammascale <- diag(x = 1/sdt, nrow = length(sdi))
+    gamma <- gamma%*%gammascale
+  }
+  index <- index + mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);
+  return(list(index = index, gamma = gamma))
+}
+
+
+CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL, 
+                    jitter.var = 0, resi = NULL, start.method=start.method){
+  n<-NROW(y); p <- NCOL(y)
+  
+  if(is.null(resi)){
+    ds.res <- matrix(NA, n, p)
+    rownames(ds.res) <- rownames(y)
+    colnames(ds.res) <- colnames(y)
+    for (i in 1:n) {
+      for (j in 1:p) {
+        if (family == "poisson") {
+          a <- ppois(as.vector(unlist(y[i, j])) - 1, mu[i,j])
+          b <- ppois(as.vector(unlist(y[i, j])), mu[i,j])
+          u <- runif(n = 1, min = a, max = b)
+          ds.res[i, j] <- qnorm(u)
+        }
+        if (family == "negative.binomial") {
+          phis <- phis + 1e-05
+          a <- pnbinom(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], size = 1/phis[j])
+          b <- pnbinom(as.vector(unlist(y[i, j])), mu = mu[i, j], size = 1/phis[j])
+          u <- runif(n = 1, min = a, max = b)
+          ds.res[i, j] <- qnorm(u)
+        }
+        if (family == "binomial") {
+          a <- pbinom(as.vector(unlist(y[i, j])) - 1, 1, mu[i, j])
+          b <- pbinom(as.vector(unlist(y[i, j])), 1, mu[i, j])
+          u <- runif(n = 1, min = a, max = b)
+          ds.res[i, j] <- qnorm(u)
+        }
+        if (family == "gaussian") {
+          a <- pnorm(as.vector(unlist(y[i, j])) - 1, 1, mu[i, j], sd = phis[j])
+          b <- pnorm(as.vector(unlist(y[i, j])), 1, mu[i, j], sd = phis[j])
+          u <- runif(n = 1, min = a, max = b)
+          ds.res[i, j] <- qnorm(u)
+        }
+        if (family == "ordinal") {
+          probK <- NULL
+          probK[1] <- pnorm(zeta[j,1]-mu[i,j],log.p = FALSE)
+          probK[max(y[,j])] <- 1 - pnorm(zeta[j,max(y[,j]) - 1] - mu[i,j])
+          if(max(y[,j]) > 2) {
+            j.levels <- 2:(max(y[,j])-1)
+            for(k in j.levels) { probK[k] <- pnorm(zeta[j,k] - mu[i,j]) - pnorm(zeta[j,k - 1] - mu[i,j]) }
+          }
+          probK <- c(0,probK)
+          cumsum.b <- sum(probK[1:(y[i,j]+1)])
+          cumsum.a <- sum(probK[1:(y[i,j])])
+          u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
+          if (abs(u - 1) < 1e-05)
+            u <- 1
+          if (abs(u - 0) < 1e-05)
+            u <- 0
+          ds.res[i, j] <- qnorm(u)
+        }
+      }
     }
+  } else {
+    ds.res <- resi
+  }
+  resi <- as.matrix(ds.res); resi[is.infinite(resi)] <- 0; resi[is.nan(resi)] <- 0
+  
+  if(p>2 && n>2){
+    if(any(is.nan(resi))){stop("Method 'res' for starting values can not be used, when glms fit too poorly to the data. Try other starting value methods 'zero' or 'random' or change the model.")}
+    ca  <-  try(vegan::cca(y))
+    if(inherits(ca,"try-error")) stop("Correspondence analysis for calculating starting values failed. Maybe rows that sum to zero, remove these.")
+    gamma <- vegan::scores(ca,choices=1:num.lv)$species
+    index <- vegan::scores(ca,choices=1:num.lv)$sites
   } else {
     gamma <- matrix(1,p,num.lv)
     gamma[upper.tri(gamma)]=0
