@@ -11,7 +11,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   ignore.u=FALSE
   n <- dim(y)[1]
   p <- dim(y)[2]
-  
   tr <- NULL
   num.lv <- num.lv
   y <- as.matrix(y)
@@ -111,6 +110,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         }else if(is.null(X)){
           lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
           lambda2 <- fit$params[,-c(1:(num.lv+1))]  
+          lambda2 <- matrix(c(lambda2),nrow=n,ncol=num.lv)
         }
         
       
@@ -295,7 +295,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         r1 <- matrix(param1[nam=="r0"])
         b1 <- matrix(param1[nam=="b"],num.X+1,p)
         lambda1 <- param1[nam=="lambda"]
-        lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv)
+        lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv,byrow=T)
         u1 <- matrix(param1[nam=="u"],n,num.lv)
         lg_phi1 <- param1[nam=="lg_phi"]
         log_sigma1 <- param1[nam=="log_sigma"]
@@ -411,7 +411,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         theta <- matrix(0,p,num.lv)
         if(p>1) {
           theta[lower.tri(theta,diag=TRUE)] <- param[li];
-          theta<-cbind(theta,-1*abs(matrix(param[l2i],ncol=num.lv)))
+          theta<-cbind(theta,-1*abs(matrix(param[l2i],ncol=num.lv,byrow=T)))
         } else {theta <- param[li]
         theta<-c(theta,param[l2i])}
         # diag(theta) <- exp(diag(theta)) !!!
@@ -538,7 +538,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         rownames(se.lambdas) <- colnames(out$y)
         out$sd$theta <- se.lambdas; se <- se[-(1:(p * num.lv - sum(0:(num.lv-1))))];
         # diag(out$sd$theta) <- diag(out$sd$theta)*diag(out$params$theta) !!!
-        se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv);
+        se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv,byrow=T);
         colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
         rownames(se.lambdas2) <- colnames(out$y);
         out$sd$theta <- cbind(out$sd$theta,se.lambdas2); se <- se[-(1:(p * num.lv))]
