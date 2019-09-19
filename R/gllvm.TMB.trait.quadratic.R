@@ -225,7 +225,8 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                 
                 if (row.eff) 
                   row.params <- start.params$params$row.params  ## row parameters
-                theta <- c(start.params$params$theta)  ## LV coefficients
+                theta <- c(start.params$params$theta)[,1:num.lv]  ## LV coefficients
+                theta2 <- start.params$params$theta[,-c(1:num.lv)]
                 vameans <- matrix(start.params$lvs, ncol = num.lv)
                 lambda <- start.params$A
             } else {
@@ -410,7 +411,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             B1 <- matrix(param1[nam == "B"])
             
             lambda1 <- param1[nam == "lambda"]
-            lambda2 <- t(matrix(-1*abs(param1[nam=="lambda2"]),nrow=p,ncol=num.lv,byrow=T))
+            lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv)
             u1 <- matrix(param1[nam == "u"], n, num.lv)
             lg_phi1 <- param1[nam == "lg_phi"]
             lg_sigma1 <- param1[nam == "log_sigma"]

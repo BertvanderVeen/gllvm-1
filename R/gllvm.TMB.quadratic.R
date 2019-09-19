@@ -125,9 +125,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         betas <- c(start.params$params$Xcoef) ## covariates coefficients
         lambdas <- NULL
         lambda2 <- NULL
-          lambdas <- start.params$params$theta
+          lambdas <- start.params$params$theta[,1:num.lv]
           lambdas[upper.tri(lambdas)] <- 0
-        lambda2 <- start.params$params$lambda2
+        lambda2 <- start.params$params$theta[,-c(1:num.lv)]
         row.params <- NULL
         if (start.params$row.eff != FALSE) {
           row.params <- start.params$params$row.params
@@ -294,7 +294,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         r1 <- matrix(param1[nam=="r0"])
         b1 <- matrix(param1[nam=="b"],num.X+1,p)
         lambda1 <- param1[nam=="lambda"]
-        lambda2 <- t(matrix(-1*abs(param1[nam=="lambda2"]),nrow=p,ncol=num.lv,byrow=T))
+        lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv)
         u1 <- matrix(param1[nam=="u"],n,num.lv)
         lg_phi1 <- param1[nam=="lg_phi"]
         log_sigma1 <- param1[nam=="log_sigma"]

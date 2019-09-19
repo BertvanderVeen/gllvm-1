@@ -13,7 +13,10 @@
 #' @param symbols logical, if \code{TRUE} sites are plotted using symbols, if \code{FALSE} (default) site numbers are used
 #' @param cex.spp size of species labels in biplot
 #' @param hill logical, if TRUE and \code{bell = TRUE} scales optima by tolerances per lV (i.e. gives bell-curves of unit variance)
-#' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with predicted optima and 95% of the predicted environmental ranges (2D)
+#' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with (scaled) predicted optima and 95% of the predicted environmental ranges (2D)
+#' @param env.ranges logical, if TRUE plots predicted species distributions in 2D
+#' @param type when predicting bell-shapes, can be used to predict on the response or link scale. Default is response.
+#' @param intercept when predicting bell-shapes, can be used to include species-intercepts in the plot. Default is TRUE
 #' @param ...\tadditional graphical arguments.
 #'
 #' @details
@@ -45,7 +48,7 @@
 #'@export
 #'@export ordiplot.gllvm.quadratic
 ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, jitter = FALSE, 
-    jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = F, ...) {
+    jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = F,env.ranges=T, type = "response", intercept = TRUE, ...) {
     if (any(class(object) != "gllvm.quadratic")) 
         stop("Class of the object isn't 'gllvm.quadratic'.")
     a <- jitter.amount
@@ -133,9 +136,9 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
     } else {
         if (length(which.lvs) == 1) {
             if (object$num.lv == 1) {
-                quadr.coef <- object$params$theta[, -1]
+                quadr.coef <- object$params$theta[1:ind.spp, -1,drop=F]
             } else {
-                quadr.coef <- object$params$theta[-c(1:object$num.lv)][, which.lvs]
+                quadr.coef <- object$params$theta[,-c(1:object$num.lv),drop=F][1:ind.spp, which.lvs,drop=F]
             }
             
             quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
@@ -143,7 +146,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             newLV <- matrix(NA, nrow = 1000, ncol = length(which.lvs))
             newLV[, 1] <- seq(from = min(object$lvs[, which.lvs]), max(object$lvs[, which.lvs]), length.out = 1000)
             
-            mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs)
+            mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,1:ind.spp,drop=F]
             
             plot(NA, xlim = c(min(newLV), max(newLV) + 1), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, 
                 sep = " "), xaxs = "i")
@@ -158,9 +161,9 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             abline(v = 0, h = 1, col = "black", lty = "dashed")
             text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
         } else if (length(which.lvs) > 1 & object$num.lv > 1) {
-            optima <- -object$params$theta[, 1:object$num.lv, drop = F][, which.lvs, drop = F]/(2 * object$params$theta[, -c(1:object$num.lv), 
-                drop = F][, which.lvs, drop = F])
-            quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][, which.lvs, drop = F]
+            optima <- -scale(object$params$theta[, 1:object$num.lv, drop = F][1:ind.spp, which.lvs, drop = F])/(2 * scale(object$params$theta[1:ind.spp, -c(1:object$num.lv), 
+                drop = F][, which.lvs, drop = F]))
+            quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][1:ind.spp, which.lvs, drop = F]
             quadr.coef[which(round(quadr.coef, 4) == 0)] <- 0
             excl <- which(sapply(1:nrow(quadr.coef), function(j) any(quadr.coef[j, ] == 0)))
             
@@ -171,7 +174,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
                 quadr.coef <- quadr.coef[-excl, , drop = F]
                 
             }
-            tolerances <- 1/sqrt(-2 * quadr.coef)
+            tolerances <- scale(1/sqrt(-2 * quadr.coef))
             if (hill == T) {
                 optima <- optima/tolerances
                 lvs <- object$lvs/apply(tolerances, 2, mean)
@@ -190,10 +193,13 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             text(optima, labels = row.names(optima), col = col)
             
             env.range <- env.upper - env.lower
-            for (j in 1:nrow(optima)) {
+            if(env.ranges==T){
+              for (j in 1:nrow(optima)) {
                 s = diag(2)
                 car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = col[j], lty = "dashed")
+              }
             }
+
             
             
         } else {

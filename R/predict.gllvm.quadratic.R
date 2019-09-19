@@ -8,6 +8,7 @@
 #' @param newLV A new matrix of latent variables.  If omitted, the original matrix of latent variables is used.
 #' @param LVonly (logical) ignore fixed and site-specific effects, makihng predictions only using the latent variables.
 #' @param which.lvs Specify which LV(s) to predict with, default is all
+#' @param intercept (logical) if \code{TRUE} includes the intercept
 #' @param ... not used.
 #'
 #' @details
@@ -54,7 +55,7 @@
 #'@export
 #'@export predict.gllvm.quadratic
 
-predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = NULL, type = "link", LVonly = FALSE, which.lvs = 1:object$num.lv, 
+predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = NULL, type = "link", LVonly = FALSE, which.lvs = 1:object$num.lv,intercept=F, 
     ...) {
     newdata <- newX
     p <- ncol(object$y)
@@ -66,14 +67,14 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
     
     formula <- formula(terms(object))
     eta <- matrix(0, n, p)
-    if (!is.null(newLV) & LVonly == T) {
+    if (!is.null(newLV)) {
         if (!is.matrix(newLV)) {
             stop("newLV must be a matrix")
         }
         eta <- matrix(0, nrow(newLV), p)
     }
     
-    if (LVonly == F & is.null(newLV)) {
+    if (is.null(newLV)|intercept==T) {
         b0 <- object$params$beta0
         eta <- eta + matrix(b0, n, p, byrow = TRUE)
     }
