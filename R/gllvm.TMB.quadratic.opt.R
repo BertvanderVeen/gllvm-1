@@ -2,13 +2,6 @@
 ## GLLVM, with estimation done via Variational approximation using TMB-package
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
-X = NULL; formula = NULL; num.lv = 2; family = "poisson";
-Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-6; trace = trace;
-seed = NULL;maxit = 1000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
-n.init=1;restrict=30;start.params=NULL;
-optimizer="optim";starting.val="res";diag.iter=1;
-Lambda.start=c(0.1,0.5); jitter.var=0
-
 gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6, trace = trace,
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
