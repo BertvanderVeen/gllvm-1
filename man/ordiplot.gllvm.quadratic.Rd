@@ -8,7 +8,9 @@
 \method{ordiplot}{gllvm.quadratic}(object, biplot = FALSE,
   ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL,
   jitter = FALSE, jitter.amount = 0.2, s.colors = 1,
-  symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = F, ...)
+  symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = F,
+  env.ranges = T, type = "response", intercept = TRUE,
+  legend = FALSE, ...)
 }
 \arguments{
 \item{object}{an object of class 'gllvm'.}
@@ -33,9 +35,17 @@
 
 \item{cex.spp}{size of species labels in biplot}
 
-\item{bell}{logical, if TRUE plots bell-shapes (1D) or biplot with predicted optima and 95% of the predicted environmental ranges (2D)}
+\item{bell}{logical, if TRUE plots bell-shapes (1D) or biplot with (scaled) predicted optima and 95% of the predicted environmental ranges (2D)}
 
 \item{hill}{logical, if TRUE and \code{bell = TRUE} scales optima by tolerances per lV (i.e. gives bell-curves of unit variance)}
+
+\item{env.ranges}{logical, if TRUE plots predicted species distributions in 2D}
+
+\item{type}{when predicting bell-shapes, can be used to predict on the response or link scale. Default is response.}
+
+\item{intercept}{when predicting bell-shapes, can be used to include species-intercepts in the plot. Default is TRUE}
+
+\item{legend}{when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot}
 
 \item{...\tadditional}{graphical arguments.}
 }

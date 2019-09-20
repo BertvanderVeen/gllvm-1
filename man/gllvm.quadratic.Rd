@@ -11,7 +11,7 @@ gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
   seed = NULL, maxit = 1000, start.fit = NULL,
   starting.val = "res", TMB = TRUE, optimizer = "optim",
   Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = T,
-  ridge.quadratic = F, start.method = "CA")
+  ridge.quadratic = F, start.method = "CA", config = "quadratic")
 }
 \arguments{
 \item{y}{(n x m) matrix of responses.}
@@ -61,6 +61,8 @@ gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
 \item{ridge.quadratic}{\code{TRUE} fits a ridge penalty to shrink the quadratic effect of the latent variable}
 
 \item{start.method}{ordination method to retrieve starting values. The default is Correspondence analysis (CA), with alternative Factor Analysis (FA).}
+
+\item{config}{either "optimum" or "quadratic". Defaults to quadratic. Provides an alternative parameterization to the model where the species optima and tolerances are estimated directly. On occassion this provides a better fit.}
 }
 \value{
 An object of class 'gllvm' includes the following components:

@@ -7,7 +7,7 @@
 \usage{
 \method{predict}{gllvm.quadratic}(object, newX = NULL, newTR = NULL,
   newLV = NULL, type = "link", LVonly = FALSE,
-  which.lvs = 1:object$num.lv, ...)
+  which.lvs = 1:object$num.lv, intercept = F, ...)
 }
 \arguments{
 \item{object}{an object of class 'gllvm'.}
@@ -23,6 +23,8 @@
 \item{LVonly}{(logical) ignore fixed and site-specific effects, makihng predictions only using the latent variables.}
 
 \item{which.lvs}{Specify which LV(s) to predict with, default is all}
+
+\item{intercept}{(logical) if \code{TRUE} includes the intercept}
 
 \item{...}{not used.}
 }

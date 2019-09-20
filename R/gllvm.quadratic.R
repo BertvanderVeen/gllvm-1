@@ -26,6 +26,7 @@
 #' @param jitter.var jitter variance for starting values of latent variables. Defaults to 0, meaning no jittering.
 #' @param ridge \code{TRUE} fits a ridge penalty to shrink the latent variable (linear and quadratic effects)
 #' @param ridge.quadratic \code{TRUE} fits a ridge penalty to shrink the quadratic effect of the latent variable
+#' @param config either "optimum" or "quadratic". Defaults to quadratic. Provides an alternative parameterization to the model where the species optima and tolerances are estimated directly. On occassion this provides a better fit.
 #' 
 #' @details
 #' Fits the species packing model by generalized linear latent variable models with quadratic latent variables.
@@ -389,11 +390,13 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
                                         row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                         n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
                                         diag.iter = diag.iter, trace = trace, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method)
-          }else{
+          }else if(config=="optimum"){
             fitg <- gllvm.TMB.quadratic.opt(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                                             row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                             n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
                                             diag.iter = diag.iter, trace = trace, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method)
+          }else{
+            stop(paste(config,"is not a valid configuration"))
           }
           
         }
