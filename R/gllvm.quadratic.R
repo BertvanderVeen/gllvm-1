@@ -186,6 +186,7 @@
 #' @export
 #'
 #'@useDynLib gllvm2, .registration = TRUE
+#'@useDynLib gllvm3, .registration = TRUE
 #'@importFrom TMB MakeADFun
 #'@importFrom zetadiv glm.cons
 #'@importFrom mvabund manyglm
