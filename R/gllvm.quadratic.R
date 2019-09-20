@@ -200,7 +200,7 @@
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 5, trace = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
     start.fit = NULL, starting.val = "res", TMB = TRUE, optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = T, 
-    ridge.quadratic = F, start.method="CA") {
+    ridge.quadratic = F, start.method="CA",config="quadratic") {
     constrOpt <- FALSE
     restrict <- 30
     randomX <- NULL
@@ -342,8 +342,8 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
     }
     
     if (!is.null(start.fit)) {
-        if (class(start.fit) != "gllvm") 
-            stop("Only object of class 'gllvm' can be given as a starting parameters.")
+        if (class(start.fit) != "gllvm.quadratic") 
+            stop("Only object of class 'gllvm.quadratic' can be given as a starting parameters.")
         
         if (!(family %in% c("poisson", "negative.binomial"))) 
             stop("Starting parameters can be given only for count data.")
@@ -383,10 +383,18 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             out$TR <- fitg$TR
             
         } else {
+          if(config=="quadratic"){
             fitg <- gllvm.TMB.quadratic(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
-                row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
-                n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
-                diag.iter = diag.iter, trace = trace, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method)
+                                        row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
+                                        n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
+                                        diag.iter = diag.iter, trace = trace, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method)
+          }else{
+            fitg <- gllvm.TMB.quadratic.opt(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
+                                            row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
+                                            n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
+                                            diag.iter = diag.iter, trace = trace, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method)
+          }
+          
         }
 
     out$X.design <- fitg$X.design
