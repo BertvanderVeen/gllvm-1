@@ -472,7 +472,7 @@ CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
     if(any(is.nan(resi))){stop("Method 'res' for starting values can not be used, when glms fit too poorly to the data. Try other starting value methods 'zero' or 'random' or change the model.")}
     ca  <-  try(vegan::cca(y,Z=eta))
     if(inherits(ca,"try-error")) stop("Correspondence analysis for calculating starting values failed. Maybe rows that sum to zero, remove these.")
-    # tol<-vegan::tolerance(ca,choices=1:num.lv)
+    tol<-vegan::tolerance(ca,choices=1:num.lv)
     lambda2<--0.5/tol^2
     gamma <- 1/tol^2*vegan::scores(ca,choices=1:num.lv)$species
     index <- vegan::scores(ca,choices=1:num.lv)$sites
