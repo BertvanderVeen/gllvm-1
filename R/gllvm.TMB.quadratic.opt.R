@@ -2,13 +2,6 @@
 ## GLLVM, with estimation done via Variational approximation using TMB-package
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
-X = NULL; formula = NULL; num.lv = 2; family = "poisson";
-Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-6; trace = trace;
-seed = NULL;maxit = 1000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
-n.init=1;restrict=30;start.params=NULL;
-optimizer="optim";starting.val="res";diag.iter=1;
-Lambda.start=c(0.1,0.5); jitter.var=0
-
 gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6, trace = trace,
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
@@ -428,7 +421,7 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
         if(p>1) {
           theta[lower.tri(theta,diag=TRUE)] <- param[li];
           theta<-cbind(theta,-.5/(matrix(param[l2i],ncol=num.lv,byrow=T)^2))
-          theta[,1:num.lv] <- theta[,1:num.lv]/(matrix(param[l2i],ncol=num.lv,byrow=T)^2)
+          theta[,1:num.lv] <- 1/(matrix(param[l2i],ncol=num.lv,byrow=T)^2)*theta[,1:num.lv]
         } else {theta <- param[li]
         theta<-c(theta,param[l2i])}
         # diag(theta) <- exp(diag(theta)) !!!
@@ -555,6 +548,7 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
         rownames(se.lambdas) <- colnames(out$y)
         out$sd$theta <- se.lambdas; se <- se[-(1:(p * num.lv - sum(0:(num.lv-1))))];
         # diag(out$sd$theta) <- diag(out$sd$theta)*diag(out$params$theta) !!!
+        
         se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv,byrow=T);
         colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
         rownames(se.lambdas2) <- colnames(out$y);
