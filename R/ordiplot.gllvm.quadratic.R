@@ -17,6 +17,7 @@
 #' @param env.ranges logical, if TRUE plots predicted species distributions in 2D
 #' @param type when predicting bell-shapes, can be used to predict on the response or link scale. Default is response.
 #' @param intercept when predicting bell-shapes, can be used to include species-intercepts in the plot. Default is TRUE
+#' @param legend when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot
 #' @param ...\tadditional graphical arguments.
 #'
 #' @details
@@ -48,7 +49,7 @@
 #'@export
 #'@export ordiplot.gllvm.quadratic
 ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, jitter = FALSE, 
-    jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = F,env.ranges=T, type = "response", intercept = TRUE, ...) {
+    jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = F,env.ranges=T, type = "response", intercept = TRUE, legend=FALSE,...) {
     if (any(class(object) != "gllvm.quadratic")) 
         stop("Class of the object isn't 'gllvm.quadratic'.")
     a <- jitter.amount
@@ -148,15 +149,29 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             
             mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,1:ind.spp,drop=F]
             
-            plot(NA, xlim = c(min(newLV), max(newLV) + 1), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, 
-                sep = " "), xaxs = "i")
+            if(legend==F){
+              pdf(NULL)
+              plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+              maxstr<-max(strwidth(colnames(mu)))*1.25  
+              invisible(dev.off())
+                                                                                                             
+              plot(NA, xlim = c(min(newLV), max(newLV)+maxstr), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+            }else{
+              plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+            }
             cols <- (grDevices::rainbow(ncol(mu) + 1)[2:(ncol(mu) + 1)])
+            if(legend==T){
+              legend(x="topleft",text.col=cols,colnames(mu))
+            }
+            
             for (j in 1:ncol(mu)) {
                 lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[j])
                 col <- col2rgb(cols[j], alpha = TRUE)
                 col[4] <- 127
                 col <- rgb(col[1], col[2], col[3], col[4], maxColorValue = 255)
-                text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[j], adj = 0)
+                if(legend==F){
+                  text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[j], adj = 0)  
+                }
             }
             abline(v = 0, h = 1, col = "black", lty = "dashed")
             text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
