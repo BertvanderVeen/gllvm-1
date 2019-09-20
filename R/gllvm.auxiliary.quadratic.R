@@ -498,12 +498,13 @@ CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
     gamma <- t(t(gamma)*sig)
     index <- t(t(index)*sig)
   }
-  lambda2<-matrix(0,nrow=p,ncol=num.lv)
-  for(j in 1:p){
-    for(q in 1:num.lv){
-      lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
-    }
-  }
+  lambda2<--.5/tol^2
+  
+  # for(j in 1:p){
+  #   for(q in 1:num.lv){
+  #     lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+  #   }
+  # }
   index <- index + mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);
   return(list(index = index, gamma = gamma, lambda2 = lambda2))
 }
