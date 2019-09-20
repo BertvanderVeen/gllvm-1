@@ -472,7 +472,7 @@ CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
     if(any(is.nan(resi))){stop("Method 'res' for starting values can not be used, when glms fit too poorly to the data. Try other starting value methods 'zero' or 'random' or change the model.")}
     ca  <-  try(vegan::cca(y,Z=eta))
     if(inherits(ca,"try-error")) stop("Correspondence analysis for calculating starting values failed. Maybe rows that sum to zero, remove these.")
-    tol<-vegan::tolerance(ca,choices=1:num.lv)
+    # tol<-vegan::tolerance(ca,choices=1:num.lv)
     lambda2<--0.5/tol^2
     gamma <- 1/tol^2*vegan::scores(ca,choices=1:num.lv)$species
     index <- vegan::scores(ca,choices=1:num.lv)$sites
@@ -485,12 +485,12 @@ CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
   }
   
   if(num.lv>1 && p>2){
-    # qr.gamma <- qr(t(gamma))
-    # gamma.new<-t(qr.R(qr.gamma))
-    # sig <- sign(diag(gamma.new));
-    # gamma <- t(t(gamma.new)*sig)
-    # index<-(index%*%qr.Q(qr.gamma))
-    # index <- t(t(index)*sig)
+    qr.gamma <- qr(t(gamma))
+    gamma.new<-t(qr.R(qr.gamma))
+    sig <- sign(diag(gamma.new));
+    gamma <- t(t(gamma.new)*sig)
+    index<-(index%*%qr.Q(qr.gamma))
+    index <- t(t(index)*sig)
     gamma[1,2]<-0
     diag(gamma)<-abs(diag(gamma))
   } else {
@@ -498,7 +498,12 @@ CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
     gamma <- t(t(gamma)*sig)
     index <- t(t(index)*sig)
   }
-
+  lambda2<-matrix(0,nrow=p,ncol=num.lv)
+  for(j in 1:p){
+    for(q in 1:num.lv){
+      lambda2[j,q]<--.5*(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+    }
+  }
   index <- index + mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);
   return(list(index = index, gamma = gamma, lambda2 = lambda2))
 }
