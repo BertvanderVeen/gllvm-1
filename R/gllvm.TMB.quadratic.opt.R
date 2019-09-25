@@ -304,7 +304,7 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
         r1 <- matrix(param1[nam=="r0"])
         b1 <- matrix(param1[nam=="b"],num.X+1,p)
         optima <- param1[nam=="opt"]
-        tolerances <- matrix(-1*abs(param1[nam=="tol"]),nrow=num.lv)
+        tolerances <- matrix(abs(param1[nam=="tol"]),nrow=num.lv)
         u1 <- matrix(param1[nam=="u"],n,num.lv)
         lg_phi1 <- param1[nam=="lg_phi"]
         log_sigma1 <- param1[nam=="log_sigma"]
@@ -557,7 +557,7 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
       
         #back to right scale
         out$sd$theta[,1:num.lv] <- 1/(out$sd$theta[,-c(1:num.lv)])^2*out$sd$theta[,1:num.lv]
-        out$sd$theta[,-c(1:num.lv)] <- -.5*(out$sd$theta[,-c(1:num.lv)])^2
+        out$sd$theta[,-c(1:num.lv)] <- -.5/(out$sd$theta[,-c(1:num.lv)])^2
         
       out$sd$beta0 <- sebetaM[,1]; names(out$sd$beta0) <- colnames(out$y);
       if(!is.null(X)){
