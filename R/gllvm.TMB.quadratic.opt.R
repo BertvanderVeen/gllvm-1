@@ -7,7 +7,7 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                 n.init=1,restrict=30,start.params=NULL,
                                 optimizer="optim",starting.val="res",diag.iter=1,
-                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale) {
+                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=ridge, ridge.quadratic = ridge.quadratic, start.method=start.method) {
   ignore.u=FALSE
   n <- dim(y)[1]
   p <- dim(y)[2]
@@ -293,8 +293,8 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit)),silent = TRUE))
       }
       if(optimizer=="optim") {
-        parscale<-rep(1,length(objr$par))
-        parscale[names(objr$par)=="opt"|names(objr$par)=="tol"]<-par.scale
+        parscale<-objr$par
+        parscale[parscale==0]<-1
         timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale),hessian = FALSE),silent = TRUE))
       }
       if(inherits(optr,"try-error")) warning(optr[1]);
@@ -384,8 +384,8 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
           timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit)),silent = TRUE))
         }
         if(optimizer=="optim") {
-          parscale<-rep(1,length(objr$par))
-          parscale[names(objr$par)=="opt"|names(objr$par)=="tol"]<-par.scale
+          parscale<-objr$par
+          parscale[parscale==0]<-1
           timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale),hessian = FALSE),silent = TRUE))
         }
         if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}

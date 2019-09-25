@@ -27,7 +27,6 @@
 #' @param ridge \code{TRUE} fits a ridge penalty to shrink the latent variable (linear and quadratic effects)
 #' @param ridge.quadratic \code{TRUE} fits a ridge penalty to shrink the quadratic effect of the latent variable
 #' @param config either "optimum" or "quadratic". Defaults to quadratic. Provides an alternative parameterization to the model where the species optima and tolerances are estimated directly. On occassion this provides a better fit.
-#' @param par.scale with config="optimum", rescales tolerances and optima for increased accuracy. Defaults to 0.01.
 #' @details
 #' Fits the species packing model by generalized linear latent variable models with quadratic latent variables.
 #' Method can be used with two types of latent variable models depending on covariates. If only
@@ -202,7 +201,7 @@
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 5, trace = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
     start.fit = NULL, starting.val = "res", TMB = TRUE, optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = T, 
-    ridge.quadratic = F, start.method="CA",config="quadratic", par.scale=0.01) {
+    ridge.quadratic = F, start.method="CA",config="quadratic") {
     constrOpt <- FALSE
     restrict <- 30
     randomX <- NULL
@@ -394,7 +393,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.quadratic.opt(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                                             row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                             n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
-                                            diag.iter = diag.iter, trace = trace, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale)
+                                            diag.iter = diag.iter, trace = trace, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method)
           }else{
             stop(paste(config,"is not a valid configuration"))
           }
