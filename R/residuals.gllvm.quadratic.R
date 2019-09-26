@@ -91,55 +91,29 @@ residuals.gllvm.quadratic <- function(object, ...) {
             if (object$family == "poisson") {
                 a <- ppois(as.vector(unlist(y[i, j])) - 1, mu[i, j])
                 b <- ppois(as.vector(unlist(y[i, j])), mu[i, j])
-                if (a > b) {
-                  u <- runif(n = 1, min = b, max = a)  #temporary bug fix, if a>b which sometimes happens apparently?
-                } else {
                   u <- runif(n = 1, min = a, max = b)
-                }
                 if (u == 1) 
                   u = 1 - 1e-16
                 if (u == 0) 
                   u = 1e-16
                 ds.res[i, j] <- qnorm(u)
             }
-            if (object$family == "negative.binomial") {
-                phis <- object$params$phi + 1e-05
-                a <- pnbinom(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], size = 1/phis[j])
-                b <- pnbinom(as.vector(unlist(y[i, j])), mu = mu[i, j], size = 1/phis[j])
-                if (a > b) {
-                  u <- runif(n = 1, min = b, max = a)  #temporary bug fix, if a>b which sometimes happens apparently?
-                } else {
+            if (object$family == "negative.binomial") {#still fix this, need to find correct size and prob
+                phis <- object$params$phi + 1e-05 # for nb1
+                a <- pnbinom(as.vector(unlist(y[i, j]))-1,size = mu[i, j], prob=(1/(1+1/phis[j])))
+                b <- pnbinom(as.vector(unlist(y[i, j])),size = mu[i, j], prob=(1/(1+1/phis[j])))
                   u <- runif(n = 1, min = a, max = b)
-                }
                 if (u == 1) 
                   u = 1 - 1e-16
                 if (u == 0) 
                   u = 1e-16
                 ds.res[i, j] <- qnorm(u)
             }
-            
-            if (object$family == "ZIP") {
-                a <- pzip(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], sigma = object$params$phi[j])
-                b <- pzip(as.vector(unlist(y[i, j])), mu = mu[i, j], sigma = object$params$phi[j])
-                if (a > b) {
-                  u <- runif(n = 1, min = b, max = a)  #temporary bug fix, if a>b which sometimes happens apparently?
-                } else {
-                  u <- runif(n = 1, min = a, max = b)
-                }
-                if (u == 1) 
-                  u = 1 - 1e-16
-                if (u == 0) 
-                  u = 1e-16
-                ds.res[i, j] <- qnorm(u)
-            }
+
             if (object$family == "binomial") {
                 a <- pbinom(as.vector(unlist(y[i, j])) - 1, 1, mu[i, j])
                 b <- pbinom(as.vector(unlist(y[i, j])), 1, mu[i, j])
-                if (a > b) {
-                  u <- runif(n = 1, min = b, max = a)  #temporary bug fix, if a>b which sometimes happens apparently?
-                } else {
                   u <- runif(n = 1, min = a, max = b)
-                }
                 if (u == 1) 
                   u = 1 - 1e-16
                 if (u == 0) 
@@ -153,7 +127,7 @@ residuals.gllvm.quadratic <- function(object, ...) {
                 probK[1] <- pnorm(object$params$zeta[j, 1] - eta.mat[i, j], log.p = FALSE)
                 probK[max(y[, j]) + 1 - min(y[, j])] <- 1 - pnorm(object$params$zeta[j, max(y[, j]) - min(y[, j])] - eta.mat[i, j])
                 if (max(y[, j]) > 2) {
-                  j.levels <- 2:(max(y[, j]) - min(y[, j]))  #
+                  j.levels <- 2:(max(y[, j]) - min(y[, j]))
                   for (k in j.levels) {
                     probK[k] <- pnorm(object$params$zeta[j, k] - eta.mat[i, j]) - pnorm(object$params$zeta[j, k - 1] - eta.mat[i, 
                       j])
