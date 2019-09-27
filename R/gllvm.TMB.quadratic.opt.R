@@ -226,7 +226,7 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
       if(family == "ordinal") { familyn <- 3}
       if(row.eff=="random"){
         if(ridge==T){
-          if(ride.quadratic==F){
+          if(ridge.quadratic==F){
           objr <- TMB::MakeADFun(
             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=0), silent=TRUE,
             parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),opt = optima, tol = t(tolerances), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
