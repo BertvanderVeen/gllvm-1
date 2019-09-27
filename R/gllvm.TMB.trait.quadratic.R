@@ -3,7 +3,7 @@
 gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, num.lv = 2, family = "poisson", Lambda.struc = "unstructured", 
     row.eff = FALSE, reltol = 1e-06, seed = NULL, maxit = 1000, start.lvs = NULL, offset = NULL, sd.errors = TRUE, trace = trace, 
     n.init = 1, start.params = NULL, start0 = FALSE, optimizer = "optim", starting.val = "res", randomX = NULL, diag.iter = 1, Lambda.start = c(0.1, 
-        0.5), jitter.var = 0, yXT = NULL, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method) {
+        0.5), jitter.var = 0, yXT = NULL, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, parscale=parscale,fnsdcale=fnscale) {
     if (is.null(X) && !is.null(TR)) 
         stop("Unable to fit a model that includes only trait covariates")
     
@@ -395,8 +395,20 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                 silent = TRUE))
         }
         if (optimizer == "optim") {
-            timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr, method = "BFGS", control = list(reltol = reltol, maxit = maxit), 
-                hessian = FALSE), silent = TRUE))
+          if(!is.null(par.scale)){
+            if(par.scale=="coef"){
+              parscale<-objr$par
+              parscale[parscale==0]<-1
+            }else if(is.numeric(par.scale)){
+              parscale<-rep(par.scale,length(objr$par))
+            }
+          }else{
+            parscale <- rep(1,length(objr$par))
+          }
+          if(is.null(fns.cale)|!is.numeric(fn.scale)){
+            fnscale<-1
+          }
+          timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale, fnscale=fnscale),hessian = FALSE),silent = TRUE))
         }
         if (inherits(optr, "try-error")) 
             warning(optr[1])
@@ -491,8 +503,17 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                 timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol)), silent = TRUE))
             }
             if (optimizer == "optim") {
-                timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr, method = "BFGS", control = list(reltol = reltol, 
-                  maxit = maxit), hessian = FALSE), silent = TRUE))
+              if(!is.null(par.scale)){
+                if(par.scale=="coef"){
+                  parscale<-objr$par
+                  parscale[parscale==0]<-1
+                }else if(is.numeric(par.scale)){
+                  parscale<-rep(par.scale,length(objr$par))
+                }
+              }else{
+                parscale <- rep(1,length(objr$par))
+              }
+              timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale, fnscale=fnscale),hessian = FALSE),silent = TRUE))
             }
             if (inherits(optr, "try-error")) {
                 optr <- optr1
