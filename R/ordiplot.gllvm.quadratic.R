@@ -12,7 +12,7 @@
 #' @param s.colors colors for sites
 #' @param symbols logical, if \code{TRUE} sites are plotted using symbols, if \code{FALSE} (default) site numbers are used
 #' @param cex.spp size of species labels in biplot
-#' @param hill logical, if TRUE and \code{bell = TRUE} scales optima by tolerances per lV (i.e. gives bell-curves of unit variance)
+#' @param scale For 2D plots, either "species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
 #' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with (scaled) predicted optima and 95% of the predicted environmental ranges (2D)
 #' @param env.ranges logical, if TRUE plots predicted species distributions in 2D
 #' @param type when predicting bell-shapes, can be used to predict on the response or link scale. Default is response.
@@ -49,7 +49,7 @@
 #'@export
 #'@export ordiplot.gllvm.quadratic
 ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, jitter = FALSE, 
-    jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE, hill = F,env.ranges=T, type = "response", intercept = TRUE, legend=FALSE,...) {
+    jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE,env.ranges=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale="species",...) {
     if (any(class(object) != "gllvm.quadratic")) 
         stop("Class of the object isn't 'gllvm.quadratic'.")
     a <- jitter.amount
@@ -176,8 +176,8 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             abline(v = 0, h = 1, col = "black", lty = "dashed")
             text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
         } else if (length(which.lvs) > 1 & object$num.lv > 1) {
-            optima <- -scale(object$params$theta[, 1:object$num.lv, drop = F][1:ind.spp, which.lvs, drop = F])/(2 * scale(object$params$theta[1:ind.spp, -c(1:object$num.lv), 
-                drop = F][, which.lvs, drop = F]))
+            optima <- -object$params$theta[, 1:object$num.lv, drop = F][1:ind.spp, which.lvs, drop = F]/(2 * object$params$theta[1:ind.spp, -c(1:object$num.lv), 
+                drop = F][, which.lvs, drop = F])
             quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][1:ind.spp, which.lvs, drop = F]
             quadr.coef[which(round(quadr.coef, 4) == 0)] <- 0
             excl <- which(sapply(1:nrow(quadr.coef), function(j) any(quadr.coef[j, ] == 0)))
@@ -189,24 +189,41 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
                 quadr.coef <- quadr.coef[-excl, , drop = F]
                 
             }
-            tolerances <- scale(1/sqrt(-2 * quadr.coef))
-            if (hill == T) {
-                optima <- optima/tolerances
-                lvs <- object$lvs/apply(tolerances, 2, mean)
-                tolerances <- tolerances/tolerances
-            } else {
-                lvs <- object$lvs
+            lvs <- object$lvs
+            tolerances <- 1/sqrt(-2 * quadr.coef)
+            if(scale=="species"){
+              optima <- optima/(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
+              env.upper <-  env.upper / (getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
+              env.lower <-  env.lower / (getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
+            }else if(scale=="sites"){
+              lvs<-lvs/(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
+            }else if (scale == "tolerances") {
+              optima <- optima/tolerances
+              lvs <- lvs/apply(tolerances, 2, mean)
+              tolerances <- tolerances/tolerances
             }
-            env.lower <- optima - 3 * tolerances
-            env.upper <- optima + 3 * tolerances
+
             
-            plot(rbind(rbind(env.lower, env.upper), rbind(env.lower, env.upper)), xlab = paste("Latent variable ", which.lvs[1]), 
-                ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
+            env.lower <- optima - 1.96 * tolerances
+            env.upper <- optima + 1.96 * tolerances
             
+            if(env.ranges==F){
+              plot(rbind(optima, lvs), xlab = paste("Latent variable ", which.lvs[1]), 
+                   ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
+            }else{
+              plot(rbind(rbind(env.lower, env.upper), rbind(env.lower, env.upper)), xlab = paste("Latent variable ", which.lvs[1]), 
+                   ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
+            }
+            
+            
+            if(is.null(row.names(object$y))){
+              row.names(object$y)<-1:nrow(object$y)
+            }
             col <- grDevices::rainbow(nrow(tolerances))
-            text(lvs, labels = row.names(object$y))
-            text(optima, labels = row.names(optima), col = col)
             
+            
+            text(lvs, labels = row.names(object$y),col="gray")
+            text(optima, labels = row.names(optima), col = col)
             env.range <- env.upper - env.lower
             if(env.ranges==T){
               for (j in 1:nrow(optima)) {
