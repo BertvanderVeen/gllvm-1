@@ -179,7 +179,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             optima <- -object$params$theta[, 1:object$num.lv, drop = F][1:ind.spp, which.lvs, drop = F]/(2 * object$params$theta[1:ind.spp, -c(1:object$num.lv), 
                 drop = F][, which.lvs, drop = F])
             quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][1:ind.spp, which.lvs, drop = F]
-            quadr.coef[which(round(quadr.coef, 4) == 0)] <- 0
+            quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
             excl <- which(sapply(1:nrow(quadr.coef), function(j) any(quadr.coef[j, ] == 0)))
             
             if (any(excl)) {
