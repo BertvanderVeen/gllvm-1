@@ -106,7 +106,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             }
             
             if (biplot) {
-                largest.lnorms <- order(apply(object$params$theta[, -c(which.lvs, which.lvs * 2)]^2, 1, sum), decreasing = TRUE)[1:ind.spp]
+                largest.lnorms <- order(apply(object$params$theta^2, 1, sum), decreasing = TRUE)[1:ind.spp]
                 
                 plot(rbind(choose.lvs[, which.lvs], choose.lv.coefs[, which.lvs]), xlab = paste("Latent variable ", which.lvs[1]), 
                   ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
@@ -191,6 +191,8 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             }
             lvs <- object$lvs
             tolerances <- 1/sqrt(-2 * quadr.coef)
+            env.lower <- optima - 1.96 * tolerances
+            env.upper <- optima + 1.96 * tolerances
             if(scale=="species"){
               optima <- optima/(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
               env.upper <-  env.upper / (getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
@@ -202,10 +204,6 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
               lvs <- lvs/apply(tolerances, 2, mean)
               tolerances <- tolerances/tolerances
             }
-
-            
-            env.lower <- optima - 1.96 * tolerances
-            env.upper <- optima + 1.96 * tolerances
             
             if(env.ranges==F){
               plot(rbind(optima, lvs), xlab = paste("Latent variable ", which.lvs[1]), 
