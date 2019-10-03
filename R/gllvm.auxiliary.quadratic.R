@@ -83,11 +83,14 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           fit.mva$phi <- apply(fit.mva$residuals,2,sd)
         }
         gamma=NULL
-        if(start.method=="FA"){
-          lastart <- FAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)  
-        }else{
-          lastart <- CAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)
-        }
+       
+          if(start.method=="FA"){
+            lastart <- FAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)  
+          }else{
+            lastart <- CAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)
+          }
+    
+
         
         gamma<-lastart$gamma
         index<-lastart$index
@@ -248,8 +251,8 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     sig <- sign(diag(gamma.new));
     params[,(ncol(params) - num.lv + 1):ncol(params)] <- t(t(gamma.new)*sig)
     index <- t(t(index)*sig)}, silent = TRUE)
-  
-  lambda2[lambda2==0]<--.5
+  if(!exists("lambda2")){lambda2<-matrix(-.5,p,num.lv)}else{ lambda2[lambda2==0]<--.5}
+ 
   params <- cbind(params,lambda2)
   
   out$params <- params
@@ -331,26 +334,26 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
   
   if(p>2 && n>2){
     if(any(is.nan(resi))){stop("Method 'res' for starting values can not be used, when glms fit too poorly to the data. Try other starting value methods 'zero' or 'random' or change the model.")}
-      if(n>p){
-        fa  <-  try(factanal(resi,factors=num.lv,scores = "regression"))
-        if(inherits(fa,"try-error")) stop("Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
-        gamma<-matrix(fa$loadings,p,num.lv)
-        index <- fa$scores
-      } else if(n<p) {
-        fa  <-  try(factanal(t(resi),factors=num.lv,scores = "regression"))
-        if(inherits(fa,"try-error")) stop("Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
-        gamma<-fa$scores
-        index <- matrix(fa$loadings,n,num.lv)
-      } else {
-        tryfit <- TRUE; tryi <- 1
-        while(tryfit && tryi<5) {
-          fa  <-  try(factanal(rbind(resi,rnorm(p,0,0.01)),factors=num.lv,scores = "regression"), silent = TRUE)
-          tryfit <- inherits(fa,"try-error"); tryi <- tryi + 1;
-        }
-        if(tryfit) stop(attr(fa,"condition")$message, "\n Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
-        gamma<-matrix(fa$loadings,p,num.lv)
-        index <- fa$scores[1:n,]
+    if(n>p){
+      fa  <-  try(factanal(resi,factors=num.lv,scores = "regression"))
+      if(inherits(fa,"try-error")) stop("Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
+      gamma<-matrix(fa$loadings,p,num.lv)
+      index <- fa$scores
+    } else if(n<p) {
+      fa  <-  try(factanal(t(resi),factors=num.lv,scores = "regression"))
+      if(inherits(fa,"try-error")) stop("Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
+      gamma<-fa$scores
+      index <- matrix(fa$loadings,n,num.lv)
+    } else {
+      tryfit <- TRUE; tryi <- 1
+      while(tryfit && tryi<5) {
+        fa  <-  try(factanal(rbind(resi,rnorm(p,0,0.01)),factors=num.lv,scores = "regression"), silent = TRUE)
+        tryfit <- inherits(fa,"try-error"); tryi <- tryi + 1;
       }
+      if(tryfit) stop(attr(fa,"condition")$message, "\n Factor analysis for calculating starting values failed. Maybe too many latent variables. Try smaller 'num.lv' value or change 'starting.val' to 'zero' or 'random'.")
+      gamma<-matrix(fa$loadings,p,num.lv)
+      index <- fa$scores[1:n,]
+    }
   } else {
     gamma <- matrix(1,p,num.lv)
     gamma[upper.tri(gamma)]=0
@@ -377,13 +380,13 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
     gammascale <- diag(x = 1/sdt, nrow = length(sdi))
     gamma <- gamma%*%gammascale
   }
-    #based on weighted average species SD, see canoco
-    lambda2<-matrix(0,nrow=p,ncol=num.lv)
-    for(j in 1:p){
-      for(q in 1:num.lv){
-        lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
-      }
+  #based on weighted average species SD, see canoco
+  lambda2<-matrix(0,nrow=p,ncol=num.lv)
+  for(j in 1:p){
+    for(q in 1:num.lv){
+      lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
     }
+  }
   # if(!is.null(mu)){
   #   if(family=="poisson"|family=="negative.binomial"){
   #     eta<-log(mu)
@@ -399,67 +402,16 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
   #     for(j in 1:p){
   #         lambda2[j,]<-coef(zetadiv::glm.cons(resi[,j]~-1+index^2+offset(quadratic.start.offset[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family="gaussian"))  #first coefficient the packages thinks is the intercept
   # }
-
+  
   index <- index + mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);
   return(list(index = index, gamma = gamma, lambda2 = lambda2))
 }
 
 
 CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL, 
-                    jitter.var = 0, resi = NULL, start.method=start.method){
+                    jitter.var = 0, start.method=start.method){
   
   n<-NROW(y); p <- NCOL(y)
-  
-  if(is.null(resi)){
-    ds.res <- matrix(NA, n, p)
-    rownames(ds.res) <- rownames(y)
-    colnames(ds.res) <- colnames(y)
-    for (i in 1:n) {
-      for (j in 1:p) {
-        if (family == "poisson") {
-          a <- ppois(as.vector(unlist(y[i, j])) - 1, mu[i,j])
-          b <- ppois(as.vector(unlist(y[i, j])), mu[i,j])
-          u <- runif(n = 1, min = a, max = b)
-          ds.res[i, j] <- qnorm(u)
-        }
-        if (family == "negative.binomial") {
-          phis <- phis + 1e-05
-          a <- pnbinom(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], size = 1/phis[j])
-          b <- pnbinom(as.vector(unlist(y[i, j])), mu = mu[i, j], size = 1/phis[j])
-          u <- runif(n = 1, min = a, max = b)
-          ds.res[i, j] <- qnorm(u)
-        }
-        if (family == "binomial") {
-          a <- pbinom(as.vector(unlist(y[i, j])) - 1, 1, mu[i, j])
-          b <- pbinom(as.vector(unlist(y[i, j])), 1, mu[i, j])
-          u <- runif(n = 1, min = a, max = b)
-          ds.res[i, j] <- qnorm(u)
-        }
-        if (family == "ordinal") {
-          probK <- NULL
-          probK[1] <- pnorm(zeta[j,1]-mu[i,j],log.p = FALSE)
-          probK[max(y[,j])] <- 1 - pnorm(zeta[j,max(y[,j]) - 1] - mu[i,j])
-          if(max(y[,j]) > 2) {
-            j.levels <- 2:(max(y[,j])-1)
-            for(k in j.levels) { probK[k] <- pnorm(zeta[j,k] - mu[i,j]) - pnorm(zeta[j,k - 1] - mu[i,j]) }
-          }
-          probK <- c(0,probK)
-          cumsum.b <- sum(probK[1:(y[i,j]+1)])
-          cumsum.a <- sum(probK[1:(y[i,j])])
-          u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
-          if (abs(u - 1) < 1e-05)
-            u <- 1
-          if (abs(u - 0) < 1e-05)
-            u <- 0
-          ds.res[i, j] <- qnorm(u)
-        }
-      }
-    }
-  } else {
-    ds.res <- resi
-  }
-  resi <- as.matrix(ds.res); resi[is.infinite(resi)] <- 0; resi[is.nan(resi)] <- 0
-  
   
   if(is.null(mu)){
     eta<-matrix(0,n,p)
@@ -469,14 +421,13 @@ CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
     eta<-pnorm(mu)
   }
   if(p>2 && n>2){
-    if(any(is.nan(resi))){stop("Method 'res' for starting values can not be used, when glms fit too poorly to the data. Try other starting value methods 'zero' or 'random' or change the model.")}
     ca  <-  try(vegan::cca(y,Z=eta))
     if(inherits(ca,"try-error")) stop("Correspondence analysis for calculating starting values failed. Maybe rows that sum to zero, remove these.")
     tol<-vegan::tolerance(ca,choices=1:num.lv)
     lambda2<--0.5/tol^2
     gamma <- 1/tol^2*vegan::scores(ca,choices=1:num.lv)$species
     index <- vegan::scores(ca,choices=1:num.lv)$sites
-
+    
   } else {
     gamma <- matrix(1,p,num.lv)
     gamma[upper.tri(gamma)]<- 0
