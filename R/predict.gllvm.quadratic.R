@@ -62,8 +62,8 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
     n <- max(nrow(object$y), nrow(newdata), nrow(newLV))
     if (!is.null(newdata)) 
         n <- nrow(newdata)
-    if (is.null(newdata) && !is.null(object$X) && !is.null(newLV) && (nrow(newLV) != nrow(object$y))) 
-        stop("Number of rows in newLV must equal to the number of rows in the response matrix, if environmental variables are included in the model and newX is not included.")
+    if (is.null(newdata) && !is.null(object$X) && !is.null(newLV) && (nrow(newLV) != nrow(object$y)) & LVonly == F) 
+        stop("Number of rows in newLV must equal the number of rows in the response matrix, if environmental variables are included in the model and newX is not included.")
     
     formula <- formula(terms(object))
     eta <- matrix(0, n, p)
@@ -175,8 +175,8 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
             # if(ncol(newLV) != object$num.lv) stop('Number of latent variables in input doesn't equal to the number of latent variables in
             # the model.')
             if (!is.null(newdata)) {
-                if (nrow(newLV) != nrow(Xnew)) 
-                  stop("Number of rows in newLV must equal to the number of rows in newX, if newX is included, otherwise same as number of rows in the response matrix.")
+                if (nrow(newLV) != nrow(Xnew) & LVonly == F) 
+                  stop("Number of rows in newLV must equal the number of rows in newX, if newX is included, and LVonly=F.")
             }
             lvs <- newLV
             eta <- eta + lvs[, , drop = F] %*% t(theta[, -c(object$num.lv + object$num.lv), drop = F][, which.lvs, drop = F]) + lvs[, 
