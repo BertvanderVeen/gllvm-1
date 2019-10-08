@@ -91,7 +91,11 @@ residuals.gllvm.quadratic <- function(object, ...) {
             if (object$family == "poisson") {
                 a <- ppois(as.vector(unlist(y[i, j])) - 1, mu[i, j])
                 b <- ppois(as.vector(unlist(y[i, j])), mu[i, j])
-                  u <- runif(n = 1, min = a, max = b)
+                  if(a<b){
+                    u <- runif(n = 1, min = a, max = b)
+                  }else{
+                    u <- runif(n = 1, min = b, max = a)
+                  }
                 if (u == 1) 
                   u = 1 - 1e-16
                 if (u == 0) 
@@ -103,6 +107,11 @@ residuals.gllvm.quadratic <- function(object, ...) {
                 a <- pnbinom(as.vector(unlist(y[i, j]))-1,size = mu[i, j], prob=(1/(1+1/phis[j])))
                 b <- pnbinom(as.vector(unlist(y[i, j])),size = mu[i, j], prob=(1/(1+1/phis[j])))
                   u <- runif(n = 1, min = a, max = b)
+                  if(a<b){
+                    u <- runif(n = 1, min = a, max = b)
+                  }else{
+                    u <- runif(n = 1, min = b, max = a)
+                  }
                 if (u == 1) 
                   u = 1 - 1e-16
                 if (u == 0) 
@@ -114,6 +123,11 @@ residuals.gllvm.quadratic <- function(object, ...) {
                 a <- pbinom(as.vector(unlist(y[i, j])) - 1, 1, mu[i, j])
                 b <- pbinom(as.vector(unlist(y[i, j])), 1, mu[i, j])
                   u <- runif(n = 1, min = a, max = b)
+                  if(a<b){
+                    u <- runif(n = 1, min = a, max = b)
+                  }else{
+                    u <- runif(n = 1, min = b, max = a)
+                  }
                 if (u == 1) 
                   u = 1 - 1e-16
                 if (u == 0) 
@@ -137,6 +151,11 @@ residuals.gllvm.quadratic <- function(object, ...) {
                 cumsum.b <- sum(probK[1:(y[i, j] + 2 - min(y[, j]))])
                 cumsum.a <- sum(probK[1:(y[i, j])])
                 u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
+                if(cumsum.a<cumsum.b){
+                  u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
+                }else{
+                  u <- runif(n = 1, min = cumsum.b, max = cumsum.a)
+                }
                 if (abs(u - 1) < 1e-05) 
                   u <- 1
                 if (abs(u - 0) < 1e-05) 
