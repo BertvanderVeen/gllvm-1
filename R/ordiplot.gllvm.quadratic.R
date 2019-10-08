@@ -13,7 +13,7 @@
 #' @param symbols logical, if \code{TRUE} sites are plotted using symbols, if \code{FALSE} (default) site numbers are used
 #' @param cex.spp size of species labels in biplot
 #' @param scale For 2D plots, either "species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
-#' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with (scaled) predicted optima and 95% of the predicted environmental ranges (2D)
+#' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with (scaled) predicted optima and 95 percent of the predicted environmental ranges (2D)
 #' @param env.ranges logical, if TRUE plots predicted species distributions in 2D
 #' @param type when predicting bell-shapes, can be used to predict on the response or link scale. Default is response.
 #' @param intercept when predicting bell-shapes, can be used to include species-intercepts in the plot. Default is TRUE
@@ -106,7 +106,8 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             }
             
             if (biplot) {
-                largest.lnorms <- order(apply(object$params$theta^2, 1, sum), decreasing = TRUE)[1:ind.spp]
+                resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
+                largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
                 
                 plot(rbind(choose.lvs[, which.lvs], choose.lv.coefs[, which.lvs]), xlab = paste("Latent variable ", which.lvs[1]), 
                   ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
@@ -136,10 +137,12 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         }
     } else {
         if (length(which.lvs) == 1) {
+          resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
+          largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
             if (object$num.lv == 1) {
-                quadr.coef <- object$params$theta[1:ind.spp, -1,drop=F]
+                quadr.coef <- object$params$theta[largest.lnorms, -1,drop=F]
             } else {
-                quadr.coef <- object$params$theta[,-c(1:object$num.lv),drop=F][1:ind.spp, which.lvs,drop=F]
+                quadr.coef <- object$params$theta[,-c(1:object$num.lv),drop=F][largest.lnorms, which.lvs,drop=F]
             }
             
             quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
@@ -147,7 +150,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             newLV <- matrix(NA, nrow = 1000, ncol = length(which.lvs))
             newLV[, 1] <- seq(from = min(object$lvs[, which.lvs]), max(object$lvs[, which.lvs]), length.out = 1000)
             
-            mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,1:ind.spp,drop=F]
+            mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
             
             if(legend==F){
               pdf(NULL)
@@ -159,26 +162,25 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             }else{
               plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
             }
-            cols <- (grDevices::rainbow(ncol(mu) + 1)[2:(ncol(mu) + 1)])
+            cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
             if(legend==T){
               legend(x="topleft",text.col=cols,colnames(mu))
             }
             
             for (j in 1:ncol(mu)) {
-                lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[j])
-                col <- col2rgb(cols[j], alpha = TRUE)
-                col[4] <- 127
-                col <- rgb(col[1], col[2], col[3], col[4], maxColorValue = 255)
+                lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[largest.lnorms[j]])
                 if(legend==F){
-                  text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[j], adj = 0)  
+                  text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[largest.lnorms[j]], adj = 0)  
                 }
             }
             abline(v = 0, h = 1, col = "black", lty = "dashed")
             text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
         } else if (length(which.lvs) > 1 & object$num.lv > 1) {
-            optima <- -object$params$theta[, 1:object$num.lv, drop = F][1:ind.spp, which.lvs, drop = F]/(2 * object$params$theta[1:ind.spp, -c(1:object$num.lv), 
+          resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
+          largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
+          optima <- -object$params$theta[, 1:object$num.lv, drop = F][largest.lnorms, which.lvs, drop = F]/(2 * object$params$theta[largest.lnorms, -c(1:object$num.lv), 
                 drop = F][, which.lvs, drop = F])
-            quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][1:ind.spp, which.lvs, drop = F]
+            quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][largest.lnorms, which.lvs, drop = F]
             quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
             excl <- which(sapply(1:nrow(quadr.coef), function(j) any(quadr.coef[j, ] == 0)))
             
@@ -194,11 +196,11 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             env.lower <- optima - 1.96 * tolerances
             env.upper <- optima + 1.96 * tolerances
             if(scale=="species"){
-              optima <- optima/(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
-              env.upper <-  env.upper / (getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
-              env.lower <-  env.lower / (getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
+              optima <- sweep(optima,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
+              env.upper <-  sweep(env.upper,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
+              env.lower <-  sweep(env.lower,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
             }else if(scale=="sites"){
-              lvs<-lvs/(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q))
+              lvs<-sweep(lvs,2, (getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
             }else if (scale == "tolerances") {
               optima <- optima/tolerances
               lvs <- lvs/apply(tolerances, 2, mean)
@@ -209,7 +211,10 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
               plot(rbind(optima, lvs), xlab = paste("Latent variable ", which.lvs[1]), 
                    ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
             }else{
-              plot(rbind(rbind(env.lower, env.upper), rbind(env.lower, env.upper)), xlab = paste("Latent variable ", which.lvs[1]), 
+              env.range <- env.upper - env.lower
+              xlim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[1]],lvs[which.lvs[[1]]]))
+              ylim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[2]],lvs[which.lvs[[2]]]))
+              plot(NA, xlim=xlim,ylim=ylim,xlab = paste("Latent variable ", which.lvs[1]), 
                    ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
             }
             
@@ -217,16 +222,15 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
             if(is.null(row.names(object$y))){
               row.names(object$y)<-1:nrow(object$y)
             }
-            col <- grDevices::rainbow(nrow(tolerances))
+            col <- cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
             
             
             text(lvs, labels = row.names(object$y),col="gray")
-            text(optima, labels = row.names(optima), col = col)
-            env.range <- env.upper - env.lower
+            text(optima, labels = row.names(optima), col = col[largest.lnorms])
             if(env.ranges==T){
               for (j in 1:nrow(optima)) {
                 s = diag(2)
-                car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = col[j], lty = "dashed")
+                car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = col[largest.lnorms[j]], lty = "dashed")
               }
             }
 
