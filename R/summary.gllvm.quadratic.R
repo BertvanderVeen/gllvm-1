@@ -44,7 +44,7 @@ summary.gllvm.quadratic <- function(object, ...) {
     sumry$family <- object$family
     sumry$Coefficients <- M
     sumry$Optima <- opt
-    sumry$Tolerances <- tol
+    sumry$Tolerances <- tol; row.names(tol) <- row.names(opt)
     
     if (!is.null(object$TR)) {
         if (!is.null(object$X)) {

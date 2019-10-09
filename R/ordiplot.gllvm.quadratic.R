@@ -49,202 +49,200 @@
 #'@export
 #'@export ordiplot.gllvm.quadratic
 ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, jitter = FALSE, 
-    jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE,env.ranges=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale="species",...) {
-    if (any(class(object) != "gllvm.quadratic")) 
-        stop("Class of the object isn't 'gllvm.quadratic'.")
-    a <- jitter.amount
-    n <- NROW(object$y)
-    p <- NCOL(object$y)
-    if (!is.null(ind.spp)) {
-        ind.spp <- min(c(p, ind.spp))
+                                     jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE,env.ranges=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale="species",...) {
+  if (any(class(object) != "gllvm.quadratic")) 
+    stop("Class of the object isn't 'gllvm.quadratic'.")
+  a <- jitter.amount
+  n <- NROW(object$y)
+  p <- NCOL(object$y)
+  if (!is.null(ind.spp)) {
+    ind.spp <- min(c(p, ind.spp))
+  } else {
+    ind.spp <- p
+  }
+  if (object$num.lv == 0) 
+    stop("No latent variables to plot.")
+  if (is.null(which.lvs)) {
+    if (object$num.lv > 1) {
+      which.lvs <- 1:2
     } else {
-        ind.spp <- p
+      which.lvs <- 1
     }
-    if (object$num.lv == 0) 
-        stop("No latent variables to plot.")
-    if (is.null(which.lvs)) {
-        if (object$num.lv > 1) {
-            which.lvs <- 1:2
-        } else {
-            which.lvs <- 1
-        }
+  }
+  if (is.null(rownames(object$params$theta))) 
+    rownames(object$params$theta) = paste("V", 1:p)
+  
+  if (bell == F) {
+    if (length(which.lvs) == 1) {
+      plot(1:n, object$lvs[, which.lvs], ylab = "LV1", xlab = "Row index")
     }
-    if (is.null(rownames(object$params$theta))) 
-        rownames(object$params$theta) = paste("V", 1:p)
     
-    if (bell == F) {
-        if (length(which.lvs) == 1) {
-            plot(1:n, object$lvs[, which.lvs], ylab = "LV1", xlab = "Row index")
-        }
+    if (length(which.lvs) > 1) {
+      testcov <- predict(object, LVonly = T)
+      do.svd <- svd(testcov, length(which.lvs), length(which.lvs))
+      choose.lvs <- do.svd$u * matrix(do.svd$d[1:length(which.lvs)]^alpha, nrow = n, ncol = length(which.lvs), byrow = TRUE)
+      choose.lv.coefs <- do.svd$v * matrix(do.svd$d[1:length(which.lvs)]^(1 - alpha), nrow = p, ncol = length(which.lvs), byrow = TRUE)
+      
+      
+      if (!biplot) {
+        sdd <- diag(sqrt(diag(cov(object$lvs[, which.lvs]))), nrow = length(which.lvs))
+        choose.lvs <- scale(choose.lvs) %*% sdd
+        plot(choose.lvs[, which.lvs], xlab = paste("Latent variable ", which.lvs[1]), ylab = paste("Latent variable ", which.lvs[2]), 
+             main = main, type = "n", ...)
+        if (!jitter) 
+          if (symbols) {
+            points(choose.lvs[, which.lvs], col = s.colors, ...)
+          } else {
+            text(choose.lvs[, which.lvs], label = 1:n, cex = 1.2, col = s.colors)
+          }
+        if (jitter) 
+          if (symbols) {
+            points(choose.lvs[, which.lvs][, 1] + runif(n, -a, a), choose.lvs[, which.lvs][, 2] + runif(n, -a, a), col = s.colors, 
+                   ...)
+          } else {
+            text((choose.lvs[, which.lvs][, 1] + runif(n, -a, a)), (choose.lvs[, which.lvs][, 2] + runif(n, -a, a)), label = 1:n, 
+                 cex = 1.2, col = s.colors)
+          }
+      }
+      
+      if (biplot) {
+        resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
+        largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
         
-        if (length(which.lvs) > 1) {
-            testcov <- predict(object, LVonly = T)
-            do.svd <- svd(testcov, length(which.lvs), length(which.lvs))
-            choose.lvs <- do.svd$u * matrix(do.svd$d[1:length(which.lvs)]^alpha, nrow = n, ncol = length(which.lvs), byrow = TRUE)
-            choose.lv.coefs <- do.svd$v * matrix(do.svd$d[1:length(which.lvs)]^(1 - alpha), nrow = p, ncol = length(which.lvs), byrow = TRUE)
-            
-            
-            if (!biplot) {
-                sdd <- diag(sqrt(diag(cov(object$lvs[, which.lvs]))), nrow = length(which.lvs))
-                choose.lvs <- scale(choose.lvs) %*% sdd
-                plot(choose.lvs[, which.lvs], xlab = paste("Latent variable ", which.lvs[1]), ylab = paste("Latent variable ", which.lvs[2]), 
-                  main = main, type = "n", ...)
-                if (!jitter) 
-                  if (symbols) {
-                    points(choose.lvs[, which.lvs], col = s.colors, ...)
-                  } else {
-                    text(choose.lvs[, which.lvs], label = 1:n, cex = 1.2, col = s.colors)
-                  }
-                if (jitter) 
-                  if (symbols) {
-                    points(choose.lvs[, which.lvs][, 1] + runif(n, -a, a), choose.lvs[, which.lvs][, 2] + runif(n, -a, a), col = s.colors, 
-                      ...)
-                  } else {
-                    text((choose.lvs[, which.lvs][, 1] + runif(n, -a, a)), (choose.lvs[, which.lvs][, 2] + runif(n, -a, a)), label = 1:n, 
-                      cex = 1.2, col = s.colors)
-                  }
-            }
-            
-            if (biplot) {
-                resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
-                largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
-                
-                plot(rbind(choose.lvs[, which.lvs], choose.lv.coefs[, which.lvs]), xlab = paste("Latent variable ", which.lvs[1]), 
-                  ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
-                
-                if (!jitter) {
-                  if (symbols) {
-                    points(choose.lvs[, which.lvs], col = s.colors, ...)
-                  } else {
-                    text(choose.lvs[, which.lvs], label = 1:n, cex = 1.2, col = s.colors)
-                  }
-                  text(matrix(choose.lv.coefs[largest.lnorms, which.lvs], nrow = length(largest.lnorms)), label = rownames(object$params$theta)[largest.lnorms], 
-                    col = 4, cex = cex.spp)
-                }
-                if (jitter) {
-                  if (symbols) {
-                    points(choose.lvs[, which.lvs[1]] + runif(n, -a, a), (choose.lvs[, which.lvs[2]] + runif(n, -a, a)), col = s.colors, 
-                      ...)
-                  } else {
-                    text((choose.lvs[, which.lvs[1]] + runif(n, -a, a)), (choose.lvs[, which.lvs[2]] + runif(n, -a, a)), label = 1:n, 
-                      cex = 1.2, col = s.colors)
-                  }
-                  text((matrix(choose.lv.coefs[largest.lnorms, which.lvs], nrow = length(largest.lnorms)) + runif(2 * length(largest.lnorms), 
-                    -a, a)), label = rownames(object$params$theta)[largest.lnorms], col = 4, cex = cex.spp)
-                }
-            }
-            
+        plot(rbind(choose.lvs[, which.lvs], choose.lv.coefs[, which.lvs]), xlab = paste("Latent variable ", which.lvs[1]), 
+             ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
+        
+        if (!jitter) {
+          if (symbols) {
+            points(choose.lvs[, which.lvs], col = s.colors, ...)
+          } else {
+            text(choose.lvs[, which.lvs], label = 1:n, cex = 1.2, col = s.colors)
+          }
+          text(matrix(choose.lv.coefs[largest.lnorms, which.lvs], nrow = length(largest.lnorms)), label = rownames(object$params$theta)[largest.lnorms], 
+               col = 4, cex = cex.spp)
         }
-    } else {
-        if (length(which.lvs) == 1) {
-          resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
-          largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
-            if (object$num.lv == 1) {
-                quadr.coef <- object$params$theta[largest.lnorms, -1,drop=F]
-            } else {
-                quadr.coef <- object$params$theta[,-c(1:object$num.lv),drop=F][largest.lnorms, which.lvs,drop=F]
-            }
-            
-            quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
-            
-            newLV <- matrix(NA, nrow = 1000, ncol = length(which.lvs))
-            newLV[, 1] <- seq(from = min(object$lvs[, which.lvs]), max(object$lvs[, which.lvs]), length.out = 1000)
-            
-            mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
-            
-            if(legend==F){
-              pdf(NULL)
-              plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
-              maxstr<-max(strwidth(colnames(mu)))*1.25  
-              invisible(dev.off())
-                                                                                                             
-              plot(NA, xlim = c(min(newLV), max(newLV)+maxstr), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
-            }else{
-              plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
-            }
-            cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
-            if(legend==T){
-              legend(x="topleft",text.col=cols,colnames(mu))
-            }
-            
-            for (j in 1:ncol(mu)) {
-                lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[largest.lnorms[j]])
-                if(legend==F){
-                  text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[largest.lnorms[j]], adj = 0)  
-                }
-            }
-            abline(v = 0, h = 1, col = "black", lty = "dashed")
-            text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
-        } else if (length(which.lvs) > 1 & object$num.lv > 1) {
-          resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
-          largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
-          optima <- -object$params$theta[, 1:object$num.lv, drop = F][largest.lnorms, which.lvs, drop = F]/(2 * object$params$theta[largest.lnorms, -c(1:object$num.lv), 
-                drop = F][, which.lvs, drop = F])
-            quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][largest.lnorms, which.lvs, drop = F]
-            quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
-            excl <- which(sapply(1:nrow(quadr.coef), function(j) any(quadr.coef[j, ] == 0)))
-            
-            if (any(excl)) {
-                message(paste("The species", paste(row.names(quadr.coef[excl, ]), collapse = ", "), "lack a quadratic response on the chosen LV(s) and won't be plotted.", 
-                  sep = " "))
-                optima <- optima[-excl, , drop = F]
-                quadr.coef <- quadr.coef[-excl, , drop = F]
-                
-            }
-            lvs <- object$lvs
-            tolerances <- 1/sqrt(-2 * quadr.coef)
-            env.lower <- optima - 1.96 * tolerances
-            env.upper <- optima + 1.96 * tolerances
-            if(scale=="species"){
-              optima <- sweep(optima,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
-              env.upper <-  sweep(env.upper,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
-              env.lower <-  sweep(env.lower,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
-            }else if(scale=="sites"){
-              lvs<-sweep(lvs,2, (getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
-            }else if (scale == "tolerances") {
-              optima <- optima/tolerances
-              lvs <- lvs/apply(tolerances, 2, mean)
-              tolerances <- tolerances/tolerances
-            }
-            
-            if(env.ranges==F){
-              plot(rbind(optima, lvs), xlab = paste("Latent variable ", which.lvs[1]), 
-                   ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
-            }else{
-              env.range <- env.upper - env.lower
-              xlim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[1]],lvs[which.lvs[[1]]]))
-              ylim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[2]],lvs[which.lvs[[2]]]))
-              plot(NA, xlim=xlim,ylim=ylim,xlab = paste("Latent variable ", which.lvs[1]), 
-                   ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
-            }
-            
-            
-            if(is.null(row.names(object$y))){
-              row.names(object$y)<-1:nrow(object$y)
-            }
-            col <- cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
-            
-            
-            text(lvs, labels = row.names(object$y),col="gray")
-            text(optima, labels = row.names(optima), col = col[largest.lnorms])
-            if(env.ranges==T){
-              for (j in 1:nrow(optima)) {
-                s = diag(2)
-                car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = col[largest.lnorms[j]], lty = "dashed")
-              }
-            }
-
-            
-            
-        } else {
-            stop("Not enough LVs for a biplot")
+        if (jitter) {
+          if (symbols) {
+            points(choose.lvs[, which.lvs[1]] + runif(n, -a, a), (choose.lvs[, which.lvs[2]] + runif(n, -a, a)), col = s.colors, 
+                   ...)
+          } else {
+            text((choose.lvs[, which.lvs[1]] + runif(n, -a, a)), (choose.lvs[, which.lvs[2]] + runif(n, -a, a)), label = 1:n, 
+                 cex = 1.2, col = s.colors)
+          }
+          text((matrix(choose.lv.coefs[largest.lnorms, which.lvs], nrow = length(largest.lnorms)) + runif(2 * length(largest.lnorms), 
+                                                                                                          -a, a)), label = rownames(object$params$theta)[largest.lnorms], col = 4, cex = cex.spp)
         }
+      }
+      
     }
+  } else {
+    if (length(which.lvs) == 1) {
+      resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
+      largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
+      if (object$num.lv == 1) {
+        quadr.coef <- object$params$theta[largest.lnorms, -1,drop=F]
+      } else {
+        quadr.coef <- object$params$theta[,-c(1:object$num.lv),drop=F][largest.lnorms, which.lvs,drop=F]
+      }
+      
+      quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
+      
+      newLV <- matrix(NA, nrow = 1000, ncol = length(which.lvs))
+      newLV[, 1] <- seq(from = min(object$lvs[, which.lvs]), max(object$lvs[, which.lvs]), length.out = 1000)
+      
+      mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
+      
+      if(legend==F){
+        pdf(NULL)
+        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+        maxstr<-max(strwidth(colnames(mu)))*1.25  
+        invisible(dev.off())
+        
+        plot(NA, xlim = c(min(newLV), max(newLV)+maxstr), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+      }else{
+        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+      }
+      cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
+      if(legend==T){
+        legend(x="topleft",text.col=cols[largest.lnorms],colnames(mu))
+      }
+      
+      for (j in 1:ncol(mu)) {
+        lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[largest.lnorms[j]])
+        if(legend==F){
+          text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[largest.lnorms[j]], adj = 0)  
+        }
+      }
+      abline(v = 0, h = 1, col = "black", lty = "dashed")
+      text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
+    } else if (length(which.lvs) > 1 & object$num.lv > 1) {
+      resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
+      largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
+      optima <- -object$params$theta[, 1:object$num.lv, drop = F][largest.lnorms, which.lvs, drop = F]/(2 * object$params$theta[largest.lnorms, -c(1:object$num.lv), 
+                                                                                                                                drop = F][, which.lvs, drop = F])
+      quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][largest.lnorms, which.lvs, drop = F]
+      quadr.coef[which(round(quadr.coef, 2) == 0)] <- 0
+      excl <- which(sapply(1:nrow(quadr.coef), function(j) any(quadr.coef[j, ] == 0)))
+      
+      if (any(excl)) {
+        message(paste("The species", paste(row.names(quadr.coef[excl, ]), collapse = ", "), "lack a quadratic response on the chosen LV(s) and won't be plotted.", 
+                      sep = " "))
+        optima <- optima[-excl, , drop = F]
+        quadr.coef <- quadr.coef[-excl, , drop = F]
+        
+      }
+      lvs <- object$lvs
+      tolerances <- 1/sqrt(-2 * quadr.coef)
+      if(scale=="species"){
+        optima <- sweep(optima,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
+        tolerances <-  sweep(tolerances,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
+      }else if(scale=="sites"){
+        lvs<-sweep(lvs,2, (getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
+      }else if (scale == "tolerances") {
+        optima <- optima/tolerances
+        lvs <- lvs/apply(tolerances, 2, mean)
+        tolerances <- tolerances/tolerances
+      }
+      env.lower <- optima - 1.96 * tolerances
+      env.upper <- optima + 1.96 * tolerances
+      if(env.ranges==F){
+        plot(rbind(optima, lvs), xlab = paste("Latent variable ", which.lvs[1]), 
+             ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
+      }else{
+        env.range <- env.upper - env.lower
+        xlim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[1]],lvs[which.lvs[[1]]]))
+        ylim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[2]],lvs[which.lvs[[2]]]))
+        plot(NA, xlim=xlim,ylim=ylim,xlab = paste("Latent variable ", which.lvs[1]), 
+             ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
+      }
+      
+      
+      if(is.null(row.names(object$y))){
+        row.names(object$y)<-1:nrow(object$y)
+      }
+      col <- cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
+      
+      
+      text(lvs, labels = row.names(object$y),col="gray")
+      text(optima, labels = row.names(optima), col = col[largest.lnorms])
+      if(env.ranges==T){
+        for (j in 1:nrow(optima)) {
+          s = diag(2)
+          car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = col[largest.lnorms[j]], lty = "dashed")
+        }
+      }
+      
+      
+      
+    } else {
+      stop("Not enough LVs for a biplot")
+    }
+  }
 }
 
 
 #'@export ordiplot
 ordiplot <- function(object, ...) {
-    UseMethod(generic = "ordiplot")
+  UseMethod(generic = "ordiplot")
 }
 

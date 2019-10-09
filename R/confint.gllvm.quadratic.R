@@ -48,7 +48,7 @@ confint.gllvm.quadratic <- function(object, parm = NULL, level = 0.95, ...) {
         M <- cbind(cilow, ciup)
         
         colnames(M) <- c(paste(alfa * 100, "%"), paste((1 - alfa) * 100, "%"))
-        rnames <- names(unlist(object$params))
+        rnames <- names(unlist(object$params[parmincl]))
         cal <- 0
         if (num.lv > 0) {
             nr <- rep(1:num.lv, each = p)
