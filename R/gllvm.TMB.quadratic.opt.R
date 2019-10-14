@@ -463,6 +463,7 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
     
     
     if(((n.i==1 || out$logL > abs(new.loglik)) && new.loglik>0) && !inherits(optr, "try-error")){
+      out$convergence <- optr$convergence
       out$start <- fit
       objr1 <- objr; optr1=optr;
       out$logL <- new.loglik

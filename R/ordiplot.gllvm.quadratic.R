@@ -23,7 +23,7 @@
 #' @details
 #' Function constructs a scatter plot of two latent variables, i.e. an ordination plot. If only one latent
 #' variable is in the fitted model, latent variables are plotted against their row indices \code{bell=F}.
-#' or if \code{bell=T} against their marginal predictions on the link scale.
+#' or if \code{bell=T} against their predictions.
 #'
 #' Coefficients related to latent variables are plotted in the same figure with the latent
 #' variables if \code{biplot = TRUE, bell = F}. They are labeled using the column names of y. The number
@@ -154,13 +154,13 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       
       if(legend==F){
         pdf(NULL)
-        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
         maxstr<-max(strwidth(colnames(mu)))*1.25  
         invisible(dev.off())
         
-        plot(NA, xlim = c(min(newLV), max(newLV)+maxstr), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+        plot(NA, xlim = c(min(newLV), max(newLV)+maxstr), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
       }else{
-        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "(marginal) Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
       }
       cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
       if(legend==T){
@@ -173,22 +173,26 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
           text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[largest.lnorms[j]], adj = 0)  
         }
       }
-      abline(v = 0, h = 1, col = "black", lty = "dashed")
       text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
     } else if (length(which.lvs) > 1 & object$num.lv > 1) {
       resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
       largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
       optima <- -object$params$theta[, 1:object$num.lv, drop = F][largest.lnorms, which.lvs, drop = F]/(2 * object$params$theta[largest.lnorms, -c(1:object$num.lv), 
                                                                                                                                 drop = F][, which.lvs, drop = F])
+      row.names(optima)<-colnames(object$y)[]
       quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][largest.lnorms, which.lvs, drop = F]
       quadr.coef[which(round(quadr.coef, 2) == 0)] <- 0
       excl <- which(sapply(1:nrow(quadr.coef), function(j) any(quadr.coef[j, ] == 0)))
       
-      if (any(excl)) {
-        message(paste("The species", paste(row.names(quadr.coef[excl, ]), collapse = ", "), "lack a quadratic response on the chosen LV(s) and won't be plotted.", 
-                      sep = " "))
-        optima <- optima[-excl, , drop = F]
-        quadr.coef <- quadr.coef[-excl, , drop = F]
+      if (length(excl)!=0) {
+        if(length(excl)==ncol(object$y)){
+          stop("No species show a quadratic response, can't plot species optima.")
+        }else{
+          message(paste("The species", paste(row.names(quadr.coef[excl, ]), collapse = ", "), "lack a quadratic response on the chosen LV(s) and won't be plotted.", 
+                        sep = " "))
+          optima <- optima[-excl, , drop = F]
+          quadr.coef <- quadr.coef[-excl, , drop = F] 
+        }
         
       }
       lvs <- object$lvs

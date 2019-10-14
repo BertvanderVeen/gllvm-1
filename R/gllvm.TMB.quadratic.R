@@ -150,7 +150,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if (any(phis > 20))
         phis[phis > 20] <- 20
       if (any(phis < 0.20))
-        phis[phis < 0.05] <- 0.05
+        phis[phis < 0.2] <- 0.2
       fit$phi <- phis
       phis <- 1/phis
     } 
@@ -443,7 +443,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         
       
       new.loglik <- objr$env$value.best[1]
-      if(family %in% c("negative.binomial","gaussian")) {
+      if(family == "negative.binomial") { 
         phis <- exp(param[names(param)=="lg_phi"])
       }
       if(family == "ordinal"){
@@ -453,6 +453,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     
     
     if(((n.i==1 || out$logL > abs(new.loglik)) && new.loglik>0) && !inherits(optr, "try-error")){
+      out$convergence <- optr$convergence
       out$start <- fit
       objr1 <- objr; optr1=optr;
       out$logL <- new.loglik

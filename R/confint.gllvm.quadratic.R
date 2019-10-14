@@ -50,13 +50,11 @@ confint.gllvm.quadratic <- function(object, parm = NULL, level = 0.95, ...) {
         colnames(M) <- c(paste(alfa * 100, "%"), paste((1 - alfa) * 100, "%"))
         rnames <- names(unlist(object$params[parmincl]))
         cal <- 0
-        if (num.lv > 0) {
-            nr <- rep(1:num.lv, each = p)
-            nc <- rep(1:p, num.lv)
-            rnames[1:(num.lv * p * 2)] <- c(paste(paste("theta.LV", nr, sep = ""), nc, sep = "."), paste(paste("theta.LV", nr, "^2", 
+        nr <- rep(1:num.lv, each = p)
+        nc <- rep(1:p, num.lv)
+        rnames[1:(num.lv * p * 2)] <- c(paste(paste("theta.LV", nr, sep = ""), nc, sep = "."), paste(paste("theta.LV", nr, "^2", 
                 sep = ""), nc, sep = "."))
-            cal <- cal + num.lv * p * 2
-        }
+        cal <- cal + num.lv * p * 2
         rnames[(cal + 1):(cal + p)] <- paste("Intercept", names(object$params$beta0), sep = ".")
         cal <- cal + p
         if (!is.null(object$TR)) {
@@ -97,7 +95,7 @@ confint.gllvm.quadratic <- function(object, parm = NULL, level = 0.95, ...) {
             rnames[(cal + 1):s] <- paste("Standard deviations phi", names(object$params$phi), sep = ".")
         }
         rownames(M) <- rnames
-    } else {
+    } else {#the rowname still needs to be formatted here
         if ("beta0" %in% parm) {
             object$params$Intercept = object$params$beta0
             object$sd$Intercept = object$sd$beta0
@@ -106,7 +104,7 @@ confint.gllvm.quadratic <- function(object, parm = NULL, level = 0.95, ...) {
         cilow <- unlist(object$params[parm]) + qnorm(alfa) * unlist(object$sd[parm])
         ciup <- unlist(object$params[parm]) + qnorm(1 - alfa) * unlist(object$sd[parm])
         M <- cbind(cilow, ciup)
-        
+        colnames(M) <- c(paste(alfa * 100, "%"), paste((1 - alfa) * 100, "%"))
     }
     return(M)
 }

@@ -591,6 +591,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
         
         
         if ((n.i == 1 || out$logL > (new.loglik)) && is.finite(new.loglik) && !inherits(optr, "try-error")) {
+            out$convergence <- optr$convergence
             objr1 <- objr
             optr1 <- optr
             out$logL <- new.loglik

@@ -202,8 +202,8 @@
 
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 5, trace = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
-    start.fit = NULL, starting.val = "res", TMB = TRUE, optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = T, 
-    ridge.quadratic = F, start.method="FA",config="quadratic", par.scale="coef", fn.scale=0.01) {
+    start.fit = NULL, starting.val = "res", TMB = TRUE, optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
+    ridge.quadratic = FALSE, start.method="FA",config="quadratic", par.scale=1, fn.scale=1) {
     constrOpt <- FALSE
     restrict <- 30
     randomX <- NULL
@@ -441,7 +441,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             cat("Random row effects ended up to almost zero. Might be a false convergence or local maxima. You can try simpler model, less latent variables or change the optimizer. \n")
         
     }
-    
+    out$convergence <- fitg$convergence
     out$prediction.errors = fitg$prediction.errors
     out$call <- match.call()
     class(out) <- "gllvm.quadratic"
