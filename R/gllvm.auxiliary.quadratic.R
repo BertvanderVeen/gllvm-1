@@ -212,7 +212,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     zeta[,1] <- 0 ## polr parameterizes as no intercepts and all cutoffs vary freely. Change this to free intercept and first cutoff to zero
     for(j in 1:p) {
       y.fac <- factor(y[,j])
-      if(length(levels(y.fac)) > 2) {#still remove linear term from starting values here.
+      if(length(levels(y.fac)) > 2) {#still remove linear term from starting values here where necessary.
         if(starting.val=="res"){
           if(is.null(X) || !is.null(TR)) {cw.fit <- MASS::polr(y.fac ~ index + I(index^2), method = "probit"); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
           if(!is.null(X) & is.null(TR) ) {cw.fit <- MASS::polr(y.fac ~ X + index + I(index^2), method = "probit"); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
@@ -274,7 +274,19 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     sig <- sign(diag(gamma.new));
     params[,(ncol(params) - num.lv + 1):ncol(params)] <- t(t(gamma.new)*sig)
     index <- t(t(index)*sig)}, silent = TRUE)
-  if(!exists("lambda2")){lambda2<-matrix(-.5,p,num.lv)}else{ lambda2[lambda2==0]<--.5}
+  if(starting.val=="random"){
+    #based on weighted average species SD, see canoco
+    lambda2<-matrix(0,nrow=p,ncol=num.lv)
+    for(j in 1:p){
+      for(q in 1:num.lv){
+        lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+      }
+    }
+  }else if(starting.val=="zero"){
+    lambda2<-matrix(-.5,p,num.lv)
+  }else{
+    lambda2[lambda2==0]<--.5
+  }
   #something going wrong here for random
   params <- cbind(params,lambda2)
   
