@@ -97,13 +97,14 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
         lambda2<-lastart$lambda2
         #re-iter the intercept, now with quadratic term
         if(family!="gaussian") {
-          if(!is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ X + I(index^2), family = family, K = trial.size)
-          if(is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ I(index^2), family = family, K = trial.size)
+          if(!is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ X + index + I(index^2), family = family, K = trial.size)
+          if(is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ index + I(index^2), family = family, K = trial.size)
         } else {
-          if(!is.null(X)) fit.mva2 <- mvabund::manylm(y ~ X + I(index^2))
-          if(is.null(X)) fit.mva2 <- mvabund::manylm(y ~ I(index^2))
+          if(!is.null(X)) fit.mva2 <- mvabund::manylm(y ~ X + index + I(index^2))
+          if(is.null(X)) fit.mva2 <- mvabund::manylm(y ~ index + I(index^2))
         }
         coef[,1] <- t(fit.mva2$coef)[,1]
+        #potentially add the lv coefficients for gaussian shaped responses
         
       } else {
         n1 <- colnames(X)
@@ -171,10 +172,10 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     } else {
         if(family!="gaussian") {
           if(is.null(TR)){
-            if(!is.null(X)) {fit.mva$coef <- fit.mva$coef[row.names(fit.mva$coef)!="I(index^2)2",]; fit.mva <- mvabund::manyglm(y ~ X + I(index^2), family = family, K = trial.size)}
-            if(is.null(X)) {fit.mva$coef <- fit.mva$coef[row.names(fit.mva$coef)!="I(index^2)2",]; fit.mva <- mvabund::manyglm(y ~ I(index^2), family = family, K = trial.size)}
+            if(!is.null(X)) {fit.mva <- mvabund::manyglm(y ~ X + index + I(index^2), family = family, K = trial.size); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]}
+            if(is.null(X)) {fit.mva <- mvabund::manyglm(y ~ index + I(index^2), family = family, K = trial.size); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]}
           } else {
-            fit.mva$coef <- fit.mva$coef[row.names(fit.mva$coef)!="I(index^2)2",]; fit.mva <- mvabund::manyglm(y ~ I(index^2), family = family, K = trial.size)
+            fit.mva$coef <- fit.mva <- mvabund::manyglm(y ~ index + I(index^2), family = family, K = trial.size); fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]
             env  <-  rep(0,num.X)
             trait  <-  rep(0,num.T)
             inter <- rep(0, num.T * num.X)
@@ -182,10 +183,10 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           }
         } else {
           if(is.null(TR)){
-            if(!is.null(X)) {fit.mva$coef <- fit.mva$coef[row.names(fit.mva$coef)!="I(index^2)2",]; fit.mva <- mvabund::manylm(y ~ X + I(index^2))}
-            if(is.null(X)) {fit.mva$coef <- fit.mva$coef[row.names(fit.mva$coef)!="I(index^2)2",]; fit.mva <- mvabund::manylm(y ~ I(index^2))}
+            if(!is.null(X)) {fit.mva <- mvabund::manylm(y ~ X + index + I(index^2)); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]}
+            if(is.null(X)) {fit.mva <- mvabund::manylm(y ~ index + I(index^2)); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]}
           } else {
-            fit.mva <- fit.mva$coef <- fit.mva$coef[row.names(fit.mva$coef)!="I(index^2)2",]; mvabund::manylm(y ~ I(index^2))
+            fit.mva <- mvabund::manylm(y ~ index + I(index^2)); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]
             env  <-  rep(0,num.X)
             trait  <-  rep(0,num.T)
             inter <- rep(0, num.T * num.X)
@@ -211,28 +212,28 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     zeta[,1] <- 0 ## polr parameterizes as no intercepts and all cutoffs vary freely. Change this to free intercept and first cutoff to zero
     for(j in 1:p) {
       y.fac <- factor(y[,j])
-      if(length(levels(y.fac)) > 2) {
+      if(length(levels(y.fac)) > 2) {#still remove linear term from starting values here.
         if(starting.val=="res"){
-          if(is.null(X) || !is.null(TR)) {cw.fit$coef <- cw.fit$coef[,colnames!="I(index^2)1"|colnames!="I(index^2)2"]; cw.fit <- MASS::polr(y.fac ~ I(index^2), method = "probit")}
-          if(!is.null(X) & is.null(TR) ) {cw.fit$coef <- cw.fit$coef[,colnames!="I(index^2)1"|colnames!="I(index^2)2"]; cw.fit <- MASS::polr(y.fac ~ X + I(index^2), method = "probit")}
+          if(is.null(X) || !is.null(TR)) {cw.fit <- MASS::polr(y.fac ~ index + I(index^2), method = "probit"); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
+          if(!is.null(X) & is.null(TR) ) {cw.fit <- MASS::polr(y.fac ~ X + index + I(index^2), method = "probit"); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
         } else if(starting.val=="zero"){
           if(is.null(X) || !is.null(TR)) cw.fit <- MASS::polr(y.fac ~ 1, method = "probit")
           if(!is.null(X) & is.null(TR) ) cw.fit <- MASS::polr(y.fac ~ X, method = "probit")
         } else {
-          if(is.null(X) || !is.null(TR)) {cw.fit$coef <- cw.fit$coef[,colnames!="I(index^2)2"]; cw.fit <- MASS::polr(y.fac ~ I(index^2), method = "probit")}
+          if(is.null(X) || !is.null(TR)) {cw.fit <- MASS::polr(y.fac ~ index + I(index^2), method = "probit"); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
         }
         params[j,1:ncol(cbind(1,X))] <- c(cw.fit$zeta[1],-cw.fit$coefficients)
         zeta[j,2:length(cw.fit$zeta)] <- cw.fit$zeta[-1]-cw.fit$zeta[1]
       }
       if(length(levels(y.fac)) == 2) {
         if(starting.val=="res"){
-          if(is.null(X) || !is.null(TR)) {cw.fit$coef <- cw.fit$coef[,colnames!="I(index^2)1"|colnames!="I(index^2)2"]; cw.fit <- glm(y.fac ~ I(index^2), family = binomial(link = "probit"))}
-          if(!is.null(X) & is.null(TR) ) {cw.fit$coef <- cw.fit$coef[,colnames!="I(index^2)1"|colnames!="I(index^2)2"]; cw.fit <- glm(y.fac ~ X + I(index^2), family = binomial(link = "probit"))}
+          if(is.null(X) || !is.null(TR)) {cw.fit <- glm(y.fac ~ index + I(index^2), family = binomial(link = "probit")); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
+          if(!is.null(X) & is.null(TR) ) {cw.fit <- glm(y.fac ~ X + index + I(index^2), family = binomial(link = "probit")); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
         } else if(starting.val=="zero"){
           if(is.null(X) || !is.null(TR)) cw.fit <- glm(y.fac ~ 1, family = binomial(link = "probit"))
           if(!is.null(X) & is.null(TR) ) cw.fit <- glm(y.fac ~ X, family = binomial(link = "probit"))
         }else{
-          if(is.null(X) || !is.null(TR)) {cw.fit$coef <- cw.fit$coef[,colnames!="I(index^2)2"]; cw.fit <- glm(y.fac ~ I(index^2), family = binomial(link = "probit"))}
+          if(is.null(X) || !is.null(TR)) {cw.fit <- glm(y.fac ~ index + I(index^2), family = binomial(link = "probit")); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
         }
         params[j,] <- cw.fit$coef
       }
