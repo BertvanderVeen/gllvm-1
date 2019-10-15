@@ -95,15 +95,15 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
         gamma<-lastart$gamma
         index<-lastart$index
         lambda2<-lastart$lambda2
-        #re-iter the intercept, now with quadratic term
+        #estimate new intercept, now accounting for a quadratic term
         if(family!="gaussian") {
-          if(!is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ X + index + I(index^2), family = family, K = trial.size)
-          if(is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ index + I(index^2), family = family, K = trial.size)
+          if(!is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ X + offset(t(index)%*%gamma+t(index^2)%*%lambda2), family = family, K = trial.size)
+          if(is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ 1 + offset(t(index)%*%gamma+t(index^2)%*%lambda2), family = family, K = trial.size)
         } else {
-          if(!is.null(X)) fit.mva2 <- mvabund::manylm(y ~ X + index + I(index^2))
-          if(is.null(X)) fit.mva2 <- mvabund::manylm(y ~ index + I(index^2))
+          if(!is.null(X)) fit.mva2 <- mvabund::manylm(y ~ X + offset(t(index)%*%gamma+t(index^2)%*%lambda2))
+          if(is.null(X)) fit.mva2 <- mvabund::manylm(y ~ 1 + offset(t(index)%*%gamma+t(index^2)%*%lambda2))
         }
-        coef[,1] <- t(fit.mva2$coef)[,1]
+        coef <- t(fit.mva2$coef)
         #potentially add the lv coefficients for gaussian shaped responses
         
       } else {
@@ -170,6 +170,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
       if(is.null(TR)){params <- cbind(coef,gamma)
       } else { params <- cbind((fit.mva$coef$beta0),gamma)}
     } else {
+      #here I include a quadratic term, though not as offset due to the lack of a second set of coefficients
         if(family!="gaussian") {
           if(is.null(TR)){
             if(!is.null(X)) {fit.mva <- mvabund::manyglm(y ~ X + index + I(index^2), family = family, K = trial.size); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]}

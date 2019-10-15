@@ -179,7 +179,10 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
       optima <- -object$params$theta[, 1:object$num.lv, drop = F][largest.lnorms, which.lvs, drop = F]/(2 * object$params$theta[largest.lnorms, -c(1:object$num.lv), 
                                                                                                                                 drop = F][, which.lvs, drop = F])
-      row.names(optima)<-colnames(object$y)[]
+      if(is.null(colnames(object$y)))row.names(optima)<-largest.lnorms
+      if(!is.null(colnames(object$y)))row.names(optima)<-colnames(object$y)[largest.lnorms]
+      
+      
       quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][largest.lnorms, which.lvs, drop = F]
       quadr.coef[which(round(quadr.coef, 2) == 0)] <- 0
       excl <- which(sapply(1:nrow(quadr.coef), function(j) any(quadr.coef[j, ] == 0)))

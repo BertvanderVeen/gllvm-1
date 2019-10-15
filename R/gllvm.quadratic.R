@@ -64,13 +64,11 @@
 #'   Mean and variance for distributions are defined as follows.
 #'\itemize{
 #'   \item{For count data \code{family = poisson()}:} {Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(\mu_{ij}) = \mu_{ij}}, or}
-#'   \item{ \code{family = 'negative.binomial'}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(\mu_{ij}) = \mu_{ij}+\phi_j*\mu_{ij}^2}}
+#'   \item{ \code{family = 'negative.binomial'}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(\mu_{ij}) = \mu_{ij}+\frac{\mu_{ij}}{\phi_j}}}
 #'
 #'   \item{For binary data \code{family = binomial()}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(\mu_{ij}) = \mu_{ij}(1-\mu_{ij})}.}
 #'
 #'   \item{For ordinal data \code{family = 'ordinal'}:}{ Cumulative probit model, see Hui et.al. (2016).}
-#'   
-#'   \item{For normal distributed data \code{family = gaussian()}:}{ Expectation \eqn{E[Y_{ij}] = \mu_{ij}}, variance \eqn{V(y_{ij}) = \frac{\mu_{ij}}{\phi_j} + \mu_{ij}.}}
 #' }
 #' }
 #'
