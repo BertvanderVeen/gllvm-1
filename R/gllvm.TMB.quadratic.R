@@ -74,13 +74,18 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   n.i <- 1
   
   out <- list( y = y, X = X, logL = Inf, X.design = X)
+  old.logL <- Inf
   if (n.init > 1)
     seed <- sample(1:10000, n.init)
   
   while(n.i <= n.init){
     if(n.init > 1 && trace)
-      cat("Initial run ", n.i, "\n")
-    
+      if(n.i==2|old.logL>out$logL){
+        cat("Initial run ", n.i, "LL",out$logL , "\n")
+      }else{
+        cat("Initial run ", n.i, "\n")
+      }
+    old.logL <- out$logL
     fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method)
     
     sigma <- 1
@@ -400,7 +405,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           }
           timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale, fnscale=fnscale),hessian = FALSE),silent = TRUE))
         }
-        if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+        if(optimizer=="optim"){
+          if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+        }else{
+          if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+        }
         
       }
       
@@ -443,7 +452,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         
       
       new.loglik <- objr$env$value.best[1]
-      if(family == "negative.binomial") { 
+      if(family %in% c("negative.binomial","gaussian")) {
         phis <- exp(param[names(param)=="lg_phi"])
       }
       if(family == "ordinal"){
@@ -453,7 +462,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     
     
     if(((n.i==1 || out$logL > abs(new.loglik)) && new.loglik>0) && !inherits(optr, "try-error")){
-      out$convergence <- optr$convergence
       out$start <- fit
       objr1 <- objr; optr1=optr;
       out$logL <- new.loglik

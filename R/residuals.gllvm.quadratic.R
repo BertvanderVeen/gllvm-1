@@ -104,8 +104,8 @@ residuals.gllvm.quadratic <- function(object, ...) {
             }
             if (object$family == "negative.binomial") {#still fix this, need to find correct size and prob
                 phis <- object$params$phi + 1e-05 # for nb1
-                a <- pnbinom(as.vector(unlist(y[i, j]))-1,size = mu[i, j], prob=(1/(1+1/phis[j])))
-                b <- pnbinom(as.vector(unlist(y[i, j])),size = mu[i, j], prob=(1/(1+1/phis[j])))
+                a <- pnbinom(as.vector(unlist(y[i, j]))-1,mu = mu[i, j], size=mu[i,j]*phis[j])
+                b <- pnbinom(as.vector(unlist(y[i, j])),mu = mu[i, j], size=mu[i,j]*phis[j])
                   u <- runif(n = 1, min = a, max = b)
                   if(a<b){
                     u <- runif(n = 1, min = a, max = b)

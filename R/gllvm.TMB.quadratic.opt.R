@@ -74,12 +74,18 @@ gllvm.TMB.quadratic.opt <- function(y, X = NULL, formula = NULL, num.lv = 2, fam
   n.i <- 1
   
   out <- list( y = y, X = X, logL = Inf, X.design = X)
+  old.logL <- Inf
   if (n.init > 1)
     seed <- sample(1:10000, n.init)
   
   while(n.i <= n.init){
     if(n.init > 1 && trace)
-      cat("Initial run ", n.i, "\n")
+      if(n.i==2|old.logL>out$logL){
+        cat("Initial run ", n.i, "LL",out$logL , "\n")
+      }else{
+        cat("Initial run ", n.i, "\n")
+      }
+    old.logL <- out$logL
     
     fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method)
     

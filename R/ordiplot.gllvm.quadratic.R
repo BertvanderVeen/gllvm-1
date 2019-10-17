@@ -184,17 +184,17 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       
       
       quadr.coef <- object$params$theta[, -c(1:object$num.lv), drop = F][largest.lnorms, which.lvs, drop = F]
-      quadr.coef[which(round(quadr.coef, 2) == 0)] <- 0
-      excl <- which(sapply(1:nrow(quadr.coef), function(j) any(quadr.coef[j, ] == 0)))
+      # quadr.coef[which(round(quadr.coef, 2) == 0)] <- 0
+      excl <- sapply(1:nrow(optima), function(j) any(optima[j, ] > 10 | optima[j, ] < -10))
       
-      if (length(excl)!=0) {
-        if(length(excl)==ncol(object$y)){
-          stop("No species show a quadratic response, can't plot species optima.")
+      if (length(which(excl))!=0) {
+        if(length(which(excl))==ncol(object$y)){
+          stop("Optima are too far removed from the latent varaibles to visualize")
         }else{
-          message(paste("The species", paste(row.names(quadr.coef[excl, ]), collapse = ", "), "lack a quadratic response on the chosen LV(s) and won't be plotted.", 
+          message(paste("Columns", paste(row.names(optima[excl, ]), collapse = ", "), "have optima too far removed from the latent variables and will not be visualized (if bell=T)", 
                         sep = " "))
-          optima <- optima[-excl, , drop = F]
-          quadr.coef <- quadr.coef[-excl, , drop = F] 
+          optima <- optima[!excl, , drop = F]
+          quadr.coef <- quadr.coef[!excl, , drop = F] 
         }
         
       }

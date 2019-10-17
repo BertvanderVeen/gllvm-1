@@ -97,11 +97,11 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
         lambda2<-lastart$lambda2
         #estimate new intercept, now accounting for a quadratic term
         if(family!="gaussian") {
-          if(!is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ X + offset(t(index)%*%gamma+t(index^2)%*%lambda2), family = family, K = trial.size)
-          if(is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ 1 + offset(t(index)%*%gamma+t(index^2)%*%lambda2), family = family, K = trial.size)
+          if(!is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ X + offset(index%*%t(gamma)+index^2%*%t(lambda2)), family = family, K = trial.size)
+          if(is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ 1 + offset(index%*%t(gamma)+index^2%*%t(lambda2)), family = family, K = trial.size)
         } else {
-          if(!is.null(X)) fit.mva2 <- mvabund::manylm(y ~ X + offset(t(index)%*%gamma+t(index^2)%*%lambda2))
-          if(is.null(X)) fit.mva2 <- mvabund::manylm(y ~ 1 + offset(t(index)%*%gamma+t(index^2)%*%lambda2))
+          if(!is.null(X)) fit.mva2 <- mvabund::manylm(y ~ X + offset(index%*%t(gamma)+index^2%*%t(lambda2)))
+          if(is.null(X)) fit.mva2 <- mvabund::manylm(y ~ 1 + offset(index%*%t(gamma)+index^2%*%t(lambda2)))
         }
         coef <- t(fit.mva2$coef)
         #potentially add the lv coefficients for gaussian shaped responses
@@ -173,10 +173,10 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
       #here I include a quadratic term, though not as offset due to the lack of a second set of coefficients
         if(family!="gaussian") {
           if(is.null(TR)){
-            if(!is.null(X)) {fit.mva <- mvabund::manyglm(y ~ X + index + I(index^2), family = family, K = trial.size); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]}
-            if(is.null(X)) {fit.mva <- mvabund::manyglm(y ~ index + I(index^2), family = family, K = trial.size); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]}
+            if(!is.null(X)) {fit.mva <- mvabund::manyglm(y ~ X + index, family = family, K = trial.size)}
+            if(is.null(X)) {fit.mva <- mvabund::manyglm(y ~ index, family = family, K = trial.size)}
           } else {
-            fit.mva$coef <- fit.mva <- mvabund::manyglm(y ~ index + I(index^2), family = family, K = trial.size); fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]
+            fit.mva$coef <- fit.mva <- mvabund::manyglm(y ~ index, family = family, K = trial.size)
             env  <-  rep(0,num.X)
             trait  <-  rep(0,num.T)
             inter <- rep(0, num.T * num.X)
@@ -184,10 +184,10 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
           }
         } else {
           if(is.null(TR)){
-            if(!is.null(X)) {fit.mva <- mvabund::manylm(y ~ X + index + I(index^2)); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]}
-            if(is.null(X)) {fit.mva <- mvabund::manylm(y ~ index + I(index^2)); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]}
+            if(!is.null(X)) {fit.mva <- mvabund::manylm(y ~ X + index)}
+            if(is.null(X)) {fit.mva <- mvabund::manylm(y ~ index )}
           } else {
-            fit.mva <- mvabund::manylm(y ~ index + I(index^2)); fit.mva$coef <- fit.mva$coef[!(row.names(fit.mva$coef)%in%paste("I(index^2)",1:num.lv,sep="")),]
+            fit.mva <- mvabund::manylm(y ~ index + I(index^2))
             env  <-  rep(0,num.X)
             trait  <-  rep(0,num.T)
             inter <- rep(0, num.T * num.X)
