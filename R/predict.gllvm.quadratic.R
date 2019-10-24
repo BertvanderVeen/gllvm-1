@@ -185,18 +185,13 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
     }
     
     
-    if (object$family %in% c("poisson", "negative.binomial", "tweedie")) 
+    if (object$family %in% c("poisson", "negative.binomial")) 
         ilinkfun <- exp
     if (object$family == "binomial") 
         ilinkfun <- binomial(link = object$link)$linkinv
     if (object$family == "ordinal") 
         ilinkfun <- pnorm
-    if (object$family == "ZIP") 
-        ilinkfun <- pnorm
-    if (object$family == "gaussian") 
-        ilinkfun <- gaussian()$linkinv
-    
-    
+
     out <- NULL
     preds <- NULL
     if ("link" %in% type) 

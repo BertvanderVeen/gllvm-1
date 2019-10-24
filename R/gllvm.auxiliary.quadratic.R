@@ -39,7 +39,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
   }
   sigma=1
   if(!is.numeric(y))
-    stop("y must a numeric. If ordinal data, please convert to numeric with lowest level equal to 1. Thanks")
+    stop("y must a numeric.")# If ordinal data, please convert to numeric with lowest level equal to 1. Thanks")
   
   if(!(family %in% c("poisson","negative.binomial","binomial","ordinal")))
     stop("inputed family not allowed...sorry =(")
@@ -211,40 +211,66 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     params <- matrix(NA,p,ncol(cbind(1,X))+num.lv)
     zeta <- matrix(NA,p,max.levels - 1)
     zeta[,1] <- 0 ## polr parameterizes as no intercepts and all cutoffs vary freely. Change this to free intercept and first cutoff to zero
+    
+    if(starting.val=="random"){
+      #based on weighted average species SD, see canoco
+      lambda2<-matrix(0,nrow=p,ncol=num.lv)
+      for(j in 1:p){
+        for(q in 1:num.lv){
+          lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+        }
+      }
+      if(any(is.infinite(lambda2))){
+        lambda2[is.infinite(lambda2)]<--0.5
+      }
+    }
+    
     for(j in 1:p) {
       y.fac <- factor(y[,j])
-      if(length(levels(y.fac)) > 2) {#still remove linear term from starting values here where necessary.
-        if(starting.val=="res"){
-          if(is.null(X) || !is.null(TR)) {cw.fit <- MASS::polr(y.fac ~ index + I(index^2), method = "probit"); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
-          if(!is.null(X) & is.null(TR) ) {cw.fit <- MASS::polr(y.fac ~ X + index + I(index^2), method = "probit"); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
-        } else if(starting.val=="zero"){
-          if(is.null(X) || !is.null(TR)) cw.fit <- MASS::polr(y.fac ~ 1, method = "probit")
-          if(!is.null(X) & is.null(TR) ) cw.fit <- MASS::polr(y.fac ~ X, method = "probit")
-        } else {
-          if(is.null(X) || !is.null(TR)) {cw.fit <- MASS::polr(y.fac ~ index + I(index^2), method = "probit"); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
-        }
+      if(length(levels(y.fac)) > 2) {
+        if(starting.val%in%c("res","zero")){
+          if(is.null(X) || !is.null(TR)) {cw.fit <- MASS::polr(y.fac ~ 1, method = "probit")}
+          if(!is.null(X) & is.null(TR) ) {cw.fit <- MASS::polr(y.fac ~ X, method = "probit")}
+        } else if(starting.val=="random"){
+          if(is.null(X) || !is.null(TR)) cw.fit <- MASS::polr(y.fac ~ index + offset(index^2%*%t(lambda2)), method = "probit")
+          if(!is.null(X) & is.null(TR) ) cw.fit <- MASS::polr(y.fac ~ X + index, method = "probit")
+        } 
         params[j,1:ncol(cbind(1,X))] <- c(cw.fit$zeta[1],-cw.fit$coefficients)
         zeta[j,2:length(cw.fit$zeta)] <- cw.fit$zeta[-1]-cw.fit$zeta[1]
       }
       if(length(levels(y.fac)) == 2) {
-        if(starting.val=="res"){
-          if(is.null(X) || !is.null(TR)) {cw.fit <- glm(y.fac ~ index + I(index^2), family = binomial(link = "probit")); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
-          if(!is.null(X) & is.null(TR) ) {cw.fit <- glm(y.fac ~ X + index + I(index^2), family = binomial(link = "probit")); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
-        } else if(starting.val=="zero"){
-          if(is.null(X) || !is.null(TR)) cw.fit <- glm(y.fac ~ 1, family = binomial(link = "probit"))
-          if(!is.null(X) & is.null(TR) ) cw.fit <- glm(y.fac ~ X, family = binomial(link = "probit"))
-        }else{
-          if(is.null(X) || !is.null(TR)) {cw.fit <- glm(y.fac ~ index + I(index^2), family = binomial(link = "probit")); cw.fit$coef <- cw.fit$coef[,!(colnames(cw.fit$coef)%in%paste("I(index^2)",1:num.lv,sep=""))]}
+        if(starting.val%in%c("res","zero")){
+          if(is.null(X) || !is.null(TR)) {cw.fit <- glm(y.fac ~ 1, family = binomial(link = "probit"))}
+          if(!is.null(X) & is.null(TR) ) {cw.fit <- glm(y.fac ~ X, family = binomial(link = "probit"))}
+        } else if(starting.val=="random"){
+          if(is.null(X) || !is.null(TR)) cw.fit <- glm(y.fac ~ index + offset(index^2%*%t(lambda2)), family = binomial(link = "probit"))
+          if(!is.null(X) & is.null(TR) ) cw.fit <- glm(y.fac ~ X + index + offset(index^2%*%t(lambda2)), family = binomial(link = "probit"))
         }
         params[j,] <- cw.fit$coef
       }
     }
+    if(starting.val=="res"){
+      eta.mat <- matrix(params[,1],n,p,byrow=TRUE)
+      if(!is.null(X) && is.null(TR)) eta.mat <- eta.mat + (X %*% matrix(params[,2:(1+num.X)],num.X,p))
+      mu <- eta.mat
+      if(start.method=="FA"){
+        lastart <- FAstart(eta.mat, family=family, y=y, num.lv = num.lv, zeta = zeta)
+      }else{
+        lastart <- CAstart(eta.mat, family=family, y=y, num.lv = num.lv)
+      }
+      gamma<-lastart$gamma
+      index<-lastart$index
+      lambda2<-lastart$lambda2
+      params[,(ncol(cbind(1,X))+1):ncol(params)]=gamma
+    }
+    
     env <- rep(0,num.X)
     trait <- rep(0,num.T)
     inter <- rep(0, num.T * num.X)
     B=c(env,trait,inter)
   }
   
+    
   if(family!="ordinal" || (family=="ordinal" & starting.val=="res")){
     if(num.lv>1 && p>2){
       gamma<-as.matrix(params[,(ncol(params) - num.lv + 1):ncol(params)])
@@ -275,22 +301,15 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     sig <- sign(diag(gamma.new));
     params[,(ncol(params) - num.lv + 1):ncol(params)] <- t(t(gamma.new)*sig)
     index <- t(t(index)*sig)}, silent = TRUE)
-  if(starting.val=="random"){
-    #based on weighted average species SD, see canoco
-    lambda2<-matrix(0,nrow=p,ncol=num.lv)
-    for(j in 1:p){
-      for(q in 1:num.lv){
-        lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
-      }
-    }
-  }else if(starting.val=="zero"){
+  if(starting.val=="zero"){
     lambda2<-matrix(-.5,p,num.lv)
   }else{
     lambda2[lambda2==0]<--.5
   }
-  #something going wrong here for random
-  params <- cbind(params,lambda2)
   
+  params <- cbind(params,lambda2)
+  params<<-params
+  zeta<<-zeta
   out$params <- params
   out$phi <- phi
   out$mu <- mu
@@ -327,20 +346,32 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
         if (family == "poisson") {
           a <- ppois(as.vector(unlist(y[i, j])) - 1, mu[i,j])
           b <- ppois(as.vector(unlist(y[i, j])), mu[i,j])
-          u <- runif(n = 1, min = a, max = b)
+          if(a<b){
+            u <- runif(n = 1, min = a, max = b)
+          }else{
+            u <- runif(n = 1, min = b, max = a)
+          }
           ds.res[i, j] <- qnorm(u)
         }
         if (family == "negative.binomial") {
           phis <- phis + 1e-05
           a <- pnbinom(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], size = 1/phis[j])
           b <- pnbinom(as.vector(unlist(y[i, j])), mu = mu[i, j], size = 1/phis[j])
-          u <- runif(n = 1, min = a, max = b)
+          if(a<b){
+            u <- runif(n = 1, min = a, max = b)
+          }else{
+            u <- runif(n = 1, min = b, max = a)
+          }
           ds.res[i, j] <- qnorm(u)
         }
         if (family == "binomial") {
           a <- pbinom(as.vector(unlist(y[i, j])) - 1, 1, mu[i, j])
           b <- pbinom(as.vector(unlist(y[i, j])), 1, mu[i, j])
-          u <- runif(n = 1, min = a, max = b)
+          if(a<b){
+            u <- runif(n = 1, min = a, max = b)
+          }else{
+            u <- runif(n = 1, min = b, max = a)
+          }
           ds.res[i, j] <- qnorm(u)
         }
         if (family == "ordinal") {
@@ -354,7 +385,11 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
           probK <- c(0,probK)
           cumsum.b <- sum(probK[1:(y[i,j]+1)])
           cumsum.a <- sum(probK[1:(y[i,j])])
-          u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
+          if(cumsum.a<cumsum.b){
+            u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
+          }else{
+            u <- runif(n = 1, min = cumsum.b, max = cumsum.a)
+          }
           if (abs(u - 1) < 1e-05)
             u <- 1
           if (abs(u - 0) < 1e-05)
@@ -423,6 +458,9 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
       lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
     }
   }
+  if(any(is.infinite(lambda2))){
+    lambda2[is.infinite(lambda2)]<--0.5
+  }
   # if(!is.null(mu)){
   #   if(family=="poisson"|family=="negative.binomial"){
   #     eta<-log(mu)
@@ -444,8 +482,7 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
 }
 
 
-CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL, 
-                    jitter.var = 0, start.method=start.method){
+CAstart <- function(mu, family, y, num.lv, start.method=start.method, jitter.var = 0){
   
   n<-NROW(y); p <- NCOL(y)
   
@@ -460,8 +497,10 @@ CAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
     ca  <-  try(vegan::cca(y,Z=eta))
     if(inherits(ca,"try-error")) stop("Correspondence analysis for calculating starting values failed. Maybe rows that sum to zero, remove these.")
     tol<-vegan::tolerance(ca,choices=1:num.lv)
+    if(any(tol==0))tol[tol==0]<-1
     lambda2<--0.5/tol^2
     gamma <- 1/tol^2*vegan::scores(ca,choices=1:num.lv)$species
+
     index <- vegan::scores(ca,choices=1:num.lv)$sites
     
   } else {

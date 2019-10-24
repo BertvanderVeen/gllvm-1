@@ -18,6 +18,13 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
     if (num.lv == 0) {
         stop("Can't fit the species packing model without latent variables")
     }
+    if(family == "ordinal") {
+      y00<-y
+      if(min(y)==0){ y=y+1}
+      max.levels <- apply(y,2,function(x) length(min(x):max(x)))
+      if(any(max.levels == 1) || all(max.levels == 2))
+        stop("Ordinal data requires all columns to have at least has two levels. If all columns only have two levels, please use family == binomial instead. Thanks")
+    }
     
     if (NCOL(X) < 1) 
         stop("No covariates in the model, fit the model using gllvm(y,family=", family, "...)")
@@ -159,6 +166,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
     
     out <- list(y = y, X = X1, TR = TR1, num.lv = num.lv, row.eff = row.eff, logL = Inf, family = family, offset = offset, randomX = randomX, 
         X.design = Xd, terms = term)
+    old.logL <- Inf
     if (is.null(formula) && is.null(X) && is.null(TR)) {
         formula = "~ 1"
     }
@@ -172,7 +180,13 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
         num.T <- dim(TR)[2]
         
         if (n.init > 1 && trace) 
-            cat("initial run ", n.i, "\n")
+          if(n.init > 1 && trace)
+            if(n.i==2|old.logL>out$logL){
+              cat("Initial run ", n.i, "LL",out$logL , "\n")
+            }else{
+              cat("Initial run ", n.i, "\n")
+            }
+        old.logL <- out$logL
         res <- start.values.gllvm.TMB.quadratic(y = y, X = X1, TR = TR1, family = family, offset = offset, trial.size = trial.size, 
             num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, formula = formula, jitter.var = jitter.var, 
             yXT = yXT, row.eff = row.eff, start.method=start.method)
@@ -247,12 +261,13 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             phis <- 1/phis
             
         }
-        if (family == "ordinal") {
-            zeta = res$zeta[, -1]
-            K = length(unique(c(y)))
-        } else {
-            zeta = matrix(0)
-            K = 1
+        if(family=="ordinal"){
+          zeta = fit$zeta[,-1]
+          K = max(y00)-min(y00)
+          zeta <- t(fit$zeta)[-1,][!is.na(t(fit$zeta)[-1,])]
+        }else{
+          zeta = matrix(0)
+          K = 1
         }
         
         q <- num.lv
@@ -320,7 +335,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             familyn <- 2
         }
         if (family == "ordinal") {
-            familyn = 6
+            familyn = 3
         }
         
         if (row.eff == "random") {
@@ -432,7 +447,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             lg_gamma = param1[nam == "lg_gamma"]
             lg_gamma2 = param1[nam == "lg_gamma2"]
             if (family == "ordinal") {
-                zeta <- matrix(param1[nam == "zeta"], nrow = p, ncol = K - 2)
+                zeta <- param1[nam == "zeta"]
             }
             
             if (row.eff == "random") {
@@ -527,11 +542,22 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
         if (family %in% c("negative.binomial")) {
             phis = exp(param[names(param) == "lg_phi"])
         }
-        if (family == "ordinal") {
-            zetas <- matrix(param[names(param) == "zeta"], nrow = p, ncol = K - 2)
-            zetas <- cbind(0, zetas)
-            row.names(zetas) <- colnames(y)
-            colnames(zetas) <- paste(min(y):(max(y) - 1), "|", (min(y) + 1):max(y), sep = "")
+        if(family == "ordinal"){
+          zetas <- param[names(param)=="zeta"]
+          zetanew <- matrix(0,nrow=p,ncol=K)
+          idx<-0
+          for(j in 1:ncol(y)){
+            k<-max(y[,j])-2
+            if(k>0){
+              for(l in 1:k){
+                zetanew[j,l+1]<-zetas[idx+l]
+              } 
+            }
+            idx<-idx+k
+          }
+          row.names(zetanew) <- colnames(y00); colnames(zetanew) <- paste(min(y):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
+          zetas<-zetanew
+          out$y<-y00
         }
         if (ridge == T) {
             gi <- names(param) == "lg_gamma"
@@ -591,7 +617,6 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
         
         
         if ((n.i == 1 || out$logL > (new.loglik)) && is.finite(new.loglik) && !inherits(optr, "try-error")) {
-            out$convergence <- optr$convergence
             objr1 <- objr
             optr1 <- optr
             out$logL <- new.loglik
@@ -630,6 +655,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                 names(out$params$inv.phi) <- colnames(out$y)
             }
             if (family == "ordinal") {
+                zetas[,-1][zetas[,-1]==0]<-NA
                 out$params$zeta <- zetas
             }
             if (!is.null(randomX)) {
@@ -769,11 +795,22 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                 nr <- ncol(xb)
                 out$sd$sigmaB <- se * c(diag(out$params$sigmaB), rep(1, nr * (nr - 1)/2))
             }
-            if (family %in% c("ordinal")) {
-                se.zetas <- se[1:(p * (K - 2))]
-                out$sd$zeta <- cbind(0, matrix(se.zetas, ncol = K - 2, nrow = p))
-                row.names(out$sd$zeta) <- colnames(y)
-                colnames(out$sd$zeta) <- paste(min(y):(max(y) - 1), "|", (min(y) + 1):max(y), sep = "")
+            if(family %in% c("ordinal")){
+              se.zetas <- se[1:(p*(K-2))];
+              se.zetanew <- matrix(0,nrow=p,ncol=K)
+              idx<-0
+              for(j in 1:ncol(y)){
+                k<-max(y[,j])-2
+                if(k>0){
+                  for(l in 1:k){
+                    se.zetanew[j,l+1]<-se.zetas[idx+l]
+                  } 
+                }
+                idx<-idx+k
+              }
+              
+              out$sd$zeta <- se.zetanew
+              row.names(out$sd$zeta) <- colnames(y00); colnames(out$sd$zeta) <- paste(min(y00):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
             }
             
         }

@@ -15,7 +15,7 @@
 #' @param scale For 2D plots, either "species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
 #' @param bell logical, if TRUE plots bell-shapes (1D) or biplot with (scaled) predicted optima and 95 percent of the predicted environmental ranges (2D)
 #' @param env.ranges logical, if TRUE plots predicted species distributions in 2D
-#' @param type when predicting bell-shapes, can be used to predict on the response or link scale. Default is response.
+#' @param type when predicting bell-shapes, can be used to predict on the response or link scale. Default is response (except for ordinal, for which the only option is "link").
 #' @param intercept when predicting bell-shapes, can be used to include species-intercepts in the plot. Default is TRUE
 #' @param legend when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot
 #' @param ...\tadditional graphical arguments.
@@ -78,7 +78,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
     }
     
     if (length(which.lvs) > 1) {
-      testcov <- predict(object, LVonly = T)
+      testcov <- predict(object, LVonly = T) #LV effect only
       do.svd <- svd(testcov, length(which.lvs), length(which.lvs))
       choose.lvs <- do.svd$u * matrix(do.svd$d[1:length(which.lvs)]^alpha, nrow = n, ncol = length(which.lvs), byrow = TRUE)
       choose.lv.coefs <- do.svd$v * matrix(do.svd$d[1:length(which.lvs)]^(1 - alpha), nrow = p, ncol = length(which.lvs), byrow = TRUE)
@@ -149,7 +149,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       
       newLV <- matrix(NA, nrow = 1000, ncol = length(which.lvs))
       newLV[, 1] <- seq(from = min(object$lvs[, which.lvs]), max(object$lvs[, which.lvs]), length.out = 1000)
-      
+      if(object$family=="ordinal")type="link"
       mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
       
       if(legend==F){

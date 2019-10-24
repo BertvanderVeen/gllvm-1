@@ -22,7 +22,7 @@
 #' @param reltol  convergence criteria for log-likelihood, defaults to 1e-6.
 #' @param maxit maximum number of iterations within \code{optim} function, defaults to 1000.
 #' @param seed a single seed value, defaults to \code{NULL}.
-#' @param optimizer if \code{TMB=TRUE}, log-likelihood can be optimized using \code{'\link{optim}'} (default) or \code{'\link{nlminb}'}.
+#' @param optimizer The log-likelihood can be optimized using \code{'\link{optim}'} (default) or \code{'\link{nlminb}'} (only with diag.iter=0).
 #' @param jitter.var jitter variance for starting values of latent variables. Defaults to 0, meaning no jittering.
 #' @param ridge \code{TRUE} fits a ridge penalty to shrink the latent variable (linear and quadratic effects)
 #' @param ridge.quadratic \code{TRUE} fits a ridge penalty to shrink the quadratic effect of the latent variable
@@ -200,7 +200,7 @@
 
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 5, trace = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
-    start.fit = NULL, starting.val = "res", TMB = TRUE, optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
+    start.fit = NULL, starting.val = "res", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
     ridge.quadratic = FALSE, start.method="FA",config="quadratic", par.scale=1, fn.scale=1) {
     constrOpt <- FALSE
     restrict <- 30
@@ -337,10 +337,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
     if (p < 3 && !is.null(TR)) {
         stop("Fourth corner model can not be fitted with less than three response variables.\n")
     }
-    if (row.eff == "random" && !TMB) {
-        cat("Random row effect model is not implemented without TMB, so 'TMB = TRUE' is used instead. \n")
-        TMB <- TRUE
-    }
+
     
     if (!is.null(start.fit)) {
         if (class(start.fit) != "gllvm.quadratic") 
@@ -367,7 +364,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
     n.i <- 1
     
     out <- list(y = y, X = X, TR = TR, data = datayx, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init, sd = FALSE, 
-        Lambda.struc = Lambda.struc, TMB = TMB, terms = term)
+        Lambda.struc = Lambda.struc, TMB = TRUE, terms = term)
     
     if (family == "binomial") {
         out$link <- "probit"
@@ -436,10 +433,11 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
     }
     if (is.finite(out$logL) && row.eff == "random") {
         if (abs(out$params$sigma) < 0.02 && max(abs(out$params$sigma - sqrt(out$Ar))) < 0.001) 
-            cat("Random row effects ended up to almost zero. Might be a false convergence or local maxima. You can try simpler model, less latent variables or change the optimizer. \n")
-        
+        cat("Random row effects ended up almost zero. Might be a false convergence or local maxima. You can try a simpler model, less latent variables or change the optimizer.")
     }
-    out$convergence <- fitg$convergence
+    if(any(out$TMBfn$gr(out$TMBfn$par)>0.001)){
+      cat("Large gradient value(s) detected. Model might not have converged, please check your settings. \n")
+    }
     out$prediction.errors = fitg$prediction.errors
     out$call <- match.call()
     class(out) <- "gllvm.quadratic"

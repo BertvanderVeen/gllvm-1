@@ -2,13 +2,12 @@
 ## GLLVM, with estimation done via Variational approximation using TMB-package
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
-
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6, trace = trace,
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                 n.init=1,start.params=NULL,
                                 optimizer="optim",starting.val="res",diag.iter=1,
-                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=fn.scale, fn.scale=fn.scale) {
+                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale) {
   ignore.u=FALSE
   n <- dim(y)[1]
   p <- dim(y)[2]
@@ -162,6 +161,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(family=="ordinal"){
       zeta = fit$zeta[,-1]
       K = length(unique(c(y)))
+      zeta[is.na(zeta)]<-0
     }else{
       zeta = matrix(0)
       K = 1
@@ -212,7 +212,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           }
         } 
       if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
-      
       if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
       if(!is.null(X)){Xd <- cbind(1,X)} else {Xd <- matrix(1,n)}
       extra <- 0
@@ -324,7 +323,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         lg_gamma=(param1[nam=="lg_gamma"])
         lg_gamma2=(param1[nam=="lg_gamma2"])
         if(family=="ordinal"){
-          zeta <- matrix(param1[nam=="zeta"],nrow=p,ncol=K-2)  
+          zeta <- matrix(param1[nam=="zeta"],nrow=p,ncol=K-2)  #this needs a fix to add the levels that are not present in the data
         }
         
         if(row.eff == "random"){
@@ -455,12 +454,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(family %in% c("negative.binomial","gaussian")) {
         phis <- exp(param[names(param)=="lg_phi"])
       }
-      if(family == "ordinal"){
-        zetas<-matrix(param[names(param)=="zeta"],nrow=p, ncol=K-2)
-      }
-    
-    
-    
+
     if(((n.i==1 || out$logL > abs(new.loglik)) && new.loglik>0) && !inherits(optr, "try-error")){
       out$start <- fit
       objr1 <- objr; optr1=optr;
@@ -558,6 +552,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
 
       if(familyn!=1) incl[names(objr$par)=="lg_phi"] <- FALSE
       if(familyn!=3) incl[names(objr$par)=="zeta"] <- FALSE
+      if(familyn==3) inc[names(objr$par)=="zeta"&objr$par==0] <- FALSE
       A.mat <- -sdr[incl, incl] # a x a
       D.mat <- -sdr[incld, incld] # d x d
       B.mat <- -sdr[incl, incld] # a x d

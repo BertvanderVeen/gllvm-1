@@ -5,6 +5,7 @@
 //GLLVM
 //Author: Jenni Niku, Bert van der Veen
 //------------------------------------------------------------
+
 template<class Type>
 Type objective_function<Type>::operator() ()
 {
@@ -31,7 +32,7 @@ Type objective_function<Type>::operator() ()
   
   PARAMETER_VECTOR(Au);
   PARAMETER_VECTOR(lg_Ar);
-  PARAMETER_MATRIX(zeta);
+  PARAMETER_VECTOR(zeta);
   //DATA_SCALAR(extra);
   //DATA_INTEGER(method);// 0=VA, 1=LA
   DATA_INTEGER(model);
@@ -68,7 +69,7 @@ Type objective_function<Type>::operator() ()
       }
       // set diag>0 !!!!!!!!!!!
       if (j == i){
-        newlam(i,j) = fabs(newlam(i,j));
+        newlam(i,j) = abs(newlam(i,j));
       }
     }
   }
@@ -138,8 +139,8 @@ Type objective_function<Type>::operator() ()
       }
     }
   }
-  //trace of quadratic effect
   
+  //trace of quadratic effect
   for (int i=0; i<n; i++) {
     for (int j=0; j<p;j++){
       eta(i,j) -= 0.5*((D.col(j).matrix()*A.col(i).matrix()).diagonal().sum());//could just remove .matrix().diagonal() and sum all, off-diagonal is zero due to D being a diagonal matrix
@@ -191,59 +192,52 @@ Type objective_function<Type>::operator() ()
     }
     
   } else if(family==3){
-    int ymax = 1;
-    int ymin = 999;
+
+    int ymax =  CppAD::Integer(y.maxCoeff());
+    int K = ymax - 1;
     
-    //find maximum and minimum integer values in the data
-    for (int i=0; i<n; i++) {
-      for(int j=0; j<p; j++){
-        if(ymax<y(i,j)){
-          ymax += 1;
-        }
-        if(ymax<ymin){
-          ymin = ymax;
-        }else if(ymin>y(i,j) && ymin != 0){
-          ymin -= 1;
-        }
-      }
-    }
-    
-    //add a column of zeros
-    matrix <Type> zetanew(p,zeta.cols()+1);
+    matrix <Type> zetanew(p,K);
     zetanew.fill(0.0);
-    int K = zeta.cols();
-    for (int j=0; j<p; j++){
-      for(int k=0; k<K; k++){
-        zetanew(j,k+1) = zeta(j,k);
-      }
-      
-    }
     
-    for (int i=0; i<n; i++) {
+    int idx = 0;
       for(int j=0; j<p; j++){
-        //minimum category
-        if(y(i,j)==ymin){
-          nll -= log(pnorm(zetanew(j,0) - eta(i,j), Type(0), Type(1)));
-        }
-        //maxmimum category
-        if(y(i,j)==ymax){
-          int idx = ymax-(1+ymin);
-          nll -= log(1 - pnorm(zetanew(j,idx) - eta(i,j), Type(0), Type(1)));
-        }
-        //everything else
-        for (int l=ymin; l<ymax; l++) {
-          if(y(i,j)==l && y(i,j) != ymin && y(i,j) != ymax){
-            int idx = (l-ymin);
-            int idx2 = l-(1+ymin);
-            nll -= log(pnorm(zetanew(j,idx)-eta(i,j), Type(0), Type(1))-pnorm(zetanew(j,idx2)-eta(i,j), Type(0), Type(1))); 
+        int ymaxj = CppAD::Integer(y.col(j).maxCoeff());
+        int Kj = ymaxj - 1;
+          if(Kj>1){
+            for(int k=0; k<(Kj-1); k++){
+              if(k==1){
+                zetanew(j,k+1) = abs(zeta(idx+k));//second cutoffs must be positive
+              }else{
+                zetanew(j,k+1) = zeta(idx+k);
+              }
+              
+            }
           }
-        }
-        
-        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();   
+          idx += Kj-1;
       }
-      nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
-    }
-    
+
+          for (int i=0; i<n; i++) {
+            for(int j=0; j<p; j++){
+              int ymaxj = CppAD::Integer(y.col(j).maxCoeff());
+              //minimum category
+              if(y(i,j)==1){
+                nll -= log(pnorm(zetanew(j,0) - eta(i,j), Type(0), Type(1)));
+              }else if(y(i,j)==ymaxj){
+              //maximum category
+              int idx = ymaxj-2;
+                nll -= log(1 - pnorm(zetanew(j,idx) - eta(i,j), Type(0), Type(1)));
+              }else if(ymaxj>2){
+              for (int l=2; l<ymaxj; l++) {
+                if(y(i,j)==l && l != ymaxj){
+                  nll -= log(pnorm(zetanew(j,l-1)-eta(i,j), Type(0), Type(1))-pnorm(zetanew(j,l-2)-eta(i,j), Type(0), Type(1))); 
+                }
+              }
+              }
+              nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();   
+            }
+            nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+          }
+          
   }
   if(ridge>0){
     //shrinks LVs
@@ -271,8 +265,6 @@ Type objective_function<Type>::operator() ()
   
   
   nll -= -0.5*(u.array()*u.array()).sum() - n*log(sigma)*random(0);// -0.5*t(u_i)*u_i
-  
-  
   
   return nll;
 }
