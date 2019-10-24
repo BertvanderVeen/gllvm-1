@@ -267,7 +267,6 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
           zeta <- t(fit$zeta)[-1,][!is.na(t(fit$zeta)[-1,])]
         }else{
           zeta = matrix(0)
-          K = 1
         }
         
         q <- num.lv
