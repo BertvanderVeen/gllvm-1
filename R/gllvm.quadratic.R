@@ -185,7 +185,6 @@
 #' @export
 #'
 #'@useDynLib gllvm2, .registration = TRUE
-#'@useDynLib gllvm3, .registration = TRUE
 #'@importFrom vegan scores
 #'@importFrom vegan tolerance
 #'@importFrom vegan CCA
