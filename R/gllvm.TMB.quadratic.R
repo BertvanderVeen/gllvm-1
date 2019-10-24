@@ -437,8 +437,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           }
           idx<-idx+k
         }
+      zetanew[,1] <- 0  
       row.names(zetanew) <- colnames(y00); colnames(zetanew) <- paste(min(y):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
-        zetas<-zetanew
+      zetas<-zetanew
       out$y<-y00
         }
       if(ridge==T){
@@ -616,7 +617,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             }
             idx<-idx+k
           }
-
+        se.zetanew[,1] <- 0
         out$sd$zeta <- se.zetanew
         row.names(out$sd$zeta) <- colnames(y00); colnames(out$sd$zeta) <- paste(min(y00):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
       }
