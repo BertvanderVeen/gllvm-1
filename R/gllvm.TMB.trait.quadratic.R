@@ -796,7 +796,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                 out$sd$sigmaB <- se * c(diag(out$params$sigmaB), rep(1, nr * (nr - 1)/2))
             }
             if(family %in% c("ordinal")){
-              se.zetas <- se[1:(p*(K-2))];
+              se.zetas <- se;
               se.zetanew <- matrix(0,nrow=p,ncol=K)
               idx<-0
               for(j in 1:ncol(y)){
