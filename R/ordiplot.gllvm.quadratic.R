@@ -162,6 +162,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       }else{
         plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
       }
+      
       cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
       if(legend==T){
         legend(x="topleft",text.col=cols[largest.lnorms],colnames(mu))
@@ -222,7 +223,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         plot(NA, xlim=xlim,ylim=ylim,xlab = paste("Latent variable ", which.lvs[1]), 
              ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
       }
-      
+      abline(v=0,h=0,lty="dotted")
       
       if(is.null(row.names(object$y))){
         row.names(object$y)<-1:nrow(object$y)
@@ -238,8 +239,6 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
           car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = col[largest.lnorms[j]], lty = "dashed")
         }
       }
-      
-      
       
     } else {
       stop("Not enough LVs for a biplot")
