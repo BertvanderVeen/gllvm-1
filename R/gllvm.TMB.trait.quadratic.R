@@ -544,7 +544,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
         }
         if(family == "ordinal"){
           zetas <- param[names(param)=="zeta"]
-          zetanew <- matrix(0,nrow=p,ncol=K)
+          zetanew <- matrix(NA,nrow=p,ncol=K)
           idx<-0
           for(j in 1:ncol(y)){
             k<-max(y[,j])-2
@@ -655,7 +655,6 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                 names(out$params$inv.phi) <- colnames(out$y)
             }
             if (family == "ordinal") {
-                zetas[,-1][zetas[,-1]==0]<-NA
                 out$params$zeta <- zetas
             }
             if (!is.null(randomX)) {
@@ -797,7 +796,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             }
             if(family %in% c("ordinal")){
               se.zetas <- se;
-              se.zetanew <- matrix(0,nrow=p,ncol=K)
+              se.zetanew <- matrix(NA,nrow=p,ncol=K)
               idx<-0
               for(j in 1:ncol(y)){
                 k<-max(y[,j])-2
