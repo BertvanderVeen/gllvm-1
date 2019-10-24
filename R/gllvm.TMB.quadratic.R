@@ -606,7 +606,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         names(out$sd$phi) <- colnames(y);  se <- se[-(1:p)]
       }
       if(family %in% c("ordinal")){
-        se.zetas <- se[1:(p*(K-2))];
+        se.zetas <- se;
           se.zetanew <- matrix(0,nrow=p,ncol=K)
           idx<-0
           for(j in 1:ncol(y)){
