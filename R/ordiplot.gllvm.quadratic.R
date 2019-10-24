@@ -106,7 +106,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       }
       
       if (biplot) {
-        resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
+        resid.cov <- object$params$theta[,1:object$num.lv]^2 + 2*object$params$theta[,-c(1:object$num.lv)]^2
         largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
         
         plot(rbind(choose.lvs[, which.lvs], choose.lv.coefs[, which.lvs]), xlab = paste("Latent variable ", which.lvs[1]), 
@@ -137,8 +137,9 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
     }
   } else {
     if (length(which.lvs) == 1) {
-      resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
+      resid.cov <- object$params$theta[,1:object$num.lv,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F]^2
       largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
+      cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])[largest.lnorms]
       if (object$num.lv == 1) {
         quadr.coef <- object$params$theta[largest.lnorms, -1,drop=F]
       } else {
@@ -163,15 +164,14 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
       }
       
-      cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
       if(legend==T){
-        legend(x="topleft",text.col=cols[largest.lnorms],colnames(mu))
+        legend(x="topleft",text.col=cols,colnames(mu))
       }
       
       for (j in 1:ncol(mu)) {
-        lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[largest.lnorms[j]])
+        lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[j])
         if(legend==F){
-          text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[largest.lnorms[j]], adj = 0)  
+          text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[j], adj = 0)  
         }
       }
       text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
@@ -180,6 +180,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
       optima <- -object$params$theta[, 1:object$num.lv, drop = F][largest.lnorms, which.lvs, drop = F]/(2 * object$params$theta[largest.lnorms, -c(1:object$num.lv), 
                                                                                                                                 drop = F][, which.lvs, drop = F])
+      cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])[largest.lnorms]
       if(is.null(colnames(object$y)))row.names(optima)<-largest.lnorms
       if(!is.null(colnames(object$y)))row.names(optima)<-colnames(object$y)[largest.lnorms]
       
@@ -196,6 +197,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
                         sep = " "))
           optima <- optima[!excl, , drop = F]
           quadr.coef <- quadr.coef[!excl, , drop = F] 
+          cols <- cols[!excl]
         }
         
       }
@@ -228,15 +230,13 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       if(is.null(row.names(object$y))){
         row.names(object$y)<-1:nrow(object$y)
       }
-      col <- cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])
-      
-      
+
       text(lvs, labels = row.names(object$y),col="gray")
-      text(optima, labels = row.names(optima), col = col[largest.lnorms])
+      text(optima, labels = row.names(optima), col = cols)
       if(env.ranges==T){
         for (j in 1:nrow(optima)) {
           s = diag(2)
-          car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = col[largest.lnorms[j]], lty = "dashed")
+          car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = cols[j], lty = "dashed")
         }
       }
       
