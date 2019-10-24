@@ -186,8 +186,10 @@
 #'
 #'@useDynLib gllvm2, .registration = TRUE
 #'@useDynLib gllvm3, .registration = TRUE
+#'@importFrom vegan scores
+#'@importFrom vegan tolerance
+#'@importFrom vegan CCA
 #'@importFrom TMB MakeADFun
-#'@importFrom zetadiv glm.cons
 #'@importFrom mvabund manyglm
 #'@importFrom graphics abline axis par plot segments text points boxplot panel.smooth lines polygon
 #'@importFrom grDevices rainbow
