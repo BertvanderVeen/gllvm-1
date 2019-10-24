@@ -24,7 +24,6 @@ logLik.gllvm.quadratic <- function(object, ...) {
         
     }
     if (!is.null(object$params$zeta)) {
-      object$params$inv.phi <- NULL
       object$params$zeta<-object$params$zeta[,-1]
     }
     if (object$row.eff %in% c("fixed", TRUE)) 
