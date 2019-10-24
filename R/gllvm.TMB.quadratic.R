@@ -173,7 +173,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       zeta <- t(fit$zeta)[-1,][!is.na(t(fit$zeta)[-1,])]
     }else{
       zeta = matrix(0)
-      K = 1
     }
     
     
