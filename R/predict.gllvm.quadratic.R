@@ -55,7 +55,7 @@
 #'@export
 #'@export predict.gllvm.quadratic
 
-predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = NULL, type = "link", LVonly = FALSE, which.lvs = 1:object$num.lv,intercept=F, 
+predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = NULL, type = "link", LVonly = FALSE, which.lvs = 1:object$num.lv,intercept=T, 
     ...) {
     newdata <- newX
     p <- ncol(object$y)
@@ -202,21 +202,21 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
         out <- object$logL
     
     if (object$family == "ordinal" && type == "response") {
-        k.max <- ncol(object$params$zeta) + 1
-        preds <- array(NA, dim = c(k.max, nrow(eta), p), dimnames = list(paste("level", 1:k.max, sep = ""), NULL, NULL))
+        k.max <- apply(object$params$zeta,1,function(x)length(x[!is.na(x)])) + 1
+        preds <- array(NA, dim = c(max(k.max), nrow(eta), p), dimnames = list(paste("level", 1:max(k.max), sep = ""), NULL, NULL))
         
         for (i in 1:n) {
             for (j in 1:p) {
                 probK <- NULL
                 probK[1] <- pnorm(object$params$zeta[j, 1] - eta[i, j], log.p = FALSE)
-                probK[k.max] <- 1 - pnorm(object$params$zeta[j, k.max - 1] - eta[i, j])
-                if (k.max > 2) {
-                  j.levels <- 2:(k.max - 1)
+                probK[k.max[j]] <- 1 - pnorm(object$params$zeta[j, k.max[j] - 1] - eta[i, j])
+                if (k.max[j] > 2) {
+                  j.levels <- 2:(k.max[j] - 1)
                   for (k in j.levels) {
                     probK[k] <- pnorm(object$params$zeta[j, k] - eta[i, j]) - pnorm(object$params$zeta[j, k - 1] - eta[i, j])
                   }
                 }
-                preds[, i, j] <- probK
+                preds[, i, j] <- c(probK,rep(NA,max(k.max)-k.max[j]))
             }
         }
         out <- preds
