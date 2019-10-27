@@ -87,7 +87,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
         if(start.method=="FA"){
           lastart <- FAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)  
         }else{
-          lastart <- CAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)
+          lastart <- CAstart(mu=NULL, family=family, y=y, num.lv = num.lv)
         }
         
         
@@ -159,7 +159,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
         if(start.method=="FA"){
           lastart <- FAstart(mu=mu, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)  
         }else{
-          lastart <- CAstart(mu=mu, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)
+          lastart <- CAstart(mu=mu, family=family, y=y, num.lv = num.lv)
         }
         gamma<-lastart$gamma
         index<-lastart$index
@@ -309,13 +309,22 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
     index <- t(t(index)*sig)}, silent = TRUE)
   if(starting.val=="zero"){
     lambda2<-matrix(-.5,p,num.lv)
-  }else{
-    lambda2[lambda2==0]<--.5
+  }else if(starting.val=="random"){
+    if(starting.val=="random"){
+      #based on weighted average species SD, see canoco
+      lambda2<-matrix(0,nrow=p,ncol=num.lv)
+      for(j in 1:p){
+        for(q in 1:num.lv){
+          lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+        }
+      }
+      if(any(is.infinite(lambda2))){
+        lambda2[is.infinite(lambda2)]<--0.5
+      }
+    }
   }
-  
+  lambda2[lambda2==0]<--.5
   params <- cbind(params,lambda2)
-  params<<-params
-  zeta<<-zeta
   out$params <- params
   out$phi <- phi
   out$mu <- mu

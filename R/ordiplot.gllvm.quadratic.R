@@ -106,7 +106,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       }
       
       if (biplot) {
-        resid.cov <- object$params$theta[,1:object$num.lv]^2 + 2*object$params$theta[,-c(1:object$num.lv)]^2
+        resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
         largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
         
         plot(rbind(choose.lvs[, which.lvs], choose.lv.coefs[, which.lvs]), xlab = paste("Latent variable ", which.lvs[1]), 
@@ -137,7 +137,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
     }
   } else {
     if (length(which.lvs) == 1) {
-      resid.cov <- object$params$theta[,1:object$num.lv,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F]^2
+      resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
       largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
       cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])[largest.lnorms]
       if (object$num.lv == 1) {
