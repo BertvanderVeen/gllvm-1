@@ -44,7 +44,7 @@ simulate.gllvm.quadratic = function(object, nsim = 1, conditional = FALSE, seed 
     
     nRows = dim(object$lvs)[1]
     nCols = dim(object$params$theta)[1]
-    if(conditional == TRUE){
+    if(conditional == FALSE){
     # generate new latent variables
     lvsNew = matrix(rnorm(nsim * nRows * object$num.lv), ncol = object$num.lv)
     }else{
