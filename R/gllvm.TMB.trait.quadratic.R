@@ -262,11 +262,11 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             
         }
         if(family=="ordinal"){
-          zeta = fit$zeta[,-1]
           K = max(y00)-min(y00)
-          zeta <- t(fit$zeta)[-1,][!is.na(t(fit$zeta)[-1,])]
+          zeta <- c(fit$zeta[,-1])
+          zeta <- zeta[!is.na(zeta)]
         }else{
-          zeta = matrix(0)
+          zeta = 0
         }
         
         q <- num.lv
@@ -445,9 +445,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             Ar1 <- c(param1[nam == "lg_Ar"])
             lg_gamma = param1[nam == "lg_gamma"]
             lg_gamma2 = param1[nam == "lg_gamma2"]
-            if (family == "ordinal") {
-                zeta <- param1[nam == "zeta"]
-            }
+            zeta <- param1[nam == "zeta"]
             
             if (row.eff == "random") {
                 

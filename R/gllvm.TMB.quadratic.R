@@ -2,6 +2,11 @@
 ## GLLVM, with estimation done via Variational approximation using TMB-package
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
+X = NULL; formula = NULL; num.lv = 2; family = "ordinal";
+Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-6; trace = trace;
+seed = NULL;maxit = 1000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
+n.init=1;start.params=NULL;optimizer="optim";starting.val="zero";diag.iter=1;
+Lambda.start=c(0.1,0.5); jitter.var=0; start.method="FA";ridge=F;ridge.quadratic=F
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6, trace = trace,
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
@@ -174,13 +179,12 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       phis <- 1/phis
     } 
     if(family=="ordinal"){
-      zeta = fit$zeta[,-1]
       K = max(y00)-min(y00)
-      zeta <- t(fit$zeta)[-1,][!is.na(t(fit$zeta)[-1,])]
+      zeta <- c(fit$zeta[,-1])
+      zeta <- zeta[!is.na(zeta)]
     }else{
-      zeta = matrix(0)
+      zeta = 0
     }
-    
     
     if (is.null(offset))
       offset <- matrix(0, nrow = n, ncol = p)
@@ -338,9 +342,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         lg_Ar1 <- (param1[nam=="lg_Ar"])
         lg_gamma=(param1[nam=="lg_gamma"])
         lg_gamma2=(param1[nam=="lg_gamma2"])
-        if(family=="ordinal"){
-          zeta <- param1[nam=="zeta"]
-        }
+        zeta <- param1[nam=="zeta"]
         
         if(row.eff == "random"){
           if(ridge==T){
