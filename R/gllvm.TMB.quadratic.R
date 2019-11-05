@@ -106,7 +106,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
         lambdas <- as.matrix(fit$params[,(ncol(fit$params)-num.lv*2+1):(ncol(fit$params)-num.lv)])
           lambdas[upper.tri(lambdas)] <- 0
-        covM.lvs <- array(NA, dim = c(n, num.lv, num.lv))
       
       row.params <- NULL
       
@@ -141,7 +140,15 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         lambda2 <- NULL
           lambdas <- start.params$params$theta[,1:num.lv]
           lambdas[upper.tri(lambdas)] <- 0
-        lambda2 <- start.params$params$theta[,-c(1:num.lv)]
+          if(class(start.params)=="gllvm.quadratic"){
+            lambda2 <- start.params$params$theta[,-c(1:num.lv)] 
+          }else{
+            if(!is.null(X)){
+              lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
+            }else if(is.null(X)){
+              lambda2 <- fit$params[,-c(1:(num.lv+1))]  
+            }#this still needs to be implement for traits.
+          }
         row.params <- NULL
         if (start.params$row.eff != FALSE) {
           row.params <- start.params$params$row.params
@@ -152,7 +159,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         }## row parameters
         lvs <- NULL
           lvs <- matrix(start.params$lvs, ncol = num.lv)
-          covM.lvs <- array(NA, dim = c(n, num.lv, num.lv))
       } else {
         stop( "Model which is set as starting parameters isn't the suitable for the one you are trying to fit. Check that attributes y, X and row.eff match to each other.")
       }
@@ -219,6 +225,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             Au <- c(Au,rep(0,num.lv*(num.lv-1)/2*n))
           }
         } 
+
+    #remove here
       if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
       if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
       if(!is.null(X)){Xd <- cbind(1,X)} else {Xd <- matrix(1,n)}
@@ -413,11 +421,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale, fnscale=fnscale),hessian = FALSE),silent = TRUE))
         }
         if(optimizer=="optim"){
-          if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+          if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1}#Lambda.struc="diagonal"
         }else{
-          if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+          if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1}#; Lambda.struc="diagonal"
         }
-        
       }
       
       param<-objr$env$last.par.best
