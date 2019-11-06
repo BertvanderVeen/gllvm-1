@@ -2,6 +2,12 @@
 ## GLLVM, with estimation done via Variational approximation using TMB-package
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
+X = NULL; formula = NULL; num.lv = 2; family = "ordinal";
+Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-6; trace = trace;
+seed = NULL;maxit = 1000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
+n.init=1;start.params=NULL;
+optimizer="optim";starting.val="zero";diag.iter=1;
+Lambda.start=c(0.1,0.5); jitter.var=0; ridge=F; ridge.quadratic = F; start.method="FA"; par.scale="coef"; fn.scale=1
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-6, trace = trace,
                                 seed = NULL,maxit = 1000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
@@ -37,7 +43,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       stop("Ordinal data requires all columns to have at least has two levels. If all columns only have two levels, please use family == binomial instead. Thanks")
                         
     if(any(!apply(y,2,function(x)all(diff(sort(unique(x)))==1))))
-      stop("Can't fit ordinal model if there are species with missing classes. Please reclassify per species.")              
+      stop("Can't fit ordinal model if there are species with missing classes. Please reclassify per species.")
       
   }
   num.X <- 0;
@@ -179,7 +185,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     } 
     if(family=="ordinal"){
       K = max(y00)-min(y00)
-      zeta <- c(fit$zeta[,-1])
+      zeta <- c(t(fit$zeta[,-1]))
       zeta <- zeta[!is.na(zeta)]
     }else{
       zeta = 0
