@@ -208,7 +208,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     timeo<-NULL
     se <- NULL
     
-        if(is.null(start.params)){
+        if(is.null(start.params)  || start.params$method!="VA"){
           if(Lambda.struc=="diagonal" || diag.iter>0){
             Au <- log(rep(Lambda.start[1],num.lv*n)) #1/2, 1
           } else{
@@ -336,10 +336,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         u1 <- matrix(param1[nam=="u"],n,num.lv)
         lg_phi1 <- param1[nam=="lg_phi"]
         log_sigma1 <- param1[nam=="log_sigma"]
-        Au1<- c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0,num.lv*(num.lv-1)/2*n))
-        lg_Ar1 <- (param1[nam=="lg_Ar"])
-        lg_gamma=(param1[nam=="lg_gamma"])
-        lg_gamma2=(param1[nam=="lg_gamma2"])
+        Au1<- c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n)) #this line adds the covariance parameters.. ufin binom the next optimization doesnt run, we end up with 0 covariance
+        lg_Ar1 <- param1[nam=="lg_Ar"]
+        lg_gamma <- param1[nam=="lg_gamma"]
+        lg_gamma2 <- param1[nam=="lg_gamma2"]
         zeta <- param1[nam=="zeta"]
         
         if(row.eff == "random"){
@@ -486,6 +486,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(((n.i==1 || out$logL > abs(new.loglik)) && new.loglik>0) && !inherits(optr, "try-error")){
       out$start <- fit
       objr1 <- objr; optr1=optr;
+      out$convergence <- optr1$convergence
       out$logL <- new.loglik
         out$lvs <- lvs
         out$params$theta <- theta

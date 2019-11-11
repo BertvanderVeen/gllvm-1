@@ -429,7 +429,8 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
     if(grad.check==T&any(out$TMBfn$gr(out$TMBfn$par)>0.001)){
       cat( paste("Large gradient value(s) detected ", "(max was ",round(max(out$TMBfn$gr(out$TMBfn$par)),3), "). Model might not have converged. \n",sep=""))
     }
-    out$prediction.errors = fitg$prediction.errors
+  
+    out$convergence <- fitg$convergence
     out$call <- match.call()
     class(out) <- "gllvm.quadratic"
     return(out)
