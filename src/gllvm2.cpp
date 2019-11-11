@@ -143,7 +143,7 @@ Type objective_function<Type>::operator() ()
   //trace of quadratic effect
   for (int i=0; i<n; i++) {
     for (int j=0; j<p;j++){
-      eta(i,j) -= 0.5*((D.col(j).matrix()*A.col(i).matrix()).diagonal().sum());//could just remove .matrix().diagonal() and sum all, off-diagonal is zero due to D being a diagonal matrix
+      eta(i,j) -= 0.5*((D.col(j).matrix()*A.col(i).matrix()).trace());
     }
   }     
   if(family==0){

@@ -96,14 +96,14 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
         index<-lastart$index
         lambda2<-lastart$lambda2
         #estimate new intercept, now accounting for a quadratic term
-        if(family!="gaussian") {
-          if(!is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ X + offset(index%*%t(gamma)+index^2%*%t(lambda2)), family = family, K = trial.size)
-          if(is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ 1 + offset(index%*%t(gamma)+index^2%*%t(lambda2)), family = family, K = trial.size)
-        } else {
-          if(!is.null(X)) fit.mva2 <- mvabund::manylm(y ~ X + offset(index%*%t(gamma)+index^2%*%t(lambda2)))
-          if(is.null(X)) fit.mva2 <- mvabund::manylm(y ~ 1 + offset(index%*%t(gamma)+index^2%*%t(lambda2)))
-        }
-        coef <- t(fit.mva2$coef)
+        # if(family!="gaussian") {
+        #   if(!is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ X + offset(index%*%t(gamma)+index^2%*%t(lambda2)), family = family, K = trial.size)
+        #   if(is.null(X)) fit.mva2 <- mvabund::manyglm(y ~ 1 + offset(index%*%t(gamma)+index^2%*%t(lambda2)), family = family, K = trial.size)
+        # } else {
+        #   if(!is.null(X)) fit.mva2 <- mvabund::manylm(y ~ X + offset(index%*%t(gamma)+index^2%*%t(lambda2)))
+        #   if(is.null(X)) fit.mva2 <- mvabund::manylm(y ~ 1 + offset(index%*%t(gamma)+index^2%*%t(lambda2)))
+        # }
+        # coef <- t(fit.mva2$coef)
         #potentially add the lv coefficients for gaussian shaped responses
         
       } else {
