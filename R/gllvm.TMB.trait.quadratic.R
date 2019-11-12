@@ -145,7 +145,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
     }
     
     
-    if (!(family %in% c("poisson", "negative.binomial", "binomial", "tweedie", "ZIP", "gaussian", "ordinal"))) 
+    if (!(family %in% c("poisson", "negative.binomial", "binomial", "ordinal"))) 
         stop("Selected family not permitted...sorry!")
     if (!(Lambda.struc %in% c("unstructured", "diagonal"))) 
         stop("Lambda matrix (covariance of vartiational distribution for latent variable) not permitted...sorry!")
@@ -307,8 +307,19 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                   Au <- c(Au, log(start.params$A[, d]))
                 }
             }
-            if (Lambda.struc != "diagonal" && diag.iter == 0) {
-                Au <- c(Au, rep(0, num.lv * (num.lv - 1)/2 * n))
+            if(Lambda.struc!="diagonal" && diag.iter==0){
+              if(start.params$Lambda.struc=="unstructured"){
+                for(d1 in 1:num.lv) {
+                  for(d2 in 1:num.lv) {
+                    if(d1!=d2){
+                      Au <- c(Au,start.params$A[,d1,d2] )
+                    }
+                  }
+                }
+              }else{
+                Au <- c(Au,rep(0,num.lv*(num.lv-1)/2*n))##this is redundant
+              }
+              
             }
         }
         if (length(Lambda.start) < 2) {

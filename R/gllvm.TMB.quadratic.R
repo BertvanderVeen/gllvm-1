@@ -223,7 +223,18 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             }
           }
           if(Lambda.struc!="diagonal" && diag.iter==0){
-            Au <- c(Au,rep(0,num.lv*(num.lv-1)/2*n))
+            if(start.params$Lambda.struc=="unstructured"){
+            for(d1 in 1:num.lv) {
+              for(d2 in 1:num.lv) {
+                if(d1!=d2){
+                  Au <- c(Au,start.params$A[,d1,d2] )
+              }
+              }
+            }
+                }else{
+                  Au <- c(Au,rep(0,num.lv*(num.lv-1)/2*n))##this is redundant
+                }
+
           }
         } 
 
