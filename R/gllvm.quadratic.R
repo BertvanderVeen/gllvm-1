@@ -17,7 +17,9 @@
 #' @param n.init number of initial runs. Uses multiple runs and picks up the one giving highest log-likelihood value. Defaults to 1.
 #' @param offset vector or matrix of offset terms.
 #' @param Lambda.struc  covariance structure of VA distributions for latent variables,'unstructured' or 'diagonal'.
-#' @param diag.iter  non-negative integer which is used to speed up the updating of variational (covariance) parameters in VA method. Defaults to 5.
+#' @param diag.iter  if larger than 1, the updating of variational (covariance) parameters is sped-up by first fitting a model with a diagonal structure.
+#' @param trace logical, if \code{TRUE} in each iteration step of n.init information on current step will be printed. Defaults to FALSE. 
+#' @param trace2 local, if \code{TRUE} prints the optimizer trace.
 #' @param Lambda.start starting values for variances in VA distributions for latent variables in variational approximation method. Defaults to 0.1.
 #' @param reltol  convergence criteria for log-likelihood, defaults to 1e-6.
 #' @param maxit maximum number of iterations within \code{optim} function, defaults to 1000.
@@ -200,7 +202,7 @@
 #'@importFrom mvtnorm rmvnorm
 
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
-    sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 5, trace = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
+    sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 1, trace = FALSE, trace2 = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
     start.fit = NULL, starting.val = "res", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
     ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = TRUE) {
     #build in gradient check
@@ -377,7 +379,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.trait.quadratic(y, X = X, TR = TR, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                 row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                 n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, randomX = randomX, 
-                diag.iter = diag.iter, trace = trace, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale)
+                diag.iter = diag.iter, trace = trace, trace2 = trac2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale)
             out$X <- fitg$X
             out$TR <- fitg$TR
             
@@ -385,7 +387,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.quadratic(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                                         row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                         n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
-                                        diag.iter = diag.iter, trace = trace, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale)
+                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale)
         }
 
     out$X.design <- fitg$X.design
