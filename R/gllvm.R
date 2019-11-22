@@ -404,12 +404,16 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
 
 
     if (!is.null(start.fit)) {
-      if (class(start.fit) != "gllvm" && class(start.fit) != "gllvm.quadratic")
+      if (class(start.fit) != "gllvm" && class(start.fit) != 'gllvm.quadratic')
         stop("Only object of class 'gllvm' can be given as a starting parameters.")
 
+      if (!(family %in% c("poisson", "negative.binomial", "ZIP")))
+        stop("Starting parameters can be given only for count data.")
+
+    }
     #  if(num.lv>=p){ stop("Number of latent variables (",num.lv,") must be less than number of response variables (",p,").");}
 
-}
+
     if (is.null(offset))
       O <- matrix(0, nrow = n, ncol = p)
     else if (NCOL(offset) == 1)
