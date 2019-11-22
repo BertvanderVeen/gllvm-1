@@ -124,7 +124,7 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
           betas <- c(start.params$params$Xcoef) ## covariates coefficients
         lambdas <- NULL
         if (num.lv > 0){
-          lambdas <- start.params$params$theta
+          lambdas <- start.params$params$theta[,1:num.lv]
           lambdas[upper.tri(lambdas)] <- 0}
         row.params <- NULL
         if (start.params$row.eff != FALSE) {
@@ -218,12 +218,23 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
               Au <- c(Au,log(start.params$A[,d,d]))
             } else {
               Au <- c(Au,log(start.params$A[,d]))
-              }
+            }
           }
           if(Lambda.struc!="diagonal" && diag.iter==0){
-            Au <- c(Au,rep(0,num.lv*(num.lv-1)/2*n))
+            if(start.params$Lambda.struc=="unstructured"){
+              for(d1 in 1:num.lv) {
+                for(d2 in 1:num.lv) {
+                  if(d1!=d2){
+                    Au <- c(Au,start.params$A[,d1,d2] )
+                  }
+                }
+              }
+            }else{
+              Au <- c(Au,rep(0,num.lv*(num.lv-1)/2*n))##this is redundant
+            }
+            
           }
-        }} else { Au <- 0}
+        } } else { Au <- 0}
       if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
 
       if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
