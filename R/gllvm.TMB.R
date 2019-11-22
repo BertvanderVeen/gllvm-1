@@ -115,8 +115,7 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
 
     } else{
       if (dim(start.params$y) == dim(y) &&
-          is.null(X) == is.null(start.params$X) &&
-          (row.eff == start.params$row.eff)) {
+          is.null(X) == is.null(start.params$X)) {
         beta0 <- start.params$params$beta0 ## column intercepts
         betas <- NULL
         if (!is.null(X))
@@ -133,6 +132,13 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
             row.params[1] <- 0
           if(row.params=="random")
             sigma <- start.params$params$sigma
+        }else{
+                 if (row.eff != FALSE) {
+        row.params <- fit$row.params
+        if (row.eff == "random") {
+          sigma <- sd(row.params)#1;#
+        }
+      }
         }## row parameters
         lvs <- NULL
         if (num.lv > 0) {
