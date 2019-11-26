@@ -421,10 +421,10 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, maxit = maxit, trace = trace2)), 
                 silent = !trace2))
         }
-        if (optimizer == "optim") {
+        if (optimizer == "optim" & starting.val!="zero") {
           if(!is.null(par.scale)){
             if(par.scale=="coef"){
-              parscale<-objr$par
+              parscale<-abs(objr$par)
               parscale[parscale==0]<-1
             }else if(is.numeric(par.scale)){
               parscale<-rep(par.scale,length(objr$par))
