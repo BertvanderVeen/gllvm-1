@@ -238,6 +238,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           }
         } 
 
+
       if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
       if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
       if(!is.null(X)){Xd <- cbind(1,X)} else {Xd <- matrix(1,n)}
