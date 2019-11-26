@@ -315,9 +315,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit,trace=trace2)),silent = !trace2))
       }
       if(optimizer=="optim") {
-        if(!is.null(par.scale)&&starting.val!="zero"){
+        if(!is.null(par.scale)){
           if(par.scale=="coef"){
-            parscale<-abs(objr$par)
+            parscale<-abs(objr$par)#this trick comes from https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.12044
             parscale[parscale==0]<-1
           }else if(is.numeric(par.scale)){
             parscale<-rep(par.scale,length(objr$par))
@@ -421,7 +421,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         if(optimizer=="optim") {
           if(!is.null(par.scale)){
             if(par.scale=="coef"){
-              parscale<-objr$par
+              parscale<-abs(objr$par)
               parscale[parscale==0]<-1
             }else if(is.numeric(par.scale)){
               parscale<-rep(par.scale,length(objr$par))
