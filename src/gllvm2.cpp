@@ -86,7 +86,7 @@ Type objective_function<Type>::operator() ()
       }
       // set diag>0 !!!!!!!!!!!
       if (j == i){
-        newlam(i,j) = abs(newlam(i,j));
+        newlam(i,j) = fabs(newlam(i,j));
       }
     }
   }
