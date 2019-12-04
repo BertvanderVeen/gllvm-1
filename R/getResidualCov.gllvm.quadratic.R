@@ -7,6 +7,7 @@
 #' @return Function returns following components:
 #'  \item{cov }{residual covariance matrix}
 #'  \item{trace }{trace of the residual covariance matrix}
+#'  \item{trace.q }{trace of the residual covariance matrix per latent variable}
 #'
 #' @details 
 #' Residual covariance matrix, storing information on species co-occurrence that is not explained by the environmental variables (if included), is calculated using the matrix of latent variables loadings, that is,  \Sigma_{j,k} =\eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'} + .
@@ -43,6 +44,8 @@
 #'rescov$cov
 #'# Trace of the covariance matrix
 #'rescov$tr
+#'# Trace per latent variable
+#'rescov$trace.q
 #'
 #'@aliases getResidualCov getResidualCov.gllvm.quadratic
 #'@method getResidualCov gllvm.quadratic

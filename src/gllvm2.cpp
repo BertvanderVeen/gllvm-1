@@ -56,6 +56,7 @@ Type objective_function<Type>::operator() ()
   DATA_INTEGER(ridge);
   DATA_INTEGER(ridge_quadratic);
   DATA_VECTOR(random);//random row
+  DATA_INTEGER(zetastruc);
   
   int n = y.rows();
   int p = y.cols();
@@ -208,7 +209,7 @@ Type objective_function<Type>::operator() ()
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
     
-  } else if(family==3){
+  } else if(family==3 && zetastruc==1){
 
     int ymax =  CppAD::Integer(y.maxCoeff());
     int K = ymax - 1;
@@ -255,6 +256,40 @@ Type objective_function<Type>::operator() ()
             nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
           }
           
+  } else if(family==3 && zetastruc==0){
+    
+    int ymax =  CppAD::Integer(y.maxCoeff());
+    int K = ymax - 1;
+    
+    vector <Type> zetanew(K);
+    zetanew.fill(0.0);
+    for(int k=0; k<(K-1); k++){
+      if(k==1){
+        zetanew(k+1) = fabs(zeta(k));//second cutoffs must be positive
+      }else{
+        zetanew(k+1) = zeta(k);
+      }
+    }
+    for (int i=0; i<n; i++) {
+      for(int j=0; j<p; j++){
+        //minimum category
+        if(y(i,j)==1){
+          nll -= log(pnorm(zetanew(0) - eta(i,j), Type(0), Type(1)));
+        }else if(y(i,j)==ymax){
+          //maximum category
+          int idx = ymax-2;
+          nll -= log(1 - pnorm(zetanew(idx) - eta(i,j), Type(0), Type(1)));
+        }else if(ymax>2){
+          for (int l=2; l<ymax; l++) {
+            if(y(i,j)==l && l != ymax){
+              nll -= log(pnorm(zetanew(l-1)-eta(i,j), Type(0), Type(1))-pnorm(zetanew(l-2)-eta(i,j), Type(0), Type(1)));
+            }
+          }
+        }
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();   
+      }
+      nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+    }
   }
   if(ridge>0){
     //shrinks LVs
