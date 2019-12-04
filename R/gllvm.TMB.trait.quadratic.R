@@ -775,7 +775,6 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             D.mat <- -sdr[incld, incld]  # d x d
             B.mat <- -sdr[incl, incld]  # a x d
             cov.mat.mod <- try(MASS::ginv(A.mat - B.mat %*% solve(D.mat) %*% t(B.mat)),silent=T)
-            if(inherits(cov.mat.mod,"try-error"))cat("Failed to calculate standard errors due to singular fit.")
             se <- sqrt(diag(abs(cov.mat.mod)))
             
             incla<-rep(FALSE, length(incl))
@@ -856,10 +855,10 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
               }
             }
             
-        }})
+        }}, silent=T)
     
     if (inherits(tr, "try-error")) {
-        cat("Standard errors for parameters could not be calculated.\n")
+        cat("Standard errors for parameters could not be calculated, due to singular fit.\n")
     }
     
     if (is.null(formula1)) {
