@@ -18,6 +18,8 @@
 #' @param type when predicting bell-shapes, can be used to predict on the response or link scale. Default is response (except for ordinal, for which the only option is "link").
 #' @param intercept when predicting bell-shapes, can be used to include species-intercepts in the plot. Default is TRUE
 #' @param legend when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot
+#' @param predict.region logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.
+#' @param leve level for prediction regions.
 #' @param ...\tadditional graphical arguments.
 #'
 #' @details
@@ -49,7 +51,7 @@
 #'@export
 #'@export ordiplot.gllvm.quadratic
 ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, jitter = FALSE, 
-                                     jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE,env.ranges=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale="species",...) {
+                                     jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, bell = TRUE,env.ranges=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale="species", predict.region = FALSE, level = 0.95, ...) {
   if (any(class(object) != "gllvm.quadratic")) 
     stop("Class of the object isn't 'gllvm.quadratic'.")
   a <- jitter.amount
@@ -132,6 +134,22 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
           text((matrix(choose.lv.coefs[largest.lnorms, which.lvs], nrow = length(largest.lnorms)) + runif(2 * length(largest.lnorms), 
                                                                                                           -a, a)), label = rownames(object$params$theta)[largest.lnorms], col = 4, cex = cex.spp)
         }
+        if(predict.region){
+          sdb<-sdA(object)
+          object$A<-sdb+object$A
+          r=0
+          #if(object$row.eff=="random") r=1
+          
+          for (i in 1:n) {
+            if(!object$TMB && object$Lambda.struc == "diagonal"){
+              covm <- diag(object$A[i,which.lvs+r]);
+            } else {
+              #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
+              covm <- object$A[i,which.lvs+r,which.lvs+r];
+            }
+            ellipse( choose.lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)))
+          }
+        }
       }
       
     }
@@ -203,6 +221,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       }
       lvs <- object$lvs
       tolerances <- 1/sqrt(-2 * quadr.coef)
+      
       if(scale=="species"){
         optima <- sweep(optima,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
         tolerances <-  sweep(tolerances,2,(getResidualCov(object)$trace.q/sum(getResidualCov(object)$trace.q)),"*")
@@ -212,6 +231,22 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         optima <- optima/tolerances
         lvs <- lvs/apply(tolerances, 2, mean)
         tolerances <- tolerances/tolerances
+      }
+      if(predict.region){
+        sdb<-sdA(object)
+        object$A<-sdb+object$A
+        r=0
+        #if(object$row.eff=="random") r=1
+        
+        for (i in 1:n) {
+          if(object$Lambda.struc == "diagonal"){
+            covm <- diag(object$A[i,which.lvs+r]);
+          } else {
+            #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
+            covm <- object$A[i,which.lvs+r,which.lvs+r];
+          }
+          ellipse(object$lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)))#these ignore scaling for now
+        }
       }
       env.lower <- optima - 1.96 * tolerances
       env.upper <- optima + 1.96 * tolerances
@@ -239,7 +274,6 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
           car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = cols[j], lty = "dashed")
         }
       }
-      
     } else {
       stop("Not enough LVs for a biplot")
     }

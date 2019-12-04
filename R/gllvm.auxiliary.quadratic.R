@@ -10,7 +10,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
   mu<-NULL
   out <- list()
   
-  
+  sigma=1
   row.params <- rep(0, n);
   if(starting.val %in% c("res","random") || row.eff == "random"){
     rmeany <- rowMeans(y)
@@ -36,8 +36,9 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
       }
     }
     if(any(abs(row.params)>1.5)) row.params[abs(row.params)>1.5] <- 1.5 * sign(row.params[abs(row.params)>1.5])
+    sigma=sd(row.params)
   }
-  sigma=1
+  
   if(!is.numeric(y))
     stop("y must a numeric.")# If ordinal data, please convert to numeric with lowest level equal to 1. Thanks")
   
@@ -288,7 +289,7 @@ start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
   }
   
     
-  if(family!="ordinal" || (family=="ordinal" & starting.val=="res")){
+  if((family!="ordinal" || (family=="ordinal" & starting.val=="res")) & starting.val!="zero"){
     if(num.lv>1 && p>2){
       gamma<-as.matrix(params[,(ncol(params) - num.lv + 1):ncol(params)])
       qr.gamma <- qr(t(gamma))
@@ -651,7 +652,21 @@ sdrandom<-function(obj, Vtheta, incl, ignore.u = FALSE){
   return(diag.cov.random)
 }
 
-
+# Calculates adjusted prediction errors for random effects
+sdA<-function(fit){
+  n<-nrow(fit$y)
+  A<- -fit$Hess$cov.mat.mod  #
+  B<- fit$Hess$Hess.full[fit$Hess$incl, fit$Hess$incla]
+  C<- fit$Hess$Hess.full[fit$Hess$incla, fit$Hess$incl]
+  D<- solve(fit$Hess$Hess.full[fit$Hess$incla, fit$Hess$incla])
+  covb <- (D%*%C)%*%(A)%*%(B%*%t(D))
+  se <- (diag(abs(covb)))
+  CovAerr<-array(0, dim(fit$A))
+  for (i in 1:ncol(fit$A)) {
+    CovAerr[,i,i] <- se[1:n]; se<-se[-(1:n)]
+  }
+  CovAerr
+}
 # draw an ellipse
 ellipse<-function(center, covM, rad){
   seg <- 51

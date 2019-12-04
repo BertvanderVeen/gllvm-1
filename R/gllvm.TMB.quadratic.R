@@ -467,7 +467,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           zetanew[,1] <- 0 
           row.names(zetanew) <- colnames(y00); colnames(zetanew) <- paste(min(y):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
         }else{
-          zetanew <- c(0,zeta)
+          zetanew <- c(0,zetas)
           names(zetanew) <- paste(min(y00):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
         }
         
@@ -591,6 +591,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       incl[names(objr$par)=="lg_Ar"] <- FALSE;
       incl[names(objr$par)=="Au"] <- FALSE;
       
+      incl[names(objr$par)=="lg_gamma"] <- FALSE;
+      incl[names(objr$par)=="lg_gamma2"] <- FALSE;
+      
       if(row.eff=="random") {
         inclr[names(objr$par)=="r0"] <- TRUE;
         incl[names(objr$par)=="lg_Ar"] <- FALSE; incld[names(objr$par)=="lg_Ar"] <- TRUE
@@ -606,12 +609,16 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
 
       if(familyn!=1) incl[names(objr$par)=="lg_phi"] <- FALSE
       if(familyn!=3) incl[names(objr$par)=="zeta"] <- FALSE
+        
       A.mat <- -sdr[incl, incl] # a x a
       D.mat <- -sdr[incld, incld] # d x d
       B.mat <- -sdr[incl, incld] # a x d
       cov.mat.mod <- try(MASS::ginv(A.mat-B.mat%*%solve(D.mat)%*%t(B.mat)))
-      #need to exclude the upper triangular here
       se <- sqrt(diag(abs(cov.mat.mod)))
+      
+      incla<-rep(FALSE, length(incl))
+      incla[names(objr$par)=="u"] <- TRUE
+      out$Hess <- list(Hess.full=sdr, incla = incla, incl=incl, incld=incld, cov.mat.mod=cov.mat.mod)
       
       if(row.eff=="fixed") { se.row.params <- c(0,se[1:(n-1)]); names(se.row.params) <- rownames(out$y); se <- se[-(1:(n-1))] }
       sebetaM <- matrix(se[1:((num.X+1)*p)],p,num.X+1,byrow=TRUE);  se <- se[-(1:((num.X+1)*p))]

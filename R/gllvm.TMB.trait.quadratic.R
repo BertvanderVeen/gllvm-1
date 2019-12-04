@@ -578,7 +578,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             zetanew[,1] <- 0 
             row.names(zetanew) <- colnames(y00); colnames(zetanew) <- paste(min(y):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
           }else{
-            zetanew <- c(0,zeta)
+            zetanew <- c(0,zetas)
             names(zetanew) <- paste(min(y00):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
           }
           
@@ -750,6 +750,9 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             incl[names(objr$par) == "Au"] <- FALSE
             incld[names(objr$par) == "Au"] <- TRUE
             
+            incl[names(objr$par)=="lg_gamma"] <- FALSE;
+            incl[names(objr$par)=="lg_gamma2"] <- FALSE;
+            
             if (row.eff == "random") {
                 incl[names(objr$par) == "lg_Ar"] <- FALSE
                 incld[names(objr$par) == "lg_Ar"] <- TRUE
@@ -773,6 +776,11 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
             B.mat <- -sdr[incl, incld]  # a x d
             cov.mat.mod <- try(MASS::ginv(A.mat - B.mat %*% solve(D.mat) %*% t(B.mat)))
             se <- sqrt(diag(abs(cov.mat.mod)))
+            
+            incla<-rep(FALSE, length(incl))
+            incla[names(objr$par)=="u"] <- TRUE
+            out$Hess <- list(Hess.full=sdr, incla = incla, incl=incl, incld=incld, cov.mat.mod=cov.mat.mod)
+            
             
             if (row.eff == "fixed") {
                 se.row.params <- c(0, se[1:(n - 1)])
