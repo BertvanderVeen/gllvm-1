@@ -135,6 +135,9 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
                                                                                                           -a, a)), label = rownames(object$params$theta)[largest.lnorms], col = 4, cex = cex.spp)
         }
         if(predict.region){
+          if(is.null(object$sd)){
+            cat("Cannot plot prediction regions if no standard errors were calculated.")
+          }else{
           sdb<-sdA(object)
           object$A<-sdb+object$A
           r=0
@@ -148,6 +151,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
               covm <- object$A[i,which.lvs+r,which.lvs+r];
             }
             ellipse( choose.lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)))
+          }
           }
         }
       }
