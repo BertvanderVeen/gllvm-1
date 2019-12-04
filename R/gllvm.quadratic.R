@@ -401,6 +401,9 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
     out$X <- fitg$X
     
     out$params <- fitg$params
+    if(family == "ordinal"){
+      out$zeta.struc = zeta.struc
+    }
     if (sd.errors) {
         out$sd <- fitg$sd
     }
