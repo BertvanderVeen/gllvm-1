@@ -1,8 +1,8 @@
 ########################################################################################## GLLVM fourth corner model, with estimation done via Laplace and Variational approximation using TMB-package Original author:
 ########################################################################################## Jenni Niku, Bert van der Veen
 gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, num.lv = 2, family = "poisson", Lambda.struc = "unstructured", 
-    row.eff = FALSE, reltol = reltol, seed = NULL, maxit = maxit, start.lvs = NULL, offset = NULL, sd.errors = TRUE, trace = trace, trace2 = trace2, 
-    n.init = n.init, start.params = NULL, start0 = FALSE, optimizer = "optim", starting.val = "res", randomX = NULL, diag.iter = 1, Lambda.start = Lambda.start, jitter.var = jitter.var, yXT = NULL, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, parscale=parscale,fnscale=fnscale, zeta.struc = zeta.struc) {
+    row.eff = FALSE, reltol = 1e-10, seed = NULL, maxit = 2000, start.lvs = NULL, offset = NULL, sd.errors = TRUE, trace = FALSE, trace2 = FALSE, 
+    n.init = 1, start.params = NULL, start0 = FALSE, optimizer = "optim", starting.val = "res", randomX = NULL, diag.iter = 1, Lambda.start = c(0.1,0.5), jitter.var = 0, yXT = NULL, ridge = FALSE, ridge.quadratic = FALSE, start.method="FA", parscale=1,fnscale=1, zeta.struc = "species") {
     if (is.null(X) && !is.null(TR)) 
         stop("Unable to fit a model that includes only trait covariates")
     

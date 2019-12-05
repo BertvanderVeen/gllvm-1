@@ -3,11 +3,11 @@
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
-                                Lambda.struc="unstructured", row.eff = FALSE, reltol = reltol, trace = trace, trace2 = trace2,
-                                seed = NULL,maxit = maxit, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
-                                n.init=n.init,start.params=NULL,
-                                optimizer="optim",starting.val="res",diag.iter=diag.iter,
-                                Lambda.start=Lambda.start, jitter.var=jitter.var, ridge=ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc) {
+                                Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
+                                seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
+                                n.init=1,start.params=NULL,
+                                optimizer="optim",starting.val="res",diag.iter=1,
+                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species") {
   n <- dim(y)[1]
   p <- dim(y)[2]
   tr <- NULL
