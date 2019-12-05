@@ -230,6 +230,9 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
         } else {
             if (dim(start.params$y) == dim(y) && is.null(X) == is.null(start.params$X) && is.null(T) == is.null(start.params$TR) && 
                 row.eff == start.params$row.eff) {
+              if(start.params$family=="ordinal"&start.params$zeta.struc==zeta.struc){
+                zeta <- start.params$zeta
+              }
                 beta0 <- start.params$params$beta0
                 # common env params or different env response for each spp
                 B <- NULL

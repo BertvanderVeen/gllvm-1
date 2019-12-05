@@ -136,6 +136,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if (dim(start.params$y) == dim(y) &&
           is.null(X) == is.null(start.params$X) &&
           (row.eff == start.params$row.eff)) {
+        if(start.params$family=="ordinal"&start.params$zeta.struc==zeta.struc){
+          zeta <- start.params$zeta
+        }
         beta0 <- start.params$params$beta0 ## column intercepts
         betas <- NULL
         if (!is.null(X))
