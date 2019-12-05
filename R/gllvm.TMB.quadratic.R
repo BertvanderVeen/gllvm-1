@@ -130,7 +130,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           lambda2 <- fit$params[,-c(1:(num.lv+1))]  
         }
         
-      
       #subtract a fraction from the 0 quadratic scores, otherwise the optimization can't get away from the 0s where necessary.
     } else{
       if (dim(start.params$y) == dim(y) &&
@@ -160,9 +159,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         row.params <- NULL
         if (start.params$row.eff != FALSE) {
           row.params <- start.params$params$row.params
-          if(row.params=="fixed")
+          if(row.eff=="fixed")
             row.params[1] <- 0
-          if(row.params=="random")
+          if(row.eff=="random")
             sigma <- start.params$params$sigma
         }## row parameters
         lvs <- NULL
