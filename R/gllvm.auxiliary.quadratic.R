@@ -401,6 +401,7 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
           }
           ds.res[i, j] <- qnorm(u)
         }
+        if(family=="ordinal"){
       if(zeta.struc == "species"){
         probK <- NULL
         probK[1] <- pnorm(zeta[j,1]-mu[i,j],log.p = FALSE)
@@ -437,7 +438,8 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
         ds.res[i, j] <- qnorm(u)
       }
     }
-  }
+      }
+    }
   } else {
     ds.res <- resi
   }
