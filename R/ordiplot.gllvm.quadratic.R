@@ -76,7 +76,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
   
   if (bell == F) {
     if (length(which.lvs) == 1) {
-      plot(1:n, object$lvs[, which.lvs], ylab = "LV1", xlab = "Row index")
+      plot(1:n, object$lvs[, which.lvs], ylab = paste("LV", which.lvs), xlab = "Row index")
     }
     
     if (length(which.lvs) > 1) {
@@ -89,11 +89,11 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       if (!biplot) {
         sdd <- diag(sqrt(diag(cov(object$lvs[, which.lvs]))), nrow = length(which.lvs))
         choose.lvs <- scale(choose.lvs) %*% sdd
-        plot(choose.lvs[, which.lvs], xlab = paste("Latent variable ", which.lvs[1]), ylab = paste("Latent variable ", which.lvs[2]), 
+        plot(choose.lvs[, which.lvs], xlab = paste("LV", which.lvs[1]), ylab = paste("LV", which.lvs[2]), 
              main = main, type = "n", ...)
         if (!jitter) 
           if (symbols) {
-            points(choose.lvs[, which.lvs], col = s.colors, ...)
+            points(choose.lvs[, which.lvs], col = s.colors)
           } else {
             text(choose.lvs[, which.lvs], label = 1:n, cex = 1.2, col = s.colors)
           }
@@ -111,8 +111,8 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
         largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
         
-        plot(rbind(choose.lvs[, which.lvs], choose.lv.coefs[, which.lvs]), xlab = paste("Latent variable ", which.lvs[1]), 
-             ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
+        plot(rbind(choose.lvs[, which.lvs], choose.lv.coefs[, which.lvs]), xlab = paste("LV", which.lvs[1]), 
+             ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
         
         if (!jitter) {
           if (symbols) {
@@ -177,23 +177,23 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       
       if(legend==F){
         pdf(NULL)
-        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
         maxstr<-max(strwidth(colnames(mu)))*1.25  
         invisible(dev.off())
         
-        plot(NA, xlim = c(min(newLV), max(newLV)+maxstr), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+        plot(NA, xlim = c(min(newLV), max(newLV)+maxstr), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
       }else{
-        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i")
+        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
       }
       
       if(legend==T){
-        legend(x="topleft",text.col=cols,colnames(mu))
+        legend(x="topleft",text.col=cols,colnames(mu), cex=cex.spp)
       }
       
       for (j in 1:ncol(mu)) {
         lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[j])
         if(legend==F){
-          text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[j], adj = 0)  
+          text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[j], adj = 0, cex=cex.spp)  
         }
       }
       text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
@@ -255,14 +255,14 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       env.lower <- optima - 1.96 * tolerances
       env.upper <- optima + 1.96 * tolerances
       if(env.ranges==F){
-        plot(rbind(optima, lvs), xlab = paste("Latent variable ", which.lvs[1]), 
-             ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
+        plot(rbind(optima, lvs), xlab = paste("LV", which.lvs[1]), 
+             ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
       }else{
         env.range <- env.upper - env.lower
         xlim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[1]],lvs[which.lvs[[1]]]))
         ylim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[2]],lvs[which.lvs[[2]]]))
-        plot(NA, xlim=xlim,ylim=ylim,xlab = paste("Latent variable ", which.lvs[1]), 
-             ylab = paste("Latent variable ", which.lvs[2]), main = main, type = "n", ...)
+        plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
+             ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
       }
       abline(v=0,h=0,lty="dotted")
       
@@ -271,11 +271,11 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       }
 
       text(lvs, labels = row.names(object$y),col="gray")
-      text(optima, labels = row.names(optima), col = cols)
+      text(optima, labels = row.names(optima), col = cols, cex=cex.spp)
       if(env.ranges==T){
         for (j in 1:nrow(optima)) {
           s = diag(2)
-          car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col = cols[j], lty = "dashed")
+          car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col=scales::alpha(cols[j], 0.7), lty = "dashed", lwd=1)
         }
       }
     } else {
