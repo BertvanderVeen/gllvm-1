@@ -438,7 +438,6 @@ FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
       }
     }
   }
-    }
   } else {
     ds.res <- resi
   }
