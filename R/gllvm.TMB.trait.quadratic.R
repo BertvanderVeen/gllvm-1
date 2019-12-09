@@ -178,7 +178,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
     n.i <- 1
     if (n.init > 1) 
         seed <- sample(1:10000, n.init)
-    if(starting.val="lingllvm"){
+    if(starting.val=="lingllvm"){
       n.init2<-n.init
       n.init<-1
       #check if I've covered all options

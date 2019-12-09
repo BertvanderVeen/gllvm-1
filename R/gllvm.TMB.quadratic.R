@@ -87,7 +87,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   
   out <- list( y = y, X = X, logL = Inf, X.design = X)
   old.logL <- Inf
-  if(starting.val="lingllvm"){
+  if(starting.val=="lingllvm"){
     n.init2<-n.init
     n.init<-1
     #check if I've covered all options
