@@ -62,7 +62,7 @@ plot.gllvm.quadratic <- function(x, which = 1:5, caption = c("Residuals vs linea
     
     res <- residuals(x)
     ds.res <- res$residuals[, sppind]
-    if(any(is.infinite(ds.res)))stop("Infinite residuals detected. This indicates a very poor fit, try different starting values or settings and re-run your model.")
+    if(any(is.infinite(ds.res)))stop("Infinite residuals detected. Try again.")
     eta.mat <- res$linpred[, sppind]
     xxx <- boxplot(c(eta.mat), outline = FALSE, plot = FALSE)$stats
     

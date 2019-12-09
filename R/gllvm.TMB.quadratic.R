@@ -6,8 +6,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
                                 seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                 n.init=1,start.params=NULL,
-                                optimizer="optim",starting.val="res",diag.iter=1,
-                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species") {
+                                optimizer="optim",starting.val="lingllvm",diag.iter=1,
+                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.gllvm = "res") {
   n <- dim(y)[1]
   p <- dim(y)[2]
   tr <- NULL
@@ -87,6 +87,17 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   
   out <- list( y = y, X = X, logL = Inf, X.design = X)
   old.logL <- Inf
+  if(starting.val="lingllvm"){
+    n.init2<-n.init
+    n.init<-1
+    #check if I've covered all options
+    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, start.lvs = start.lvs, optimizer = optimizer, start.params = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.gllvm, Lambda.start = Lambda.start, , seed = seed, Lambda.struc = Lambda.struc)
+    fit$params <- cbind(fit$params$beta0, fit$params$theta)
+    fit$index <- fit$lvs
+    fit$lambda2 <- matrix(-0.5, ncol=num.lv, nrow=p)
+  }
+  
+  
   if (n.init > 1)
     seed <- sample(1:10000, n.init)
   
@@ -98,9 +109,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         cat("Initial run ", n.i, "\n")
       }
     old.logL <- out$logL
-
+    if(starting.val!="gllvn"){
     fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
-    
+    }
     sigma <- 1
     if (is.null(start.params)) {
       beta0 <- fit$params[, 1]
