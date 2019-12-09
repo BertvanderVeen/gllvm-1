@@ -14,7 +14,7 @@
 #' @param start.method ordination method to retrieve starting values. The default is Factor analysis (FA), with alternative Correspondence Analysis (CA).
 #' @param start.fit object of class 'gllvm' or 'gllvm.quadratic' which can be given as starting parameters. When an object of class 'gllvm' is provided, starting values for quadratic coefficients are generated with chosen 'starting.val'.
 #' @param sd.errors  logical. If \code{TRUE} (default) standard errors for parameter estimates are calculated.
-#' @param n.init number of initial runs. Uses multiple runs and picks up the one giving highest log-likelihood value. Defaults to 1.
+#' @param n.init number of initial runs. Uses multiple runs and picks up the one giving highest log-likelihood value. Defaults to 10. If \code{starting.val="lingllvm"} and \code{starting.val.lingllvm=="res"}, it is used for the linear GLLVM instead.
 #' @param offset vector or matrix of offset terms.
 #' @param Lambda.struc  covariance structure of VA distributions for latent variables,'unstructured' or 'diagonal'.
 #' @param diag.iter  if larger than 1, the updating of variational (covariance) parameters is sped-up by first fitting a model with a diagonal structure.
@@ -32,7 +32,7 @@
 #' @param fn.scale (see \code{'\link{optim}'} for details)
 #' @param grad.check defaults to TRUE. Checks if TMB provided gradient is near zero, i.e. if the model has converged.
 #' @param zeta.struc Structure for cut-offs in the ordinal model. Either "common", for the same cut-offs for all species, or "species" for species-specific cut-offs. For the latter, classes are arbitrary per species, each category per species needs to have at least one observations. Defaults to "species".
-#' @param starting.val.gllvm Procedure to generate starting values for linear GLLVM if \code{starting.val="lingllvm"}. See also \link{gllvm}.
+#' @param starting.val.lingllvm Procedure to generate starting values for linear GLLVM if \code{starting.val="lingllvm"}. See also \link{gllvm}.
 #' 
 #' @details
 #' Fits the species packing model by generalized linear latent variable models with quadratic latent variables.
@@ -205,9 +205,9 @@
 #'@importFrom mvtnorm rmvnorm
 
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
-    sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 1, trace = FALSE, trace2 = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
+    sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 1, trace = FALSE, trace2 = FALSE, n.init = 10, reltol = 1e-08, seed = NULL, maxit = 1000, 
     start.fit = NULL, starting.val = "res", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
-    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", starting.val.gllvm = "res") {
+    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", starting.val.lingllvm = "res") {
     #build in gradient check
     randomX <- NULL
     term <- NULL
@@ -382,7 +382,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.trait.quadratic(y, X = X, TR = TR, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                 row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                 n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, randomX = randomX, 
-                diag.iter = diag.iter, trace = trace, trace2 = trac2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, starting.val.gllvm = starting.val.gllvm)
+                diag.iter = diag.iter, trace = trace, trace2 = trac2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, starting.val.lingllvm = starting.val.lingllvm)
             out$X <- fitg$X
             out$TR <- fitg$TR
             
@@ -390,7 +390,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.quadratic(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                                         row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                         n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
-                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, starting.val.gllvm = starting.val.gllvm)
+                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, starting.val.lingllvm = starting.val.lingllvm)
         }
 
     out$X.design <- fitg$X.design

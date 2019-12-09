@@ -5,9 +5,9 @@
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
                                 seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
-                                n.init=1,start.params=NULL,
+                                n.init=10,start.params=NULL,
                                 optimizer="optim",starting.val="lingllvm",diag.iter=1,
-                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.gllvm = "res") {
+                                Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.lingllvm = "res") {
   n <- dim(y)[1]
   p <- dim(y)[2]
   tr <- NULL
@@ -88,10 +88,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   out <- list( y = y, X = X, logL = Inf, X.design = X)
   old.logL <- Inf
   if(starting.val=="lingllvm"){
+    if(n.init!=2)
     n.init2<-n.init
     n.init<-1
     
-    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.gllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc, method="VA")
+    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc, method="VA")
     
     }
   

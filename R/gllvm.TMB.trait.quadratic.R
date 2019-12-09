@@ -2,7 +2,7 @@
 ########################################################################################## Jenni Niku, Bert van der Veen
 gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, num.lv = 2, family = "poisson", Lambda.struc = "unstructured", 
     row.eff = FALSE, reltol = 1e-10, seed = NULL, maxit = 2000, start.lvs = NULL, offset = NULL, sd.errors = TRUE, trace = FALSE, trace2 = FALSE, 
-    n.init = 1, start.params = NULL, start0 = FALSE, optimizer = "optim", starting.val = "res", randomX = NULL, diag.iter = 1, Lambda.start = c(0.1,0.5), jitter.var = 0, yXT = NULL, ridge = FALSE, ridge.quadratic = FALSE, start.method="FA", parscale=1,fnscale=1, zeta.struc = "species") {
+    n.init = 10, start.params = NULL, start0 = FALSE, optimizer = "optim", starting.val = "lingllvm", randomX = NULL, diag.iter = 1, Lambda.start = c(0.1,0.5), jitter.var = 0, yXT = NULL, ridge = FALSE, ridge.quadratic = FALSE, start.method="FA", parscale=1,fnscale=1, zeta.struc = "species", starting.val.lingllvm = "res") {
     if (is.null(X) && !is.null(TR)) 
         stop("Unable to fit a model that includes only trait covariates")
     
@@ -182,7 +182,7 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
       n.init2<-n.init
       n.init<-1
       #check if I've covered all options
-      fit <- gllvm(y, formula = formula, X = X, TR = TR, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.gllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc)
+      fit <- gllvm(y, formula = formula, X = X, TR = TR, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc)
     }
     
     while (n.i <= n.init) {
