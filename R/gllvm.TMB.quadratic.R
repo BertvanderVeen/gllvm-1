@@ -91,7 +91,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     n.init2<-n.init
     n.init<-1
     #check if I've covered all options
-    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, start.lvs = start.lvs, optimizer = optimizer, start.params = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.gllvm, Lambda.start = Lambda.start, , seed = seed, Lambda.struc = Lambda.struc)
+    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.gllvm, Lambda.start = Lambda.start, , seed = seed, Lambda.struc = Lambda.struc)
     fit$params <- cbind(fit$params$beta0, fit$params$theta)
     fit$index <- fit$lvs
     fit$lambda2 <- matrix(-0.5, ncol=num.lv, nrow=p)
