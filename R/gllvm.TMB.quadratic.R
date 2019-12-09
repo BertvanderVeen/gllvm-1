@@ -91,9 +91,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(n.init!=2)
     n.init2<-n.init
     n.init<-1
-    
+    cat(paste("Running", n.init2 ,"iterations to get starting values.../n"))
     fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = ifelse(length(diag.iter>1), diag.iter[1],diag.iter), jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset)
-    
+    cat("Done generating starting values. Starting optimization quadratic model./n")  
     }
   
     if(length(diag.iter)>1)diag.iter<-diag.iter[2]
@@ -179,6 +179,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
               if(any(is.infinite(lambda2))){
                 lambda2[is.infinite(lambda2)]<--0.5
               }
+              fit$params$theta <- cbind(fit$params$theta,lambda2)
             }
           }
         row.params <- NULL
