@@ -182,9 +182,10 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
       n.init2<-n.init
       n.init<-1
       #check if I've covered all options
-      cat(paste("Running", n.init2 ,"iterations to get starting values.../n"))
+      if(trace)cat(paste("Running", n.init2 ,"iterations to get starting values...\n"))
+      
       fit <- gllvm(y, formula = formula, X = X, TR = TR, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = ifelse(length(diag.iter>1), diag.iter[1],diag.iter), jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc, sd.errors = FALSE, offset = offset)
-      cat("Done generating starting values. Starting optimization quadratic model./n")  
+      if(trace)cat("Done generating starting values. Starting optimization quadratic model.\n")  
       }
     if(length(diag.iter)>1)diag.iter<-diag.iter[2]
     while (n.i <= n.init) {
@@ -245,6 +246,9 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                 row.eff == start.params$row.eff) {
               if(start.params$family=="ordinal"){
                   zeta <- start.params$zeta 
+              }
+              if(start.params$family=="negative.binomial"){
+                phi <- start.params$phi
               }
                 beta0 <- start.params$params$beta0
                 # common env params or different env response for each spp
