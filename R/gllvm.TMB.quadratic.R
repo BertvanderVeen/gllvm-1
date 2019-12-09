@@ -90,12 +90,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   if(starting.val=="lingllvm"){
     n.init2<-n.init
     n.init<-1
-    #check if I've covered all options
-    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.gllvm, Lambda.start = Lambda.start, , seed = seed, Lambda.struc = Lambda.struc)
-    fit$params <- cbind(fit$params$beta0, fit$params$theta)
-    fit$index <- fit$lvs
-    fit$lambda2 <- matrix(-0.5, ncol=num.lv, nrow=p)
-  }
+    
+    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.gllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc, method="VA")
+    
+    }
   
   
   if (n.init > 1)
@@ -109,10 +107,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         cat("Initial run ", n.i, "\n")
       }
     old.logL <- out$logL
-    if(starting.val!="gllvn"){
+    if(starting.val!="lingllvm"){
     fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
+    }else{
+      start.params <- fit
     }
     sigma <- 1
+
     if (is.null(start.params)) {
       beta0 <- fit$params[, 1]
       betas <- NULL
@@ -161,11 +162,23 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           if(class(start.params)=="gllvm.quadratic"){
             lambda2 <- start.params$params$theta[,-c(1:num.lv)] 
           }else{
+            if(starting.val!="lingllvm"){
             if(!is.null(X)){
               lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
             }else if(is.null(X)){
               lambda2 <- fit$params[,-c(1:(num.lv+1))]  
             }#this still needs to be implement for traits.
+            }else{
+              lambda2<-matrix(0,nrow=p,ncol=num.lv)
+              for(j in 1:p){
+                for(q in 1:num.lv){
+                  lambda2[j,q]<--.5/(sum((start.params$lvs[,q]-(sum(y[,j]*start.params$lvs[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+                }
+              }
+              if(any(is.infinite(lambda2))){
+                lambda2[is.infinite(lambda2)]<--0.5
+              }
+            }
           }
         row.params <- NULL
         if (start.params$row.eff != FALSE) {

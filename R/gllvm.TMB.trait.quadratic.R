@@ -183,9 +183,6 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
       n.init<-1
       #check if I've covered all options
       fit <- gllvm(y, formula = formula, X = X, TR = TR, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.gllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc)
-      fit$params <- cbind(fit$params$beta0, fit$params$theta)
-      fit$index <- fit$lvs
-      fit$lambda2 <- matrix(-0.5, ncol=num.lv, nrow=p)
     }
     
     while (n.i <= n.init) {
@@ -205,6 +202,8 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
         res <- start.values.gllvm.TMB.quadratic(y = y, X = X1, TR = TR1, family = family, offset = offset, trial.size = trial.size, 
             num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, formula = formula, jitter.var = jitter.var, 
             yXT = yXT, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
+        }else{
+          start.params <- fit
         }
         if (is.null(start.params)) {
             beta0 <- res$params[, 1]
@@ -259,7 +258,28 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
                 if (row.eff) 
                   row.params <- start.params$params$row.params  ## row parameters
                 theta <- c(start.params$params$theta)[,1:num.lv]  ## LV coefficients
-                theta2 <- start.params$params$theta[,-c(1:num.lv)]
+                if(class(start.params)=="gllvm.quadratic"){
+                  theta2 <- start.params$params$theta[,-c(1:num.lv)] 
+                }else{
+                  if(starting.val!="lingllvm"){
+                    if(!is.null(X)){
+                      theta2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]#need to double check this
+                    }else if(is.null(X)){
+                      theta2 <- fit$params[,-c(1:(num.lv+1))]  
+                    }#this still needs to be implement for traits.
+                  }else{
+                    theta2<-matrix(0,nrow=p,ncol=num.lv)
+                    for(j in 1:p){
+                      for(q in 1:num.lv){
+                        theta2[j,q]<--.5/(sum((start.params$lvs[,q]-(sum(y[,j]*start.params$lvs[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+                      }
+                    }
+                    if(any(is.infinite(theta2))){
+                      theta2[is.infinite(theta2)]<--0.5
+                    }
+                  }
+                }
+                
                 vameans <- matrix(start.params$lvs, ncol = num.lv)
                 lambda <- start.params$A
             } else {
