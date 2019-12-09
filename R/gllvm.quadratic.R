@@ -17,7 +17,7 @@
 #' @param n.init number of initial runs. Uses multiple runs and picks up the one giving highest log-likelihood value. Defaults to 10. If \code{starting.val="lingllvm"} and \code{starting.val.lingllvm=="res"}, it is used for the linear GLLVM instead.
 #' @param offset vector or matrix of offset terms.
 #' @param Lambda.struc  covariance structure of VA distributions for latent variables,'unstructured' or 'diagonal'.
-#' @param diag.iter  if larger than 1, the updating of variational (covariance) parameters is sped-up by first fitting a model with a diagonal structure.
+#' @param diag.iter  if larger than 1, the updating of variational (covariance) parameters is sped-up by first fitting a model with a diagonal structure. If two values are supplied, uses the first for the linear GLLVM and second for the quadratic GLLVM, if \code{starting.val="lingllvm"}
 #' @param trace logical, if \code{TRUE} in each iteration step of n.init information on current step will be printed. Defaults to FALSE. 
 #' @param trace2 local, if \code{TRUE} prints the optimizer trace.
 #' @param Lambda.start starting values for variances in VA distributions for latent variables in variational approximation method. Defaults to 0.1.

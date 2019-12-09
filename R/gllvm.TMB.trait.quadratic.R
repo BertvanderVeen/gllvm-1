@@ -182,9 +182,9 @@ gllvm.TMB.trait.quadratic <- function(y, X = NULL, TR = NULL, formula = NULL, nu
       n.init2<-n.init
       n.init<-1
       #check if I've covered all options
-      fit <- gllvm(y, formula = formula, X = X, TR = TR, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc, sd.errors = FALSE, offset = offset)
+      fit <- gllvm(y, formula = formula, X = X, TR = TR, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = ifelse(length(diag.iter>1), diag.iter[1],diag.iter), jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc, sd.errors = FALSE, offset = offset)
     }
-    
+    if(length(diag.iter)>1)diag.iter<-diag.iter[2]
     while (n.i <= n.init) {
         
         num.X <- dim(X)[2]

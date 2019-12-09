@@ -92,11 +92,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     n.init2<-n.init
     n.init<-1
     
-    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = diag.iter, jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset)
+    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params, diag.iter = ifelse(length(diag.iter>1), diag.iter[1],diag.iter), jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, seed = seed, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset)
     
     }
   
-  
+    if(length(diag.iter)>1)diag.iter<-diag.iter[2]
   if (n.init > 1)
     seed <- sample(1:10000, n.init)
   
