@@ -114,7 +114,7 @@
                 cl <- makeCluster(n.cores-1)
                 registerDoParallel(cl)
                 start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-              results<<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='c', .multicombine=TRUE) %dopar% {
+              results<<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
                 if(n.init > 1 && trace){
                   if(n.i==2|old.logL>out$logL){
                     cat("Initial run ", n.i, "LL",out$logL , "\n")
@@ -510,9 +510,9 @@
                       if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
                     }
                   }
-                return(list(objr, optr))
+                return(list(objr=objr, optr=optr))
               }
-              bestLL <- lapply(results, function(x)x[[1]]$fn(x[[2]]$par))
+              bestLL <- lapply(results, function(x)x$fn(x$par))
               objr <- results[[which.min(unlist(bestLL))]][[1]]
               optr <- results[[which.min(unlist(bestLL))]][[2]]
                 
