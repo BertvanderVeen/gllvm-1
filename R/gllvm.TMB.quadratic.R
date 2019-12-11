@@ -110,8 +110,8 @@
                     if(trace)cat(paste("Running", n.init2 ,"iterations to get starting values...\n"))
                     fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params2, diag.iter = ifelse(length(diag.iter>1), diag.iter[1],diag.iter), jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc)
                     if(trace)cat("Done generating starting values. Starting optimization quadratic model.\n")  
+                    start.params <- fit
                   } 
-                  start.params <- fit
                 }
                 sigma <- 1
                 
