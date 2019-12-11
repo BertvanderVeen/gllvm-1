@@ -115,7 +115,7 @@
                 cl <- makeCluster(n.cores-1)
                 registerDoParallel(cl)
                 start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-              objr<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB")) %dopar% {
+              results<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine="rbind") %dopar% {
                 if(n.init > 1 && trace){
                   if(n.i==2|old.logL>out$logL){
                     cat("Initial run ", n.i, "LL",out$logL , "\n")
@@ -573,27 +573,33 @@
                   if(family %in% c("negative.binomial","gaussian")) {
                     phis <- exp(param[names(param)=="lg_phi"])
                   }
-            
-                if(((n.i==1 || out$logL > abs(new.loglik)) && new.loglik>0) && !inherits(optr, "try-error")){
+      
+                
+                return(list(objr, optr))
+              }
+              bestobjr <- lapply(result, function(x)x[[1]]$fn(x[[2]]$par))
+              objr <- result[[which.min(unlist(bestobjr))]][[1]]
+              optr <- result[[which.min(unlist(bestobjr))]][[2]]
+                
                   out$start <- fit
                   objr1 <- objr; optr1=optr;
                   out$convergence <- optr1$convergence
                   out$logL <- new.loglik
-                    out$lvs <- lvs
-                    out$params$theta <- theta
-                    rownames(out$lvs) <- rownames(out$y);
-                    if(ridge==T){
-                      out$params$gamma <- exp(param[gi])
-                      names(out$params$gamma) <- paste("LV",1:num.lv,sep="")
-                    }
-                    if(ridge.quadratic==T){
-                      out$params$gamma2 <- exp(param[gi2])
-                      names(out$params$gamma2) <- paste("LV",1:num.lv,"^2",sep="")
-                    }
-                    if(num.lv>1) {
-                      colnames(out$lvs) <- paste("LV", 1:num.lv, sep="")
-                      colnames(out$params$theta) <- c(paste("LV", 1:num.lv, sep=""),paste("LV", 1:num.lv, "^2", sep=""))
-                      rownames(out$params$theta) <- colnames(out$y)}
+                  out$lvs <- lvs
+                  out$params$theta <- theta
+                  rownames(out$lvs) <- rownames(out$y);
+                  if(ridge==T){
+                    out$params$gamma <- exp(param[gi])
+                    names(out$params$gamma) <- paste("LV",1:num.lv,sep="")
+                  }
+                  if(ridge.quadratic==T){
+                    out$params$gamma2 <- exp(param[gi2])
+                    names(out$params$gamma2) <- paste("LV",1:num.lv,"^2",sep="")
+                  }
+                  if(num.lv>1) {
+                    colnames(out$lvs) <- paste("LV", 1:num.lv, sep="")
+                    colnames(out$params$theta) <- c(paste("LV", 1:num.lv, sep=""),paste("LV", 1:num.lv, "^2", sep=""))
+                    rownames(out$params$theta) <- colnames(out$y)}
                   
                   names(beta0) <- colnames(out$y); out$params$beta0 <- beta0;
                   if(!is.null(X)){betas <- matrix(betas,ncol=ncol(X)); out$params$Xcoef <- betas;
@@ -617,37 +623,34 @@
                   
                   
                   param <- objr$env$last.par.best
-                    Au <- param[names(param)=="Au"]
-                    A <- array(0,dim=c(n,num.lv,num.lv))
-                    for (d in 1:num.lv){
-                      for(i in 1:n){
-                        A[i,d,d] <- exp(Au[(d-1)*n+i]);
-                      }
+                  Au <- param[names(param)=="Au"]
+                  A <- array(0,dim=c(n,num.lv,num.lv))
+                  for (d in 1:num.lv){
+                    for(i in 1:n){
+                      A[i,d,d] <- exp(Au[(d-1)*n+i]);
                     }
-                    if(length(Au)>num.lv*n){
-                      k <- 0;
-                      for (c1 in 1:num.lv){
-                        r <- c1+1;
-                        while (r <=num.lv){
-                          for(i in 1:n){
-                            A[i,r,c1] <- Au[num.lv*n+k*n+i];
-                            A[i,c1,r] <- A[i,r,c1];
-                          }
-                          k <- k; r <- r+1;
+                  }
+                  if(length(Au)>num.lv*n){
+                    k <- 0;
+                    for (c1 in 1:num.lv){
+                      r <- c1+1;
+                      while (r <=num.lv){
+                        for(i in 1:n){
+                          A[i,r,c1] <- Au[num.lv*n+k*n+i];
+                          A[i,c1,r] <- A[i,r,c1];
                         }
+                        k <- k; r <- r+1;
                       }
                     }
-                    out$A <- A
+                  }
+                  out$A <- A
                   
                   if(row.eff=="random"){
                     Ar <- exp(param[names(param)=="lg_Ar"])
                     out$Ar <- Ar^2
                   }
-                }
                 
-                n.i <- n.i+1;
-                return(objr)
-              }
+              
               tr<-try({
                 if(sd.errors && !is.infinite(out$logL)) {
                   if(trace) cat("Calculating standard errors for parameters...\n")
