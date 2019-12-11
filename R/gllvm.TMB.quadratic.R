@@ -115,6 +115,7 @@
                 registerDoParallel(cl)
                 start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
               results<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
+                if(n.init==1&n.cores>1)openmp(n.cores)
                 # if(n.init > 1 && trace){
                 #   if(n.i==2|old.logL>out$logL){
                 #     cat("Initial run ", n.i, "LL",out$logL , "\n")
