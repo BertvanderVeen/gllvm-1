@@ -111,7 +111,7 @@
               }
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
                 seed <- sample(1:10000, n.init)
-                cl <- makeCluster(n.cores-1)
+                cl <- makeCluster(n.cores)
                 registerDoParallel(cl)
                 start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
               results<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
@@ -510,6 +510,7 @@
                   }
                 return(list(objr=objr, optr=optr, fit=fit))
               }
+              stopCluster(cl)
               if(n.init>1){
                 bestLL <- lapply(results, function(x)x$objr$fn(x$optr$par))
                 objr <- results[[which.min(unlist(bestLL))]]$objr
