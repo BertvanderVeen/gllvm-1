@@ -261,8 +261,6 @@
                   fit$phi <- phi
                 }
                 
-                q <- num.lv
-                
                 optr<-NULL
                 timeo<-NULL
                 se <- NULL
@@ -570,7 +568,7 @@
               betaM <- matrix(param[bi],p,num.X+1,byrow=TRUE)
               beta0 <- betaM[,1]
               if(!is.null(X)) betas <- betaM[,-1]
-              lvs<-(matrix(param[ui],n,q))
+              lvs<-matrix(param[ui],n,num.lv)
               theta <- matrix(0,p,num.lv)
               if(p>1) {
                 theta[lower.tri(theta,diag=TRUE)] <- param[li];

@@ -191,6 +191,9 @@
 #' @export
 #'
 #'@useDynLib gllvm2, .registration = TRUE
+#'@importFrom parallel makeCluster
+#'@importFrom doParallel registerDoParallel
+#'@importFrom foreach foreach
 #'@importFrom vegan scores
 #'@importFrom vegan tolerance
 #'@importFrom vegan CCA
