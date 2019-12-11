@@ -585,7 +585,7 @@
               }
               
                   out$start <- fit
-                  out$convergence <- optr1$convergence
+                  out$convergence <- optr$convergence
                   out$logL <- objr$env$value.best[1]
                   out$lvs <- lvs
                   out$params$theta <- theta
