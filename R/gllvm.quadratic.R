@@ -192,8 +192,10 @@
 #'
 #'@useDynLib gllvm2, .registration = TRUE
 #'@importFrom parallel makeCluster
+#'@importFrom parallel stopCluster
 #'@importFrom doParallel registerDoParallel
 #'@importFrom foreach foreach
+#'@ImportFrom foreach `%dopar%`
 #'@importFrom vegan scores
 #'@importFrom vegan tolerance
 #'@importFrom vegan cca
