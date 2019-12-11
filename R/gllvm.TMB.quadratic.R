@@ -577,9 +577,9 @@
                 
                 return(list(objr, optr))
               }
-              bestobjr <- lapply(result, function(x)x[[1]]$fn(x[[2]]$par))
-              objr <- result[[which.min(unlist(bestobjr))]][[1]]
-              optr <- result[[which.min(unlist(bestobjr))]][[2]]
+              bestLL <- lapply(results, function(x)x[[1]]$fn(x[[2]]$par))
+              objr <- results[[which.min(unlist(bestLL))]][[1]]
+              optr <- results[[which.min(unlist(bestLL))]][[2]]
                 
                   out$start <- fit
                   objr1 <- objr; optr1=optr;
