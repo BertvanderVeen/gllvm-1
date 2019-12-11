@@ -195,7 +195,7 @@
 #'@importFrom parallel stopCluster
 #'@importFrom doParallel registerDoParallel
 #'@importFrom foreach foreach
-#'@ImportFrom foreach `%dopar%`
+#'@ImportFrom foreach "%dopar%"
 #'@importFrom vegan scores
 #'@importFrom vegan tolerance
 #'@importFrom vegan cca

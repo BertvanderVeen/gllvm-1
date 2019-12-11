@@ -508,7 +508,7 @@
                       if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
                     }
                   }
-                return(list(objr=objr, optr=optr, fit=fit))
+                return(list(objr=objr, optr=optr, fit=fit, timeo=timeo))
               }
               stopCluster(cl)
               if(n.init>1){
@@ -516,10 +516,12 @@
                 objr <- results[[which.min(unlist(bestLL))]]$objr
                 optr <- results[[which.min(unlist(bestLL))]]$optr  
                 fit <- results[[which.min(unlist(bestLL))]]$fit
+                timeo <- results[[which.min(unlist(bestLL))]]$timeo
               }else{
                 objr <- results$objr
                 optr <- results$optr
                 fit <- results$fit
+                timeo <- result$timeo
               }
               
                 
