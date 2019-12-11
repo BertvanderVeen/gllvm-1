@@ -521,7 +521,7 @@
                 objr <- results$objr
                 optr <- results$optr
                 fit <- results$fit
-                timeo <- result$timeo
+                timeo <- results$timeo
               }
               
                 
