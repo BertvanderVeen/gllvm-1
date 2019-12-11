@@ -114,7 +114,8 @@
                 print(n.cores)
                 cl <- makeCluster(n.cores-1)
                 registerDoParallel(cl)
-              foreach(i=1:n.init, .packages = c("gllvm","gllvm.quadratic","TMB")) %dopar% {
+                start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
+              foreach(i=1:n.init, .export="start.values.gllvm.TMB.quadratic",.packages = c("gllvm","gllvm.quadratic","TMB")) %dopar% {
                 if(n.init > 1 && trace){
                   if(n.i==2|old.logL>out$logL){
                     cat("Initial run ", n.i, "LL",out$logL , "\n")
