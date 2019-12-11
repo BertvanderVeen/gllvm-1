@@ -114,7 +114,7 @@
                 cl <- makeCluster(n.cores-1)
                 registerDoParallel(cl)
                 start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-              results<<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine="rbind") %dopar% {
+              results<<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='c', .multicombine=TRUE) %dopar% {
                 if(n.init > 1 && trace){
                   if(n.i==2|old.logL>out$logL){
                     cat("Initial run ", n.i, "LL",out$logL , "\n")
@@ -510,80 +510,77 @@
                       if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
                     }
                   }
-                  if(inherits(optr,"try-error")) warning(optr[1]);
-                  param<-objr$env$last.par.best
-                  if(family =="negative.binomial") {
-                    phis <- exp(param[names(param)=="lg_phi"])
-                  }
-                  if(family == "ordinal"){
-                    zetas <- param[names(param)=="zeta"]
-                    if(zeta.struc=="species"){
-                      zetanew <- matrix(NA,nrow=p,ncol=K)
-                      idx<-0
-                      for(j in 1:ncol(y)){
-                        k<-max(y[,j])-2
-                        if(k>0){
-                          for(l in 1:k){
-                            zetanew[j,l+1]<-zetas[idx+l]
-                          } 
-                        }
-                        idx<-idx+k
-                      }
-                      zetanew[,1] <- 0 
-                      row.names(zetanew) <- colnames(y00); colnames(zetanew) <- paste(min(y):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
-                    }else{
-                      zetanew <- c(0,zetas)
-                      names(zetanew) <- paste(min(y00):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
-                    }
-                    
-                    zetas<-zetanew
-                    out$y<-y00
-                  }
-                  if(ridge==T){
-                    gi <- names(param)=="lg_gamma"
-                  }
-                  if(ridge.quadratic==T){
-                    gi2 <- names(param)=="lg_gamma2"
-                  }
-                  
-                  bi <- names(param)=="b"
-                  li <- names(param)=="lambda"
-                  l2i <- names(param)=="lambda2"
-                  ui <- names(param)=="u"
-                  if(row.eff!=FALSE) {
-                    ri <- names(param)=="r0"
-                    if(row.eff=="fixed") row.params <- param[ri]#c(0,param[ri])
-                    if(row.eff=="random"){ sigma <- exp(param["log_sigma"]); row.params <- param[ri]}
-                  }
-                  betaM <- matrix(param[bi],p,num.X+1,byrow=TRUE)
-                  beta0 <- betaM[,1]
-                  if(!is.null(X)) betas <- betaM[,-1]
-                    lvs<-(matrix(param[ui],n,q))
-                    theta <- matrix(0,p,num.lv)
-                    if(p>1) {
-                      theta[lower.tri(theta,diag=TRUE)] <- param[li];
-                      theta<-cbind(theta,-1*abs(matrix(param[l2i],ncol=num.lv,nrow=p,byrow=T)))
-                    } else {theta <- param[li]
-                    theta<-c(theta,param[l2i])}
-                    # diag(theta) <- exp(diag(theta)) !!!
-                    
-                  
-                  new.loglik <- objr$env$value.best[1]
-                  if(family %in% c("negative.binomial","gaussian")) {
-                    phis <- exp(param[names(param)=="lg_phi"])
-                  }
-      
-                
                 return(list(objr, optr))
               }
               bestLL <- lapply(results, function(x)x[[1]]$fn(x[[2]]$par))
               objr <- results[[which.min(unlist(bestLL))]][[1]]
               optr <- results[[which.min(unlist(bestLL))]][[2]]
                 
+              if(inherits(optr,"try-error")) warning(optr[1]);
+              param<-objr$env$last.par.best
+              if(family =="negative.binomial") {
+                phis <- exp(param[names(param)=="lg_phi"])
+              }
+              if(family == "ordinal"){
+                zetas <- param[names(param)=="zeta"]
+                if(zeta.struc=="species"){
+                  zetanew <- matrix(NA,nrow=p,ncol=K)
+                  idx<-0
+                  for(j in 1:ncol(y)){
+                    k<-max(y[,j])-2
+                    if(k>0){
+                      for(l in 1:k){
+                        zetanew[j,l+1]<-zetas[idx+l]
+                      } 
+                    }
+                    idx<-idx+k
+                  }
+                  zetanew[,1] <- 0 
+                  row.names(zetanew) <- colnames(y00); colnames(zetanew) <- paste(min(y):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
+                }else{
+                  zetanew <- c(0,zetas)
+                  names(zetanew) <- paste(min(y00):(max(y00)-1),"|",(min(y00)+1):max(y00),sep="")
+                }
+                
+                zetas<-zetanew
+                out$y<-y00
+              }
+              if(ridge==T){
+                gi <- names(param)=="lg_gamma"
+              }
+              if(ridge.quadratic==T){
+                gi2 <- names(param)=="lg_gamma2"
+              }
+              
+              bi <- names(param)=="b"
+              li <- names(param)=="lambda"
+              l2i <- names(param)=="lambda2"
+              ui <- names(param)=="u"
+              if(row.eff!=FALSE) {
+                ri <- names(param)=="r0"
+                if(row.eff=="fixed") row.params <- param[ri]#c(0,param[ri])
+                if(row.eff=="random"){ sigma <- exp(param["log_sigma"]); row.params <- param[ri]}
+              }
+              betaM <- matrix(param[bi],p,num.X+1,byrow=TRUE)
+              beta0 <- betaM[,1]
+              if(!is.null(X)) betas <- betaM[,-1]
+              lvs<-(matrix(param[ui],n,q))
+              theta <- matrix(0,p,num.lv)
+              if(p>1) {
+                theta[lower.tri(theta,diag=TRUE)] <- param[li];
+                theta<-cbind(theta,-1*abs(matrix(param[l2i],ncol=num.lv,nrow=p,byrow=T)))
+              } else {theta <- param[li]
+              theta<-c(theta,param[l2i])}
+              # diag(theta) <- exp(diag(theta)) !!!
+              
+              
+              if(family %in% c("negative.binomial","gaussian")) {
+                phis <- exp(param[names(param)=="lg_phi"])
+              }
+              
                   out$start <- fit
-                  objr1 <- objr; optr1=optr;
                   out$convergence <- optr1$convergence
-                  out$logL <- new.loglik
+                  out$logL <- objr$env$value.best[1]
                   out$lvs <- lvs
                   out$params$theta <- theta
                   rownames(out$lvs) <- rownames(out$y);
