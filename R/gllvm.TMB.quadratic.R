@@ -113,7 +113,7 @@
                 seed <- sample(1:10000, n.init)
                 cl <- makeCluster(n.cores-1)
                 registerDoParallel(cl)
-              foreach(i=1:n.init, .export = c("gllvm","gllvm.quadratic","TMB")) %dopar% {
+              foreach(i=1:n.init, .packages = c("gllvm","gllvm.quadratic","TMB")) %dopar% {
                 if(n.init > 1 && trace){
                   if(n.i==2|old.logL>out$logL){
                     cat("Initial run ", n.i, "LL",out$logL , "\n")
