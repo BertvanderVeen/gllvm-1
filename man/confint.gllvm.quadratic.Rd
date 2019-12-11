@@ -4,8 +4,7 @@
 \alias{confint.gllvm.quadratic}
 \title{Confidence intervals for model parameters}
 \usage{
-\method{confint}{gllvm.quadratic}(object, parm = NULL, level = 0.95,
-  ...)
+\method{confint}{gllvm.quadratic}(object, parm = NULL, level = 0.95, ...)
 }
 \arguments{
 \item{object}{an object of class 'gllvm'.}

@@ -5,12 +5,14 @@
 \alias{simulate}
 \title{Simulate data from gllvm fit}
 \usage{
-\method{simulate}{gllvm.quadratic}(object, nsim = 1, seed = NULL, ...)
+\method{simulate}{gllvm.quadratic}(object, nsim = 1, conditional = FALSE, seed = NULL, ...)
 }
 \arguments{
 \item{object}{an object of class 'gllvm'.}
 
 \item{nsim}{an optional positive integer specifying the number of simulated datasets. Defaults to 1.}
+
+\item{conditional}{if \code{FALSE} the simulation is performed marginally over the latent variables.}
 
 \item{seed}{an optional integer to set seed number, passed to set.seed. Defaults to a random seed number.}
 
@@ -25,7 +27,7 @@ Generate new data using the fitted values of the parameters
 \details{
 simulate function for gllvm objects.  Note this simulates marginally over LVs.
 an option is to add a conditional argument, which would fix the LVs.
-David Warton
+David Warton--change this
 }
 \examples{
  \donttest{

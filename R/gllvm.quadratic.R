@@ -33,7 +33,7 @@
 #' @param grad.check defaults to TRUE. Checks if TMB provided gradient is near zero, i.e. if the model has converged.
 #' @param zeta.struc Structure for cut-offs in the ordinal model. Either "common", for the same cut-offs for all species, or "species" for species-specific cut-offs. For the latter, classes are arbitrary per species, each category per species needs to have at least one observations. Defaults to "species".
 #' @param starting.val.lingllvm Procedure to generate starting values for linear GLLVM if \code{starting.val="lingllvm"}. See also \link{gllvm}.
-#' 
+#' @param n.cores number of cores to use for parallel loop. Only useful if n.init>1
 #' @details
 #' Fits the species packing model by generalized linear latent variable models with quadratic latent variables.
 #' Method can be used with two types of latent variable models depending on covariates. If only
@@ -196,7 +196,7 @@
 #'@importFrom foreach foreach
 #'@importFrom vegan scores
 #'@importFrom vegan tolerance
-#'@importFrom vegan CCA
+#'@importFrom vegan cca
 #'@importFrom TMB MakeADFun
 #'@importFrom mvabund manyglm
 #'@importFrom graphics abline axis par plot segments text points boxplot panel.smooth lines polygon
