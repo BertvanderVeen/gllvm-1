@@ -111,6 +111,7 @@
               }
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
                 seed <- sample(1:10000, n.init)
+                print(n.cores)
                 cl <- makeCluster(n.cores-1)
                 registerDoParallel(cl)
               foreach(i=1:n.init, .packages = c("gllvm","gllvm.quadratic","TMB")) %dopar% {
