@@ -5,7 +5,7 @@
 
 //--------------------------------------------------------
 //GLLVM
-//Author: Jenni Niku, Bert van der Veen
+//Author: Bert van der Veen
 //------------------------------------------------------------
 void show_fe_exceptions(void)
 {
@@ -46,6 +46,7 @@ Type objective_function<Type>::operator() ()
   PARAMETER_VECTOR(lg_gamma2);
   DATA_INTEGER(num_lv);
   DATA_INTEGER(family);
+  DATA_INTEGER(start);
   
   PARAMETER_VECTOR(Au);
   PARAMETER_VECTOR(lg_Ar);
@@ -140,8 +141,18 @@ Type objective_function<Type>::operator() ()
     }
   }
   //lambda2 = lambda2.cwiseAbs(); //sign constraint quadratic effect
+  matrix <Type> newlam2(num_lv,p);
+   if(start==0){
+    newlam2 = lambda2.cwiseAbs(); //positive only  
+   }else{
+     for (int j=0; j<p; j++){
+       for (int q=0; q<num_lv; q++){
+         newlam2(q,j) = fabs(lambda2(q,0)); //positive only
+       }
+     }
+     
+   }
   
-  matrix <Type> newlam2 = lambda2.cwiseAbs(); //positive only
   matrix <Type> eta = C + u*newlam - (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
   
   array<Type> D(num_lv,num_lv,p);
