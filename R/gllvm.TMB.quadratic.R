@@ -111,22 +111,10 @@
               }
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
                 seed <- sample(1:10000, n.init)
-                cl <- makeCluster(n.cores)
-                registerDoParallel(cl)
-                start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-              results<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
-                if(n.init==1&n.cores>1)openmp(n.cores)
-                # if(n.init > 1 && trace){
-                #   if(n.i==2|old.logL>out$logL){
-                #     cat("Initial run ", n.i, "LL",out$logL , "\n")
-                #   }else{
-                #     cat("Initial run ", n.i, "\n")
-                #   }
-                # }
-                # old.logL <- out$logL
-                # 
+              makeMod<-function(){
+                
                 if(starting.val!="lingllvm"){
-                fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
+                  fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
                 }else{
                   if(starting.val=="lingllvm"){
                     if(trace)cat(paste("Running", n.init2 ,"iterations to get starting values...\n"))
@@ -136,7 +124,7 @@
                   start.params <- fit
                 }
                 sigma <- 1
-            
+                
                 if (is.null(start.params)) {
                   beta0 <- fit$params[, 1]
                   betas <- NULL
@@ -144,8 +132,8 @@
                     betas <- c(fit$params[, 2:(num.X + 1)])
                   lambdas <- NULL
                   
-                    lambdas <- as.matrix(fit$params[,(ncol(fit$params)-num.lv*2+1):(ncol(fit$params)-num.lv)])
-                      lambdas[upper.tri(lambdas)] <- 0
+                  lambdas <- as.matrix(fit$params[,(ncol(fit$params)-num.lv*2+1):(ncol(fit$params)-num.lv)])
+                  lambdas[upper.tri(lambdas)] <- 0
                   
                   row.params <- NULL
                   
@@ -156,22 +144,22 @@
                     }
                   }#rep(0,n)
                   lvs <- NULL
-                    lvs <- matrix(fit$index, ncol = num.lv)
-                    if(!is.null(X)){
-                      lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
-                      lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
-                    }else if(is.null(X)){
-                      lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
-                      lambda2 <- fit$params[,-c(1:(num.lv+1))]  
-                    }
-                    
+                  lvs <- matrix(fit$index, ncol = num.lv)
+                  if(!is.null(X)){
+                    lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
+                    lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
+                  }else if(is.null(X)){
+                    lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
+                    lambda2 <- fit$params[,-c(1:(num.lv+1))]  
+                  }
+                  
                   #subtract a fraction from the 0 quadratic scores, otherwise the optimization can't get away from the 0s where necessary.
                 } else{
                   if (dim(start.params$y) == dim(y) &&
                       is.null(X) == is.null(start.params$X) &&
                       (row.eff == start.params$row.eff)) {
                     if(start.params$family=="ordinal"){
-                        zeta <- start.params$zeta  
+                      zeta <- start.params$zeta  
                     }
                     if(start.params$family=="negative.binomial"){
                       phi <- start.params$phi
@@ -183,30 +171,30 @@
                     betas <- c(start.params$params$Xcoef) ## covariates coefficients
                     lambdas <- NULL
                     lambda2 <- NULL
-                      lambdas <- start.params$params$theta[,1:num.lv]
-                      lambdas[upper.tri(lambdas)] <- 0
-                      if(class(start.params)=="gllvm.quadratic"){
-                        lambda2 <- start.params$params$theta[,-c(1:num.lv)] 
-                      }else{
-                        if(starting.val!="lingllvm"){
+                    lambdas <- start.params$params$theta[,1:num.lv]
+                    lambdas[upper.tri(lambdas)] <- 0
+                    if(class(start.params)=="gllvm.quadratic"){
+                      lambda2 <- start.params$params$theta[,-c(1:num.lv)] 
+                    }else{
+                      if(starting.val!="lingllvm"){
                         if(!is.null(X)){
                           lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
                         }else if(is.null(X)){
                           lambda2 <- fit$params[,-c(1:(num.lv+1))]  
                         }#this still needs to be implement for traits.
-                        }else{
-                            lambda2<-matrix(0,nrow=p,ncol=num.lv)
-                            for(j in 1:p){
-                              for(q in 1:num.lv){
-                                lambda2[j,q]<--.5/(sum((start.params$lvs[,q]-(sum(y[,j]*start.params$lvs[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
-                              }
-                            }
-                            if(any(is.infinite(lambda2))){
-                              lambda2[is.infinite(lambda2)]<--0.5
-                            }
-                            fit$params$theta <- cbind(fit$params$theta,lambda2)
+                      }else{
+                        lambda2<-matrix(0,nrow=p,ncol=num.lv)
+                        for(j in 1:p){
+                          for(q in 1:num.lv){
+                            lambda2[j,q]<--.5/(sum((start.params$lvs[,q]-(sum(y[,j]*start.params$lvs[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
                           }
+                        }
+                        if(any(is.infinite(lambda2))){
+                          lambda2[is.infinite(lambda2)]<--0.5
+                        }
+                        fit$params$theta <- cbind(fit$params$theta,lambda2)
                       }
+                    }
                     row.params <- NULL
                     if (start.params$row.eff != FALSE) {
                       row.params <- start.params$params$row.params
@@ -216,7 +204,7 @@
                         sigma <- start.params$params$sigma
                     }## row parameters
                     lvs <- NULL
-                      lvs <- matrix(start.params$lvs, ncol = num.lv)
+                    lvs <- matrix(start.params$lvs, ncol = num.lv)
                   } else {
                     stop( "Model which is set as starting parameters isn't the suitable for the one you are trying to fit. Check that attributes y, X and row.eff match to each other.")
                   }
@@ -251,9 +239,9 @@
                 if(!is.null(row.params)){ r0 <- row.params} else {r0 <- rep(0,n)}
                 a <- c(beta0)
                 b <- NULL; if(!is.null(X)) b <- matrix(betas, ncol(X), p,byrow = TRUE)
-                  # diag(lambdas) <- log(diag(lambdas)) !!!
-                  lambda <- lambdas[lower.tri(lambdas,diag = TRUE)]
-                  u <- lvs
+                # diag(lambdas) <- log(diag(lambdas)) !!!
+                lambda <- lambdas[lower.tri(lambdas,diag = TRUE)]
+                u <- lvs
                 
                 if(!is.null(phis)) { 
                   phi <- phis 
@@ -266,116 +254,234 @@
                 timeo<-NULL
                 se <- NULL
                 
-                    if(is.null(start.params)  || start.params$method!="VA"){
-                      if(Lambda.struc=="diagonal" || diag.iter>0){
-                        Au <- log(rep(Lambda.start[1],num.lv*n)) #1/2, 1
-                      } else{
-                        Au <- c(log(rep(Lambda.start[1],num.lv*n)),rep(0,num.lv*(num.lv-1)/2*n)) #1/2, 1
-                      }
+                if(is.null(start.params)  || start.params$method!="VA"){
+                  if(Lambda.struc=="diagonal" || diag.iter>0){
+                    Au <- log(rep(Lambda.start[1],num.lv*n)) #1/2, 1
+                  } else{
+                    Au <- c(log(rep(Lambda.start[1],num.lv*n)),rep(0,num.lv*(num.lv-1)/2*n)) #1/2, 1
+                  }
+                } else {
+                  Au <- NULL
+                  for(d in 1:num.lv) {
+                    if(start.params$Lambda.struc=="unstructured" || length(dim(start.params$A))==3){
+                      Au <- c(Au,log(start.params$A[,d,d]))
                     } else {
-                      Au <- NULL
-                      for(d in 1:num.lv) {
-                        if(start.params$Lambda.struc=="unstructured" || length(dim(start.params$A))==3){
-                          Au <- c(Au,log(start.params$A[,d,d]))
-                        } else {
-                          Au <- c(Au,log(start.params$A[,d]))
-                        }
-                      }
-                      if(Lambda.struc!="diagonal" && diag.iter==0){
-                        if(start.params$Lambda.struc=="unstructured"){
-                        for(d1 in 1:num.lv) {
-                          for(d2 in 1:num.lv) {
-                            if(d1!=d2){
-                              Au <- c(Au,start.params$A[,d1,d2] )
-                          }
+                      Au <- c(Au,log(start.params$A[,d]))
+                    }
+                  }
+                  if(Lambda.struc!="diagonal" && diag.iter==0){
+                    if(start.params$Lambda.struc=="unstructured"){
+                      for(d1 in 1:num.lv) {
+                        for(d2 in 1:num.lv) {
+                          if(d1!=d2){
+                            Au <- c(Au,start.params$A[,d1,d2] )
                           }
                         }
-                            }else{
-                              Au <- c(Au,rep(0,num.lv*(num.lv-1)/2*n))##this is redundant
-                            }
-            
                       }
-                    } 
-                  if(single.curve.start==1) lambda2 <- lambda2[1,,drop=F]
-                  if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
-                  if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
-                  if(!is.null(X)){Xd <- cbind(1,X)} else {Xd <- matrix(1,n)}
-                  extra <- 0
-                  if(family == "poisson") { familyn <- 0}
-                  if(family == "negative.binomial") { familyn <- 1}
-                  if(family == "binomial") { familyn <- 2}
-                  if(family == "ordinal") { familyn <- 3}
-                  if(row.eff=="random"){
-                    if(ridge==T){
-                      if(ridge.quadratic==F){
+                    }else{
+                      Au <- c(Au,rep(0,num.lv*(num.lv-1)/2*n))##this is redundant
+                    }
+                    
+                  }
+                } 
+                if(single.curve.start==1) lambda2 <- lambda2[1,,drop=F]
+                if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
+                if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
+                if(!is.null(X)){Xd <- cbind(1,X)} else {Xd <- matrix(1,n)}
+                extra <- 0
+                if(family == "poisson") { familyn <- 0}
+                if(family == "negative.binomial") { familyn <- 1}
+                if(family == "binomial") { familyn <- 2}
+                if(family == "ordinal") { familyn <- 3}
+                if(row.eff=="random"){
+                  if(ridge==T){
+                    if(ridge.quadratic==F){
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
                         parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")
+                    }else{
+                      objr <- TMB::MakeADFun(
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
+                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                        DLL = "gllvm2")
+                    }
+                  }else{
+                    if(ridge.quadratic==F){
+                      objr <- TMB::MakeADFun(
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
+                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                        DLL = "gllvm2")
+                    }else{
+                      objr <- TMB::MakeADFun(
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
+                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                        DLL = "gllvm2")   
+                      
+                    }
+                  }
+                  
+                } else {
+                  if(ridge==T){
+                    if(ridge.quadratic==F){
+                      objr <- TMB::MakeADFun(
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
+                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                        DLL = "gllvm2")##GLLVM
+                    }else{
+                      objr <- TMB::MakeADFun(
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
+                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                        DLL = "gllvm2")##GLLVM
+                    }
+                  }else{
+                    if(ridge.quadratic==F){
+                      objr <- TMB::MakeADFun(
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
+                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                        DLL = "gllvm2")##GLLVM
+                    }else{
+                      objr <- TMB::MakeADFun(
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
+                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                        DLL = "gllvm2")##GLLVM
+                    }
+                  }
+                }
+                
+                if(optimizer=="nlminb") {
+                  timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit,trace=trace2)),silent = !trace2))
+                }
+                if(optimizer=="optim") {
+                  if(!is.null(par.scale)){
+                    if(par.scale=="coef"){
+                      parscale<-abs(objr$par)#this trick comes from https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.12044
+                      parscale[parscale==0]<-1
+                    }else if(is.numeric(par.scale)){
+                      parscale<-rep(par.scale,length(objr$par))
+                    }
+                  }else{
+                    parscale <- rep(1,length(objr$par))
+                  }
+                  if(is.null(fn.scale)|!is.numeric(fn.scale)){
+                    fnscale<-1
+                  }else{
+                    fnscale<-fn.scale
+                  }
+                  timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
+                }
+                if(inherits(optr,"try-error")) warning(optr[1]);
+                if(diag.iter>0 && Lambda.struc=="unstructured" && num.lv>1 && !inherits(optr,"try-error")|!inherits(optr,"try-error") && single.curve.start==T){
+                  objr1 <- objr
+                  optr1 <- optr
+                  param1 <- optr$par
+                  nam <- names(param1)
+                  r1 <- matrix(param1[nam=="r0"])
+                  b1 <- matrix(param1[nam=="b"],num.X+1,p)
+                  lambda1 <- param1[nam=="lambda"]
+                  lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv,ncol=p)
+                  u1 <- matrix(param1[nam=="u"],n,num.lv)
+                  #lambda2<-matrix(0,nrow=p,ncol=num.lv)
+                  #alternative for starting values lambda2
+                  #for(j in 1:p){
+                  #  for(q in 1:num.lv){
+                  #    lambda2[j,q]<--.5/(sum((u1[,q]-(sum(y[,j]*u1[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+                  #  }
+                  #}
+                  #if(any(is.infinite(lambda2))){
+                  #  lambda2[is.infinite(lambda2)]<--0.5
+                  #}
+                  #lambda2<-t(lambda2)
+                  lg_phi1 <- param1[nam=="lg_phi"]
+                  log_sigma1 <- param1[nam=="log_sigma"]
+                  #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
+                  #this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
+                  if(diag.iter>0){Au1<- c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))}else{
+                    Au1 <- param1[names(param1)=="Au"]
+                  }
+                  
+                  lg_Ar1 <- param1[nam=="lg_Ar"]
+                  lg_gamma <- param1[nam=="lg_gamma"]
+                  lg_gamma2 <- param1[nam=="lg_gamma2"]
+                  zeta <- param1[nam=="zeta"]
+                  
+                  if(row.eff == "random"){
+                    if(ridge==T){
+                      if(ridge.quadratic==F){
+                        objr <- TMB::MakeADFun(
+                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
+                          parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                          inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                          DLL = "gllvm2")
                       }else{
                         objr <- TMB::MakeADFun(
-                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
-                          parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
+                          parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
                           inner.control=list(mgcmax = 1e+200,maxit = maxit),
                           DLL = "gllvm2")
                       }
                     }else{
                       if(ridge.quadratic==F){
                         objr <- TMB::MakeADFun(
-                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
-                          parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
+                          parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
                           inner.control=list(mgcmax = 1e+200,maxit = maxit),
                           DLL = "gllvm2")
-                        }else{
-                          objr <- TMB::MakeADFun(
-                            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
-                            parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
-                            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                            DLL = "gllvm2")   
-                            
-                          }
+                      }else{
+                        objr <- TMB::MakeADFun(
+                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
+                          parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                          inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                          DLL = "gllvm2")
                       }
-                      
+                    }
+                    
                   } else {
-                   if(ridge==T){
-                     if(ridge.quadratic==F){
-                       objr <- TMB::MakeADFun(
-                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
-                         parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
-                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                         DLL = "gllvm2")##GLLVM
-                     }else{
-                       objr <- TMB::MakeADFun(
-                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
-                         parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
-                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                         DLL = "gllvm2")##GLLVM
-                     }
-                   }else{
-                     if(ridge.quadratic==F){
-                       objr <- TMB::MakeADFun(
-                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
-                         parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
-                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                         DLL = "gllvm2")##GLLVM
-                     }else{
-                       objr <- TMB::MakeADFun(
-                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=ifelse(single.curve.start>0,1,0)), silent=TRUE,
-                         parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
-                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                         DLL = "gllvm2")##GLLVM
-                     }
-                     }
-                     }
-              
+                    if(ridge==T){
+                      if(ridge.quadratic==F){
+                        objr <- TMB::MakeADFun(
+                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
+                          parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                          inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                          DLL = "gllvm2")#GLLVM#
+                      }else{
+                        objr <- TMB::MakeADFun(
+                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
+                          parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                          inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                          DLL = "gllvm2")#GLLVM#
+                      }
+                    }else{
+                      if(ridge.quadratic==F){
+                        objr <- TMB::MakeADFun(
+                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
+                          parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                          inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                          DLL = "gllvm2")#GLLVM#
+                      }else{
+                        objr <- TMB::MakeADFun(
+                          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
+                          parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
+                          inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                          DLL = "gllvm2")#GLLVM#
+                      }
+                    }
+                  }
                   if(optimizer=="nlminb") {
-                    timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit,trace=trace2)),silent = !trace2))
+                    timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit, trace=trace2)),silent = !trace2))
                   }
                   if(optimizer=="optim") {
                     if(!is.null(par.scale)){
                       if(par.scale=="coef"){
-                        parscale<-abs(objr$par)#this trick comes from https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.12044
+                        parscale<-abs(objr$par)
                         parscale[parscale==0]<-1
                       }else if(is.numeric(par.scale)){
                         parscale<-rep(par.scale,length(objr$par))
@@ -383,135 +489,28 @@
                     }else{
                       parscale <- rep(1,length(objr$par))
                     }
-                    if(is.null(fn.scale)|!is.numeric(fn.scale)){
-                      fnscale<-1
-                    }else{
-                      fnscale<-fn.scale
-                    }
-                    timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
+                    timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale, fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
                   }
-                  if(inherits(optr,"try-error")) warning(optr[1]);
-                  if(diag.iter>0 && Lambda.struc=="unstructured" && num.lv>1 && !inherits(optr,"try-error")|!inherits(optr,"try-error") && single.curve.start==T){
-                    objr1 <- objr
-                    optr1 <- optr
-                    param1 <- optr$par
-                    nam <- names(param1)
-                    r1 <- matrix(param1[nam=="r0"])
-                    b1 <- matrix(param1[nam=="b"],num.X+1,p)
-                    lambda1 <- param1[nam=="lambda"]
-                    lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv,ncol=p)
-                    u1 <- matrix(param1[nam=="u"],n,num.lv)
-                    #lambda2<-matrix(0,nrow=p,ncol=num.lv)
-                    #alternative for starting values lambda2
-                    #for(j in 1:p){
-                    #  for(q in 1:num.lv){
-                    #    lambda2[j,q]<--.5/(sum((u1[,q]-(sum(y[,j]*u1[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
-                    #  }
-                    #}
-                    #if(any(is.infinite(lambda2))){
-                    #  lambda2[is.infinite(lambda2)]<--0.5
-                    #}
-                    #lambda2<-t(lambda2)
-                    lg_phi1 <- param1[nam=="lg_phi"]
-                    log_sigma1 <- param1[nam=="log_sigma"]
-                    #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
-                    #this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
-                    if(diag.iter>0){Au1<- c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))}else{
-                      Au1 <- param1[names(param1)=="Au"]
-                    }
-                    
-                    lg_Ar1 <- param1[nam=="lg_Ar"]
-                    lg_gamma <- param1[nam=="lg_gamma"]
-                    lg_gamma2 <- param1[nam=="lg_gamma2"]
-                    zeta <- param1[nam=="zeta"]
-                    
-                    if(row.eff == "random"){
-                      if(ridge==T){
-                        if(ridge.quadratic==F){
-                          objr <- TMB::MakeADFun(
-                            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
-                            parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                            DLL = "gllvm2")
-                        }else{
-                          objr <- TMB::MakeADFun(
-                            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
-                            parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                            DLL = "gllvm2")
-                        }
-                      }else{
-                        if(ridge.quadratic==F){
-                          objr <- TMB::MakeADFun(
-                            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
-                            parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                            DLL = "gllvm2")
-                        }else{
-                          objr <- TMB::MakeADFun(
-                            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
-                            parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                            DLL = "gllvm2")
-                        }
-                      }
-                        
-                    } else {
-                      if(ridge==T){
-                        if(ridge.quadratic==F){
-                          objr <- TMB::MakeADFun(
-                            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
-                            parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                            DLL = "gllvm2")#GLLVM#
-                        }else{
-                          objr <- TMB::MakeADFun(
-                            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
-                            parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                            DLL = "gllvm2")#GLLVM#
-                        }
-                      }else{
-                        if(ridge.quadratic==F){
-                          objr <- TMB::MakeADFun(
-                            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
-                            parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                            DLL = "gllvm2")#GLLVM#
-                        }else{
-                          objr <- TMB::MakeADFun(
-                            data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=0), silent=TRUE,
-                            parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                            DLL = "gllvm2")#GLLVM#
-                        }
-                      }
-                    }
-                    if(optimizer=="nlminb") {
-                      timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit, trace=trace2)),silent = !trace2))
-                    }
-                    if(optimizer=="optim") {
-                      if(!is.null(par.scale)){
-                        if(par.scale=="coef"){
-                          parscale<-abs(objr$par)
-                          parscale[parscale==0]<-1
-                        }else if(is.numeric(par.scale)){
-                          parscale<-rep(par.scale,length(objr$par))
-                        }
-                      }else{
-                        parscale <- rep(1,length(objr$par))
-                      }
-                      timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale, fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
-                    }
-                    if(optimizer=="optim"){
-                      if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
-                    }else{
-                      if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
-                    }
+                  if(optimizer=="optim"){
+                    if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+                  }else{
+                    if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
                   }
-                return(list(objr=objr, optr=optr, fit=fit, timeo=timeo))
+                }
+                return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
               }
-              stopCluster(cl)
+                if(n.init>1&n.cores>1){
+                  cl <- makeCluster(n.cores)
+                  registerDoParallel(cl)
+                  start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
+                  results<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
+                    return(makeMod())
+                  }  
+                  stopCluster(cl)
+                }else{
+                  openmp(n.cores)
+                  results <- makeMod()
+                }
               if(n.init>1){
                 bestLL <- lapply(results, function(x)x$objr$fn(x$optr$par))
                 objr <- results[[which.min(unlist(bestLL))]]$objr
