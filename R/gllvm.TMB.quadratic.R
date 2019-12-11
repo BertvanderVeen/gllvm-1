@@ -114,16 +114,16 @@
                 cl <- makeCluster(n.cores-1)
                 registerDoParallel(cl)
                 start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-              results<<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
-                if(n.init > 1 && trace){
-                  if(n.i==2|old.logL>out$logL){
-                    cat("Initial run ", n.i, "LL",out$logL , "\n")
-                  }else{
-                    cat("Initial run ", n.i, "\n")
-                  }
-                }
-                old.logL <- out$logL
-              
+              results<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
+                # if(n.init > 1 && trace){
+                #   if(n.i==2|old.logL>out$logL){
+                #     cat("Initial run ", n.i, "LL",out$logL , "\n")
+                #   }else{
+                #     cat("Initial run ", n.i, "\n")
+                #   }
+                # }
+                # old.logL <- out$logL
+                # 
                 if(starting.val!="lingllvm"){
                 fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
                 }else{
@@ -508,15 +508,17 @@
                       if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
                     }
                   }
-                return(list(objr=objr, optr=optr))
+                return(list(objr=objr, optr=optr, fit=fit))
               }
               if(n.init>1){
                 bestLL <- lapply(results, function(x)x$objr$fn(x$optr$par))
                 objr <- results[[which.min(unlist(bestLL))]]$objr
                 optr <- results[[which.min(unlist(bestLL))]]$optr  
+                fit <- results[[which.min(unlist(bestLL))]]$fit
               }else{
                 objr <- results$objr
                 optr <- results$optr
+                fit <- results$fit
               }
               
                 
