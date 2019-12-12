@@ -493,7 +493,7 @@
                   cl <- makeCluster(n.cores)
                   registerDoParallel(cl)
                   start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  results<-foreach(i=1:n.init,.export=ls(parent.env()),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
+                  results<-foreach(i=1:n.init,error.handling=c("remove"),.export=ls(parent.env()),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
                     return(makeMod())
                   }  
                   stopCluster(cl)
