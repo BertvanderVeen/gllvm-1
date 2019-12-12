@@ -504,10 +504,10 @@
                   #try(registerDoParallel(cl),silent=T)#suppress annoying warnings message. Need to solve this different
                   try(registerDoParallel(cores = n.cores),silent=F)#suppress annoying warnings message. Need to solve this different
                   start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  try(results<-foreach(i=1:n.init,.errorhandling = "remove",.noexport="cl",.export=ls(),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE, .verbose=T) %dopar% {
+                  results<-foreach(i=1:n.init,.errorhandling = "remove",.noexport="cl",.export=ls(),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE, .verbose=FALSE) %dopar% {
                     madeMod<-makeMod()
                     return(madeMod)
-                  },silent=T) 
+                  }
                   #stopCluster(cl)
                 }else{
                   openmp(n.cores)
@@ -589,7 +589,7 @@
               }
               
                   out$start <- fit
-                  out$convergence <- optr$convergence
+                  try(out$convergence <- optr$convergence,silent=T)
                   out$logL <- objr$env$value.best[1]
                   out$lvs <- lvs
                   out$params$theta <- theta
