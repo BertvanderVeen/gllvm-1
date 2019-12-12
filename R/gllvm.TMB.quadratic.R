@@ -625,7 +625,7 @@
                   
                   out$row.eff <- row.eff
                   out$time <- timeo
-                  pars <- optr$par
+                  try(pars <- optr$par,silent=T)
                   
                   
                   param <- objr$env$last.par.best
