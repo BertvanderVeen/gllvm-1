@@ -2,14 +2,14 @@
             ## GLLVM, with estimation done via Variational approximation using TMB-package
             ## Original author: Jenni Niku, Bert van der Veen
             ##########################################################################################
-            y<-as.matrix(dune)
-            X = NULL; formula = NULL; num.lv = 2; family = "ordinal";
-            Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = FALSE;
-            seed = NULL;maxit = 2000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
-            n.init=2;start.params=NULL;
-            optimizer="optim";starting.val="lingllvm";diag.iter=1;
-            Lambda.start=c(0.1,0.5); jitter.var=0; ridge=FALSE; ridge.quadratic = FALSE; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; single.curve.start = 1; n.cores=7
-            
+            # y<-as.matrix(dune)
+            # X = NULL; formula = NULL; num.lv = 2; family = "ordinal";
+            # Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = FALSE;
+            # seed = NULL;maxit = 2000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
+            # n.init=2;start.params=NULL;
+            # optimizer="optim";starting.val="lingllvm";diag.iter=1;
+            # Lambda.start=c(0.1,0.5); jitter.var=0; ridge=FALSE; ridge.quadratic = FALSE; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; single.curve.start = 1; n.cores=7
+            # 
             gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                             Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
                                             seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
