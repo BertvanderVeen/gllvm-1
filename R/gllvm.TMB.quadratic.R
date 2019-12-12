@@ -2,6 +2,14 @@
             ## GLLVM, with estimation done via Variational approximation using TMB-package
             ## Original author: Jenni Niku, Bert van der Veen
             ##########################################################################################
+            y<-as.matrix(dune)
+            X = NULL; formula = NULL; num.lv = 2; family = "ordinal";
+            Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = FALSE;
+            seed = NULL;maxit = 2000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
+            n.init=2;start.params=NULL;
+            optimizer="optim";starting.val="lingllvm";diag.iter=1;
+            Lambda.start=c(0.1,0.5); jitter.var=0; ridge=FALSE; ridge.quadratic = FALSE; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; single.curve.start = 1; n.cores=7
+            
             gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                             Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
                                             seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
@@ -79,13 +87,10 @@
               if (is.null(formula) && is.null(X)) {
                 formula = "~ 1"
               }
-              
               ## Set initial values for model parameters (including dispersion prm) and latent variables
               if(!is.null(seed)) {
                 set.seed(seed)
               }
-              
-              n.i <- 1
               
               out <- list( y = y, X = X, logL = Inf, X.design = X)
               old.logL <- Inf
@@ -98,24 +103,20 @@
                 }
                 if(length(n.init)!=2){
                   n.init2<-n.init 
-                  n.init<-1
-                }else{
-                  n.init2<-n.init[1]
-                  n.init <- n.init[2]
                 }
               }else{
-                n.init <- n.init[1]
-                if(length(diag.iter)>1)diag.iter<-diag.iter[1]
+                if(length(n.init)>1)
+                n.init <- n.init[2]
+                if(length(diag.iter)>1)diag.iter<-diag.iter[2]
               }
-                
-                seed <- sample(1:10000, n.init)
+                if(n.init>1)seed <- sample(1:10000, n.init)
                 
                 #helper function for parallel optimization
-              makeMod<-function(){
+              makeMod<-function(i){
                 if(starting.val!="lingllvm"){
-                  fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
+                  fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
                 }else{
-                    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc)
+                    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed[i])
                     start.params <- fit
                 }
                 sigma <- 1
@@ -498,20 +499,20 @@
                 }
                 return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
               }
-              
                 if(n.init>1&n.cores>1){
                   #cl <- makeCluster(n.cores)
-                  #try(registerDoParallel(cl),silent=T)#suppress annoying warnings message. Need to solve this different
-                  try(registerDoParallel(cores = n.cores),silent=F)#suppress annoying warnings message. Need to solve this different
-                  start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  results<-foreach(i=1:n.init,.errorhandling = "remove",.noexport="cl",.export=ls(),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE, .verbose=FALSE) %dopar% {
-                    madeMod<-makeMod()
+                  try(registerDoParallel(n.cores),silent=F)#suppress annoying warnings message. Need to solve this different
+                  #start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
+                  results<-foreach(i=1:n.init,.errorhandling = "remove",.export=ls(),.packages = c("gllvm"), .combine='list', .multicombine=TRUE, .verbose=FALSE) %dopar% {
+                    madeMod<-makeMod(i)
+                    #found the issue, was exporting packages. Now I need to find out how to set a seed inside a foreach..might have to set outside the function inside the forach loop due to openmp
                     return(madeMod)
                   }
                   #stopCluster(cl)
                 }else{
                   openmp(n.cores)
-                  results <- makeMod()
+                  is.null(seed)
+                  results <- makeMod(1)
                 }
               if(n.init>1){
                 try({bestLL <- lapply(results, function(x)x$objr$env$value.best);
