@@ -154,7 +154,9 @@
                       is.null(X) == is.null(start.params$X) &&
                       (row.eff == start.params$row.eff)) {
                     if(start.params$family=="ordinal"){
-                      zeta <- start.params$params$zeta  
+                      if(start.params$zeta.struc=="species")zeta <- start.params$params$zeta[,-1]
+                      if(start.params$zeta.struc=="common")zeta <- start.params$params$zeta[-1]
+                      
                     }
                     if(start.params$family=="negative.binomial"){
                       phi <- start.params$phi
@@ -214,7 +216,8 @@
                   fit$phi <- phis
                   phis <- 1/phis
                 } 
-                if(family=="ordinal"&&is.null(start.params)){
+                if(is.null(start.params)){
+                if(family=="ordinal"){
                   K = max(y00)-min(y00)
                   if(zeta.struc=="species"){
                     zeta <- c(t(fit$zeta[,-1]))
@@ -225,6 +228,7 @@
                   
                 }else{
                   zeta = 0
+                }
                 }
                 
                 if (is.null(offset))
@@ -500,7 +504,7 @@
                   #try(registerDoParallel(cl),silent=T)#suppress annoying warnings message. Need to solve this different
                   try(registerDoParallel(cores = n.cores),silent=F)#suppress annoying warnings message. Need to solve this different
                   start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  try(results<-foreach(i=1:n.init,.errorhandling = "remove",.noexport="cl",.export=ls(),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE, .verbose=FALSE) %dopar% {
+                  try(results<-foreach(i=1:n.init,.errorhandling = "remove",.noexport="cl",.export=ls(),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE, .verbose=T) %dopar% {
                     madeMod<-makeMod()
                     return(madeMod)
                   },silent=T) 
