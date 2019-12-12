@@ -514,19 +514,11 @@
                   results <- makeMod()
                 }
               if(n.init>1){
-<<<<<<< HEAD
                 try({bestLL <- lapply(results, function(x)x$objr$env$value.best);
                 objr <- results[[which.min(unlist(bestLL))]]$objr;
                 optr <- results[[which.min(unlist(bestLL))]]$optr; 
                 fit <- results[[which.min(unlist(bestLL))]]$fit;
                 timeo <- results[[which.min(unlist(bestLL))]]$timeo},silent=T)
-=======
-                bestLL <- lapply(results, function(x)x$objr$env$value.best)
-                objr <- results[[which.min(unlist(bestLL))]]$objr
-                optr <- results[[which.min(unlist(bestLL))]]$optr  
-                fit <- results[[which.min(unlist(bestLL))]]$fit
-                timeo <- results[[which.min(unlist(bestLL))]]$timeo
->>>>>>> 7cdb562b431b9bdb799a860a73b5096db93c4d16
               }else{
                 objr <- results$objr
                 optr <- results$optr
