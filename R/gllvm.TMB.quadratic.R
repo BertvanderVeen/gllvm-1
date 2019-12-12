@@ -9,7 +9,7 @@
             # n.init=2;start.params=NULL;
             # optimizer="optim";starting.val="lingllvm";diag.iter=1;
             # Lambda.start=c(0.1,0.5); jitter.var=0; ridge=FALSE; ridge.quadratic = FALSE; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; single.curve.start = 1; n.cores=7
-            # 
+
             gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                             Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
                                             seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
@@ -501,9 +501,12 @@
               }
                 if(n.init>1&n.cores>1){
                   #cl <- makeCluster(n.cores)
-                  try(registerDoParallel(n.cores),silent=F)#suppress annoying warnings message. Need to solve this different
+                  #try(registerDoMC(n.cores),silent=F)#suppress annoying warnings message. Need to solve this different
                   #start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  results<-foreach(i=1:n.init,.errorhandling = "remove",.export=ls(),.packages = c("gllvm"), .combine='list', .multicombine=TRUE, .verbose=FALSE) %dopar% {
+                  registerDoFuture()
+                  cl <- makeClusterPSOCK(n.cores,autoStop = T)
+                  plan(cluster, workers = cl)
+                  results<-foreach(i=1:n.init,.errorhandling = "pass",.export=ls(),.packages = c("gllvm"), .combine='list', .verbose=FALSE, .inorder=FALSE, .init=NULL) %dopar% {
                     madeMod<-makeMod(i)
                     #found the issue, was exporting packages. Now I need to find out how to set a seed inside a foreach..might have to set outside the function inside the forach loop due to openmp
                     return(madeMod)
