@@ -8,6 +8,7 @@
                                             n.init=1,start.params=NULL,
                                             optimizer="optim",starting.val="lingllvm",diag.iter=1,
                                             Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.lingllvm = "res", single.curve.start = 1, n.cores=1) {
+              
               n <- dim(y)[1]
               p <- dim(y)[2]
               tr <- NULL
@@ -78,8 +79,7 @@
               if (is.null(formula) && is.null(X)) {
                 formula = "~ 1"
               }
-              #forlinGLLVM
-              start.params2 <- start.params
+              
               ## Set initial values for model parameters (including dispersion prm) and latent variables
               if(!is.null(seed)) {
                 set.seed(seed)
@@ -109,16 +109,14 @@
               }
                 
                 seed <- sample(1:10000, n.init)
+                
+                #helper function for parallel optimization
               makeMod<-function(){
                 if(starting.val!="lingllvm"){
                   fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
                 }else{
-                  if(starting.val=="lingllvm"){
-                    if(trace)cat(paste("Running", n.init2 ,"iterations to get starting values...\n"))
-                    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, start.fit = start.params2, diag.iter = diag.iter2, jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc)
-                    if(trace)cat("Done generating starting values. Starting optimization quadratic model.\n")  
+                    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc)
                     start.params <- fit
-                  } 
                 }
                 sigma <- 1
                 
@@ -496,19 +494,22 @@
                 }
                 return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
               }
+              
                 if(n.init>1&n.cores>1){
-                  cl <- makeCluster(n.cores)
-                  registerDoParallel(cl)
+                  #cl <- makeCluster(n.cores)
+                  #try(registerDoParallel(cl),silent=T)#suppress annoying warnings message. Need to solve this different
+                  try(registerDoParallel(cores = n.cores),silent=F)#suppress annoying warnings message. Need to solve this different
                   start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  results<-foreach(i=1:n.init,error.handling=c("pass"),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
+                  try(results<-foreach(i=1:n.init,.errorhandling = "remove",.noexport="cl",.export=ls(),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE, .verbose=FALSE) %dopar% {
                     madeMod<-makeMod()
                     return(madeMod)
-                  }  
-                  stopCluster(cl)
+                  },silent=T) 
+                  #stopCluster(cl)
                 }else{
                   openmp(n.cores)
                   results <- makeMod()
                 }
+              if(inherits(results,"try-error"))stop("Failed to run model.")
               if(n.init>1){
                 bestLL <- lapply(results, function(x)x$objr$fn(x$optr$par))
                 objr <- results[[which.min(unlist(bestLL))]]$objr
