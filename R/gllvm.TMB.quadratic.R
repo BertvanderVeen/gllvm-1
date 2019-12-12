@@ -149,7 +149,7 @@
                       is.null(X) == is.null(start.params$X) &&
                       (row.eff == start.params$row.eff)) {
                     if(start.params$family=="ordinal"){
-                      zeta <- start.params$zeta  
+                      zeta <- start.params$params$zeta  
                     }
                     if(start.params$family=="negative.binomial"){
                       phi <- start.params$phi
@@ -209,7 +209,7 @@
                   fit$phi <- phis
                   phis <- 1/phis
                 } 
-                if(family=="ordinal"){
+                if(family=="ordinal"&&is.null(start.params)){
                   K = max(y00)-min(y00)
                   if(zeta.struc=="species"){
                     zeta <- c(t(fit$zeta[,-1]))
@@ -493,7 +493,7 @@
                   cl <- makeCluster(n.cores)
                   registerDoParallel(cl)
                   start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  results<-foreach(i=1:n.init,.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
+                  results<-foreach(i=1:n.init,.export=ls(parent.env()),.packages = c("gllvm","gllvm.quadratic","TMB"), .combine='list', .multicombine=TRUE) %dopar% {
                     return(makeMod())
                   }  
                   stopCluster(cl)
