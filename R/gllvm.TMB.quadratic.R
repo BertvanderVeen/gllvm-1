@@ -513,20 +513,18 @@
                   openmp(n.cores)
                   results <- makeMod()
                 }
-              if(inherits(results,"try-error"))stop("Failed to run model.")
               if(n.init>1){
-                bestLL <- lapply(results, function(x)x$objr$fn(x$optr$par))
-                objr <- results[[which.min(unlist(bestLL))]]$objr
-                optr <- results[[which.min(unlist(bestLL))]]$optr  
-                fit <- results[[which.min(unlist(bestLL))]]$fit
-                timeo <- results[[which.min(unlist(bestLL))]]$timeo
+                try({bestLL <- lapply(results, function(x)x$objr$env$value.best);
+                objr <- results[[which.min(unlist(bestLL))]]$objr;
+                optr <- results[[which.min(unlist(bestLL))]]$optr; 
+                fit <- results[[which.min(unlist(bestLL))]]$fit;
+                timeo <- results[[which.min(unlist(bestLL))]]$timeo},silent=T)
               }else{
                 objr <- results$objr
                 optr <- results$optr
                 fit <- results$fit
                 timeo <- results$timeo
               }
-              
                 
               if(inherits(optr,"try-error")) warning(optr[1]);
               param<-objr$env$last.par.best
