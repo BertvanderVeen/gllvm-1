@@ -501,7 +501,7 @@
               }
                 if(n.init>1){
                   #start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  results<-foreach(i=1:n.init,.errorhandling = "pass",.export=ls(), .combine='list', .packages="gllvm",.verbose=FALSE) %dopar% {
+                  results<-foreach(i=1:n.init,.errorhandling = "pass",.export=ls(), .multicombine=T, .inorder=F, .packages="gllvm",.verbose=FALSE) %dopar% {
                     madeMod<-makeMod(i)
                     #found the issue, was exporting packages. Now I need to find out how to set a seed inside a foreach..might have to set outside the function inside the forach loop due to openmp
                     return(madeMod)
