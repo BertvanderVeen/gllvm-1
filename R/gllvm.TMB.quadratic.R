@@ -15,7 +15,7 @@
                                             seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                             n.init=1,start.params=NULL,
                                             optimizer="optim",starting.val="lingllvm",diag.iter=1,
-                                            Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.lingllvm = "res", single.curve.start = 1, n.cores=1) {
+                                            Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.lingllvm = "res", single.curve.start = 1) {
               
               n <- dim(y)[1]
               p <- dim(y)[2]
@@ -499,23 +499,19 @@
                 }
                 return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
               }
-                if(n.init>1&n.cores>1){
-                  #cl <- makeCluster(n.cores)
-                  #try(registerDoMC(n.cores),silent=F)#suppress annoying warnings message. Need to solve this different
+                if(n.init>1){
                   #start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  registerDoFuture()
-                  cl <- makeClusterPSOCK(n.cores,autoStop = T)
-                  plan(cluster, workers = cl)
-                  results<-foreach(i=1:n.init,.errorhandling = "pass",.export=ls(),.packages = c("gllvm"), .combine='list', .verbose=FALSE, .inorder=FALSE, .init=NULL) %dopar% {
+                  results<-foreach(i=1:n.init,.export=ls(), .combine='list', .packages="gllvm",.verbose=FALSE) %dopar% {
                     madeMod<-makeMod(i)
                     #found the issue, was exporting packages. Now I need to find out how to set a seed inside a foreach..might have to set outside the function inside the forach loop due to openmp
                     return(madeMod)
                   }
-                  #stopCluster(cl)
-                }else{
-                  openmp(n.cores)
-                  is.null(seed)
+                  results<<-results
+                  #on.exit(stopCluster(cl))
+                }else if(n.init==1){
                   results <- makeMod(1)
+                }else{
+                  #original while loop here? Don't store the results, like before?
                 }
               if(n.init>1){
                 try({bestLL <- lapply(results, function(x)x$objr$env$value.best);
