@@ -190,7 +190,7 @@
 #' @export
 #'
 #'@useDynLib gllvm2, .registration = TRUE
-#'@importFrom parallel parLapply
+#'@import foreach
 #'@importFrom vegan scores
 #'@importFrom vegan tolerance
 #'@importFrom vegan cca

@@ -36,8 +36,7 @@ gllvm.quadratic(
   grad.check = FALSE,
   zeta.struc = "species",
   starting.val.lingllvm = "res",
-  single.curve.start = 1,
-  n.cores = 1
+  single.curve.start = 1
 )
 }
 \arguments{
@@ -102,8 +101,6 @@ gllvm.quadratic(
 \item{zeta.struc}{Structure for cut-offs in the ordinal model. Either "common", for the same cut-offs for all species, or "species" for species-specific cut-offs. For the latter, classes are arbitrary per species, each category per species needs to have at least one observations. Defaults to "species".}
 
 \item{starting.val.lingllvm}{Procedure to generate starting values for linear GLLVM if \code{starting.val="lingllvm"}. See also \link{gllvm}.}
-
-\item{n.cores}{number of cores to use for parallel loop. Only useful if n.init>1}
 }
 \value{
 An object of class 'gllvm' includes the following components:

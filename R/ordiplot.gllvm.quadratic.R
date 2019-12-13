@@ -236,29 +236,29 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         lvs <- lvs/apply(tolerances, 2, mean)
         tolerances <- tolerances/tolerances
       }
-      if(predict.region){
-        sdb<-sdA(object)
-        object$A<-sdb+object$A
-        r=0
-        #if(object$row.eff=="random") r=1
-        
-        for (i in 1:n) {
-          if(object$Lambda.struc == "diagonal"){
-            covm <- diag(object$A[i,which.lvs+r]);
-          } else {
-            #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
-            covm <- object$A[i,which.lvs+r,which.lvs+r];
-          }
-          ellipse(object$lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)))#these ignore scaling for now
-        }
-      }
+      
       env.lower <- optima - 1.96 * tolerances
       env.upper <- optima + 1.96 * tolerances
       if(env.ranges==F){
         plot(rbind(optima, lvs), xlab = paste("LV", which.lvs[1]), 
              ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
-      }else{
+      }
+      if(predict.region){
+        sdb<-sdA(object)
+        object$A<-sdb+object$A
+        r=0
+        #if(object$row.eff=="random") r=1
+      
+      if(env.ranges==T){
         env.range <- env.upper - env.lower
+        if(any(!apply(env.range,1,function(x)all(x>-100&x<100)))){
+          flag<-T
+        }else{
+          flag<-F
+        }
+        optima<-optima[apply(env.range,1,function(x)all(x>-100&x<100)),]
+        cols<-cols[apply(env.range,1,function(x)all(x>-100&x<100))]
+        env.range<-env.range[apply(env.range,1,function(x)all(x>-100&x<100)),]
         xlim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[1]],lvs[which.lvs[[1]]]))
         ylim<-range(c(rbind(optima+env.range,optima-env.range)[,which.lvs[2]],lvs[which.lvs[[2]]]))
         plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
@@ -269,14 +269,27 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       if(is.null(row.names(object$y))){
         row.names(object$y)<-1:nrow(object$y)
       }
+      
+      for (i in 1:n) {
+        if(object$Lambda.struc == "diagonal"){
+          covm <- diag(object$A[i,which.lvs+r]);
+        } else {
+          #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
+          covm <- object$A[i,which.lvs+r,which.lvs+r];
+        }
+        ellipse(lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)), col="gray", lty="solid")#these ignore scaling for now
+      }
+      }
 
       text(lvs, labels = row.names(object$y),col="gray")
       text(optima, labels = row.names(optima), col = cols, cex=cex.spp)
       if(env.ranges==T){
         for (j in 1:nrow(optima)) {
           s = diag(2)
-          car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col=scales::alpha(cols[j], 0.7), lty = "dashed", lwd=1)
+          ellipse(optima[j,which.lvs], covM = diag(env.range[j,]), rad = sqrt(qchisq(level, df=object$num.lv)), col=scales::alpha(cols[j], 0.7), lty="dashed")#these ignore scaling for now
+          #car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col=scales::alpha(cols[j], 0.7), lty = "dashed", lwd=1)
         }
+        if(T)message("Some tolerances are too large to plot.")
       }
     } else {
       stop("Not enough LVs for a biplot")

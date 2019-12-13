@@ -220,7 +220,7 @@
                   fit$phi <- phis
                   phis <- 1/phis
                 } 
-                if(is.null(start.params)){
+                if(is.null(start.params)|family!="ordinal"){
                 if(family=="ordinal"){
                   K = max(y00)-min(y00)
                   if(zeta.struc=="species"){
@@ -685,13 +685,13 @@
                     incld[names(objr$par)=="u"] <- TRUE;
                     incld[names(objr$par)=="Au"] <- TRUE;
             
-                  if(familyn!=1) incl[names(objr$par)=="lg_phi"] <- FALSE
-                  if(familyn!=3) incl[names(objr$par)=="zeta"] <- FALSE
+                  if(family=="negative.binomial") incl[names(objr$par)=="lg_phi"] <- FALSE
+                  if(family=="ordinal") incl[names(objr$par)=="zeta"] <- FALSE
                     
                   A.mat <- -sdr[incl, incl] # a x a
                   D.mat <- -sdr[incld, incld] # d x d
                   B.mat <- -sdr[incl, incld] # a x d
-                  cov.mat.mod <- try(MASS::ginv(A.mat-B.mat%*%solve(D.mat)%*%t(B.mat)),silent=T)
+                  cov.mat.mod <- try(MASS::ginv(A.mat-B.mat%*%solve(D.mat)%*%t(B.mat)),silent=F)
                   se <- sqrt(diag(abs(cov.mat.mod)))
                   
                   incla<-rep(FALSE, length(incl))
@@ -749,7 +749,7 @@
                   }
                   if(row.eff=="random") { out$sd$sigma <- se*out$params$sigma; names(out$sd$sigma) <- "sigma" }
                   
-                }}, silent=T)
+                }}, silent=F)
               if(inherits(tr, "try-error")) { cat("Standard errors for parameters could not be calculated, due to singular fit.\n") }
               
               if(is.null(formula1)){ out$formula <- formula} else {out$formula <- formula1}
