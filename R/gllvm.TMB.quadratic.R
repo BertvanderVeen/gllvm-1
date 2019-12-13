@@ -109,7 +109,7 @@
                 n.init <- n.init[2]
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
               }
-                if(n.init>1)seed <- sample(1:10000, n.init)
+                if(n.init[1]>1)seed <- sample(1:10000, n.init)
                 
                 #helper function for parallel optimization
               makeMod<-function(i){
