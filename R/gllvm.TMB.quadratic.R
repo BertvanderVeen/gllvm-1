@@ -101,8 +101,8 @@
                 }else{
                   diag.iter2 <- diag.iter
                 }
-                if(length(n.init)!=2){
-                  n.init2<-n.init 
+                if(length(n.init)==1){
+                  n.init2<-1 
                 }else{
                   n.init2<-n.init[1]
                   n.init<-n.init[2]
@@ -502,9 +502,10 @@
                 }
                 return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
               }
+              
                 if(n.init>1){
                   #start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  results<-foreach(i=1:n.init,.errorhandling = "pass",.export=ls(), .multicombine=T, .inorder=F, .packages="gllvm",.verbose=FALSE) %dopar% {
+                  results<-foreach(i=1:n.init, .multicombine=T, .inorder=F, .packages="gllvm") %dopar% {
                     madeMod<-makeMod(i)
                     #found the issue, was exporting packages. Now I need to find out how to set a seed inside a foreach..might have to set outside the function inside the forach loop due to openmp
                     return(madeMod)
@@ -512,9 +513,8 @@
                   #on.exit(stopCluster(cl))
                 }else if(n.init==1){
                   results <- makeMod(1)
-                }else{
-                  #original while loop here? Don't store the results, like before?
                 }
+              
               if(n.init>1){
                 try({bestLL <- lapply(results, function(x)x$objr$env$value.best);
                 objr <- results[[which.min(unlist(bestLL))]]$objr;
@@ -662,6 +662,7 @@
               tr<-try({
                 if(sd.errors && !is.infinite(out$logL)) {
                   if(trace) cat("Calculating standard errors for parameters...\n")
+                  if(getDoParWorkers()>1)openmp(getDoParWorkers())
                   sdr <- optimHess(pars, objr$fn, objr$gr, control = list(reltol=reltol,maxit=maxit))#maxit=maxit
                   m <- dim(sdr)[1]; incl <- rep(TRUE,m); incld <- rep(FALSE,m); inclr <- rep(FALSE,m)
                   incl[names(objr$par)=="B"] <- FALSE
@@ -691,7 +692,7 @@
                   A.mat <- -sdr[incl, incl] # a x a
                   D.mat <- -sdr[incld, incld] # d x d
                   B.mat <- -sdr[incl, incld] # a x d
-                  cov.mat.mod <- try(MASS::ginv(A.mat-B.mat%*%solve(D.mat)%*%t(B.mat)),silent=F)
+                  cov.mat.mod <- try(MASS::ginv(A.mat-B.mat%*%solve(D.mat)%*%t(B.mat)),silent=TRUE)
                   se <- sqrt(diag(abs(cov.mat.mod)))
                   
                   incla<-rep(FALSE, length(incl))
@@ -749,7 +750,7 @@
                   }
                   if(row.eff=="random") { out$sd$sigma <- se*out$params$sigma; names(out$sd$sigma) <- "sigma" }
                   
-                }}, silent=F)
+                }}, silent=T)
               if(inherits(tr, "try-error")) { cat("Standard errors for parameters could not be calculated, due to singular fit.\n") }
               
               if(is.null(formula1)){ out$formula <- formula} else {out$formula <- formula1}
