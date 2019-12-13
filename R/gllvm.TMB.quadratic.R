@@ -103,6 +103,9 @@
                 }
                 if(length(n.init)!=2){
                   n.init2<-n.init 
+                }else{
+                  n.init2<-n.init[1]
+                  n.init<-n.init[2]
                 }
               }else{
                 if(length(n.init)>1)
