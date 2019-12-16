@@ -512,9 +512,9 @@
                     return(madeMod)
                   },silent=T)#to muffle export error. Need to keep ls() in to make sure all objects are exported to workers as some objects are in another environment as they're passed from the main gllvm function.
                   #on.exit(stopCluster(cl))
-                }else if(n.init==1&parallel==TRUE){
+                }else if(n.init==1){
                   results <- makeMod(1)
-                }else{
+                }else if(n.init>1&parallel==FALSE){
                   results<-vector("list",n.init)
                   for(i in 1:n.init){
                     results[[i]]<-makeMod(i)
