@@ -170,30 +170,53 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       
       quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
       
-      newLV <- matrix(NA, nrow = 1000, ncol = length(which.lvs))
-      newLV[, 1] <- seq(from = min(object$lvs[, which.lvs]), max(object$lvs[, which.lvs]), length.out = 1000)
       if(object$family=="ordinal")type="link"
-      mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
+      #mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
+      #have to rebuiltin the backtransformation of the linear predictor now I included curve
+      mu<-predict(object, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
       
       if(legend==F){
-        pdf(NULL)
-        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
-        maxstr<-max(strwidth(colnames(mu)))*1.25  
-        invisible(dev.off())
-        
-        plot(NA, xlim = c(min(newLV), max(newLV)+maxstr), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
+        #pdf(NULL)
+        #plot(NA, xlim = c(range(object$lvs)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
+        #maxstr<-max(strwidth(colnames(mu)))*1.25  
+        #invisible(dev.off())
+        #previpously range below was range(object$lvs)+maxstr, might still want to add this again
+        plot(NA, xlim = c(c(min(object$lvs)-.1,max(object$lvs)+.1)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
       }else{
-        plot(NA, xlim = c(min(newLV), max(newLV)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
+        plot(NA, xlim = c(range(object$lvs)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
       }
       
       if(legend==T){
         legend(x="topleft",text.col=cols,colnames(mu), cex=cex.spp)
       }
-      
+      if(type=="response"){
+      if(object$family=="binomial"){
+        linkinv<-pnorm
+      }else if(object$family%in%c("poisson", "negative.binomial")){
+        linkinv <- exp
+      }else{
+        stop("Ordinal model plot not yet implemented on response scale")
+      }
+      }else{
+        linkinv<-c
+      }
       for (j in 1:ncol(mu)) {
-        lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[j])
+        if(intercept==F){
+          func <-function(x,u,u2)linkinv(x*u+x^2*u2)
+          curve(func(x,u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],add=T)  
+        }else{
+          func <-function(x,beta,u,u2)linkinv(beta+x*u+x^2*u2)
+          curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],add=T)  
+        }
+        #lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[j])
         if(legend==F){
-          text(x = max(newLV[, 1]), y = tail(mu[order(newLV[, 1]), j])[1], labels = colnames(mu)[j], col = cols[j], adj = 0, cex=cex.spp)  
+          opt <- summary(object)$Optima[largest.lnorms,which.lvs]
+          if(opt[j]<max(object$lvs)&opt[j]>min(object$lvs)){
+            text(x = opt[j], y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0.5,-0.5))    
+          }else if(opt[j]<min(object$lvs)){
+            text(x = min(object$lvs), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0,-0.5))    
+          }else if(opt[j]>max(object$lvs))
+            text(x = max(object$lvs), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(1,-0.5))    
         }
       }
       text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
@@ -237,19 +260,13 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         tolerances <- tolerances/tolerances
       }
       
-      env.lower <- optima - 1.96 * tolerances
-      env.upper <- optima + 1.96 * tolerances
       if(env.ranges==F){
         plot(rbind(optima, lvs), xlab = paste("LV", which.lvs[1]), 
              ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
       }
-      if(predict.region){
-        sdb<-sdA(object)
-        object$A<-sdb+object$A
-        r=0
-        #if(object$row.eff=="random") r=1
-      
       if(env.ranges==T){
+        env.lower <- optima - 1.96 * tolerances#need to adapt this, not the right size at the moment
+        env.upper <- optima + 1.96 * tolerances
         env.range <- env.upper - env.lower
         if(any(!apply(env.range,1,function(x)all(x>-100&x<100)))){
           flag<-T
@@ -264,22 +281,30 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
              ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
       }
+      
+      if(predict.region){
+        sdb<-sdA(object)
+        object$A<-sdb+object$A
+        r=0
+        #if(object$row.eff=="random") r=1
+        for (i in 1:n) {
+          if(object$Lambda.struc == "diagonal"){
+            covm <- diag(object$A[i,which.lvs+r]);
+          } else {
+            #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
+            covm <- object$A[i,which.lvs+r,which.lvs+r];
+          }
+          ellipse(lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)), col="gray", lty="solid")#these ignore scaling for now
+        }
+      }
+      
+      
       abline(v=0,h=0,lty="dotted")
       
       if(is.null(row.names(object$y))){
         row.names(object$y)<-1:nrow(object$y)
       }
       
-      for (i in 1:n) {
-        if(object$Lambda.struc == "diagonal"){
-          covm <- diag(object$A[i,which.lvs+r]);
-        } else {
-          #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
-          covm <- object$A[i,which.lvs+r,which.lvs+r];
-        }
-        ellipse(lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)), col="gray", lty="solid")#these ignore scaling for now
-      }
-      }
 
       text(lvs, labels = row.names(object$y),col="gray")
       text(optima, labels = row.names(optima), col = cols, cex=cex.spp)
