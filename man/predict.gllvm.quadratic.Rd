@@ -5,17 +5,9 @@
 \alias{predict}
 \title{Predict Method for gllvm Fits}
 \usage{
-\method{predict}{gllvm.quadratic}(
-  object,
-  newX = NULL,
-  newTR = NULL,
-  newLV = NULL,
-  type = "link",
-  LVonly = FALSE,
-  which.lvs = 1:object$num.lv,
-  intercept = T,
-  ...
-)
+\method{predict}{gllvm.quadratic}(object, newX = NULL, newTR = NULL,
+  newLV = NULL, type = "link", LVonly = FALSE,
+  which.lvs = 1:object$num.lv, intercept = T, ...)
 }
 \arguments{
 \item{object}{an object of class 'gllvm'.}
