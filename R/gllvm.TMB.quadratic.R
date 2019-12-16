@@ -2,20 +2,20 @@
             ## GLLVM, with estimation done via Variational approximation using TMB-package
             ## Original author: Jenni Niku, Bert van der Veen
             ##########################################################################################
-             #y<-as.matrix(dune)
-             #X = NULL; formula = NULL; num.lv = 2; family = "ordinal";
-             #Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = FALSE;
-             #seed = NULL;maxit = 2000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
-             #n.init=2;start.params=NULL;
-             #optimizer="optim";starting.val="lingllvm";diag.iter=1;
-             #Lambda.start=c(0.1,0.5); jitter.var=0; ridge=FALSE; ridge.quadratic = FALSE; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; single.curve.start = 1; n.cores=7
+             # y<-as.matrix(spider$abund)
+             # X = NULL; formula = NULL; num.lv = 2; family = "poisson";
+             # Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = FALSE;
+             # seed = NULL;maxit = 2000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
+             # n.init=2;start.params=NULL;
+             # optimizer="optim";starting.val="lingllvm";diag.iter=1;
+             # Lambda.start=c(0.1,0.5); jitter.var=0; ridge=FALSE; ridge.quadratic = FALSE; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; single.curve.start = 1; n.cores=7
 
             gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                             Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
                                             seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                             n.init=1,start.params=NULL,
                                             optimizer="optim",starting.val="lingllvm",diag.iter=1,
-                                            Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.lingllvm = "res", single.curve.start = 1) {
+                                            Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.lingllvm = "res", single.curve.start = 1, parallel=FALSE) {
               
               n <- dim(y)[1]
               p <- dim(y)[2]
@@ -503,16 +503,21 @@
                 return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
               }
               
-                if(n.init>1){
+                if(n.init>1&parallel==TRUE){
                   #start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  results<-foreach(i=1:n.init, .multicombine=T, .inorder=F, .packages="gllvm") %dopar% {
+                  results<-foreach(i=1:n.init, .export=ls(),.multicombine=T, .inorder=F, .packages="gllvm") %dopar% {
                     madeMod<-makeMod(i)
                     #found the issue, was exporting packages. Now I need to find out how to set a seed inside a foreach..might have to set outside the function inside the forach loop due to openmp
                     return(madeMod)
                   }
                   #on.exit(stopCluster(cl))
-                }else if(n.init==1){
+                }else if(n.init==1&parallel==TRUE){
                   results <- makeMod(1)
+                }else{
+                  results<-vector("list",n.init)
+                  for(i in 1:n.init){
+                    results[[i]]<-makeMod(i)
+                  }
                 }
               
               if(n.init>1){
