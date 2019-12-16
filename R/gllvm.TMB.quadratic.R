@@ -504,12 +504,13 @@
               }
               
                 if(n.init>1&parallel==TRUE){
+                  #clusterEvalQ(cl,library.dynam("gllvm2","gllvm.quadratic",lib.loc="C:/Users/beve/Documents/R/win-library/3.6/"))
                   #start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
-                  results<-foreach(i=1:n.init, .export=ls(),.multicombine=T, .inorder=F, .packages="gllvm") %dopar% {
+                  try(results<-foreach(i=1:n.init, .export=ls(),.multicombine=T, .inorder=F, .packages="gllvm") %dopar% {
                     madeMod<-makeMod(i)
                     #found the issue, was exporting packages. Now I need to find out how to set a seed inside a foreach..might have to set outside the function inside the forach loop due to openmp
                     return(madeMod)
-                  }
+                  },silent=T)#to muffle export error. Need to keep ls() in to make sure all objects are exported to workers as some objects are in another environment as they're passed from the main gllvm function.
                   #on.exit(stopCluster(cl))
                 }else if(n.init==1&parallel==TRUE){
                   results <- makeMod(1)
