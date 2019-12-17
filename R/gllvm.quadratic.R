@@ -34,6 +34,7 @@
 #' @param zeta.struc Structure for cut-offs in the ordinal model. Either "common", for the same cut-offs for all species, or "species" for species-specific cut-offs. For the latter, classes are arbitrary per species, each category per species needs to have at least one observations. Defaults to "species".
 #' @param starting.val.lingllvm Procedure to generate starting values for linear GLLVM if \code{starting.val="lingllvm"}. See also \link{gllvm}.
 #' @param parallel whether to turn of support for parallel computing. Note that either \link{openmp} must be used if \code{n.init=1}. Or a parallel back-end supported by \link{foreach}.
+#' @param single.curve whether to fit quadratic model with equal tolerances (one quadratic coefficient per latent variable) or species-specific tolerances.
 #'
 #' @details
 #' Fits the species packing model by generalized linear latent variable models with quadratic latent variables.
@@ -209,7 +210,7 @@
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 1, trace = FALSE, trace2 = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
     start.fit = NULL, starting.val = "res", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
-    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", starting.val.lingllvm = "res", single.curve.start = 1, parallel=FALSE) {
+    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", starting.val.lingllvm = "res", single.curve = FALSE, parallel=FALSE, opt=1) {
     #build in gradient check
     randomX <- NULL
     term <- NULL
@@ -392,7 +393,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.quadratic(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                                         row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                         n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
-                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, starting.val.lingllvm = starting.val.lingllvm, single.curve.start = single.curve.start)
+                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, starting.val.lingllvm = starting.val.lingllvm, single.curve = single.curve, opt = opt)
         }
 
     out$X.design <- fitg$X.design
