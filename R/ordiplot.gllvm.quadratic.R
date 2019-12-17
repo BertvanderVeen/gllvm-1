@@ -314,7 +314,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
           ellipse(optima[j,which.lvs], covM = diag(env.range[j,]), rad = sqrt(qchisq(level, df=object$num.lv)), col=scales::alpha(cols[j], 0.7), lty="dashed")#these ignore scaling for now
           #car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col=scales::alpha(cols[j], 0.7), lty = "dashed", lwd=1)
         }
-        if(T)message("Some tolerances are too large to plot.")
+        if(flag)message("Some tolerances are too large to plot.")
       }
     } else {
       stop("Not enough LVs for a biplot")
