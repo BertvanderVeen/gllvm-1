@@ -116,6 +116,19 @@ niche.integrand2 <- function(x,object, which.lvs, spp){
   }
   return(result)
 }
-
-#FOREACH CAN USE OPENMP. ALSO ON WINDOWS??
-
+# 
+# mat<-niche.overlap(test,which.lvs=c(1,2))
+# for(j in 1:ncol(spider$abund)){
+#   diag(mat)[j]<-integrate(niche.integrand2,object=test,which.lvs=c(1,2),spp=c(j,j),-Inf,Inf)$value
+# }
+# 
+# #species responses are not independent..?
+# func<-function(x,mean,sigma){
+#   result<-1
+#   for(i in 1:length(x)){
+#     result<-result*dmvnorm(x=x[i],mean=mean,sigma=sigma)
+#   }
+#   return(result)
+# }
+# integrate(func,mean=c(summary(test)$Optima[1:2,1]),sigma=getResidualCov.gllvm.quadratic(test)$cov[1:2,1:2], -Inf, Inf)
+# 
