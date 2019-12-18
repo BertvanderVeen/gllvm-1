@@ -197,15 +197,13 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
       }else{
         stop("Ordinal model plot not yet implemented on response scale")
       }
-      }else{
-        linkinv<-c
       }
       for (j in 1:ncol(mu)) {
         if(intercept==F){
-          func <-function(x,u,u2)linkinv(x*u+x^2*u2)
+          if(type=="link"){func <-function(x,u,u2)x*u+x^2*u2}else{func <-function(x,u,u2)linkinv(x*u+x^2*u2)}
           curve(func(x,u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],add=T)  
         }else{
-          func <-function(x,beta,u,u2)linkinv(beta+x*u+x^2*u2)
+          if(type=="link"){func <-function(x,beta,u,u2)beta+x*u+x^2*u2}else{func <-function(x,beta,u,u2)linkinv(beta+x*u+x^2*u2)}
           curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],add=T)  
         }
         #lines(x = sort(newLV[, 1]), y = mu[order(newLV[, 1]), j], col = cols[j])
