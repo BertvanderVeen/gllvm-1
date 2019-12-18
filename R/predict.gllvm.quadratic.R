@@ -73,11 +73,16 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
         }
         eta <- matrix(0, nrow(newLV), p)
     }
-    
-    if (is.null(newLV)|intercept==T) {
+    if(intercept==T){
+      if (is.null(newLV)) {
         b0 <- object$params$beta0
         eta <- eta + matrix(b0, n, p, byrow = TRUE)
+      }else if(dim(newLV)==dim(object$lvs)){
+        b0 <- object$params$beta0
+        eta <- eta + matrix(b0, n, p, byrow = TRUE)
+      }
     }
+    
     
     if (!is.null(newTR)) 
         if (nrow(newTR) != p) 
