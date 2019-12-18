@@ -194,6 +194,7 @@
 #'
 #'@useDynLib gllvm2, .registration = TRUE
 #'@import foreach
+#'@importFrom gllvm gllvm
 #'@importFrom vegan scores
 #'@importFrom vegan tolerance
 #'@importFrom vegan cca

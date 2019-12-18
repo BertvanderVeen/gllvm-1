@@ -15,13 +15,13 @@
 
 \item{spp}{Species index, if specified calculates the probability of species occuring jointly.}
 
-\item{option}{either 1 or 2. If 1, calculates the matrix of pairwise occurence probabilities. If 2 calculates the niche overlap coefficient as specified in Mutshinda and O' Hara (2011). Essentially, the probability of joint occurrence for species i and j, relative to the probability of the niche belonging to species i.}
+\item{option}{either 1 or 2. If 1, calculates the matrix of pairwise occurence probabilities. If 2 calculates the niche overlap coefficient as specified in Mutshinda and O' Hara (2011). Essentially, the probability of joint occurrence for species i and j, relative to the probability of the niche belonging to species i. If 3, returns 1-p instead, i.e. the probability of not occurring together.}
 }
 \description{
 Calculates the overlap between niches of species
 }
 \details{
-The niche overlap is calculated per latent variable. If multiple latent variables are selected, calculates the average niche overlap.
+The niche overlap is calculated per latent variable. This measure currently operates under the assumption of fundamental niches (i.e. niches are independent). If multiple latent variables are selected, calculates the average niche overlap.
 }
 \examples{
 # Load a dataset from the mvabund package

@@ -13,8 +13,8 @@ gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
   0.5), jitter.var = 0, ridge = FALSE, ridge.quadratic = FALSE,
   start.method = "FA", par.scale = 1, fn.scale = 1,
   grad.check = FALSE, zeta.struc = "species",
-  starting.val.lingllvm = "res", single.curve.start = 1,
-  parallel = FALSE)
+  starting.val.lingllvm = "res", single.curve = FALSE,
+  parallel = FALSE, opt = 1)
 }
 \arguments{
 \item{y}{(n x m) matrix of responses.}
@@ -78,6 +78,8 @@ gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
 \item{zeta.struc}{Structure for cut-offs in the ordinal model. Either "common", for the same cut-offs for all species, or "species" for species-specific cut-offs. For the latter, classes are arbitrary per species, each category per species needs to have at least one observations. Defaults to "species".}
 
 \item{starting.val.lingllvm}{Procedure to generate starting values for linear GLLVM if \code{starting.val="lingllvm"}. See also \link{gllvm}.}
+
+\item{single.curve}{whether to fit quadratic model with equal tolerances (one quadratic coefficient per latent variable) or species-specific tolerances.}
 
 \item{parallel}{whether to turn of support for parallel computing. Note that either \link{openmp} must be used if \code{n.init=1}. Or a parallel back-end supported by \link{foreach}.}
 }

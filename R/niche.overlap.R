@@ -4,9 +4,9 @@
 #' @param object   An object of class 'gllvm.quadratic'.
 #' @param which.lvs The latent variables niche overlap should be calculated for. 
 #' @param spp Species index, if specified calculates the probability of species occuring jointly.
-#' @param option either 1 or 2. If 1, calculates the matrix of pairwise occurence probabilities. If 2 calculates the niche overlap coefficient as specified in Mutshinda and O' Hara (2011). Essentially, the probability of joint occurrence for species i and j, relative to the probability of the niche belonging to species i.
+#' @param option either 1 or 2. If 1, calculates the matrix of pairwise occurence probabilities. If 2 calculates the niche overlap coefficient as specified in Mutshinda and O' Hara (2011). Essentially, the probability of joint occurrence for species i and j, relative to the probability of the niche belonging to species i. If 3, returns 1-p instead, i.e. the probability of not occurring together.
 #' @details
-#' The niche overlap is calculated per latent variable. If multiple latent variables are selected, calculates the average niche overlap.
+#' The niche overlap is calculated per latent variable. This measure currently operates under the assumption of fundamental niches (i.e. niches are independent). If multiple latent variables are selected, calculates the average niche overlap.
 #' 
 #' @author Bert van der Veen
 #' @references
@@ -47,7 +47,7 @@ niche.overlap.gllvm.quadratic <- function(object,which.lvs=1, spp=NULL, option=1
   }else{
   
   nicheO <- matrix(0,ncol=p, nrow=p)
-  if(option==1){
+  if(option==1|option==3){
     for(j in p:1){
       for(j2 in 1:(j-1)){
         if(j!=j2&j>1){
@@ -88,7 +88,12 @@ niche.overlap.gllvm.quadratic <- function(object,which.lvs=1, spp=NULL, option=1
   diag(nicheO)<-1
   colnames(nicheO) <- row.names(nicheO) <- colnames(object$y)
   }
-  return(nicheO)
+  if(option==3){
+    return(1-nicheO)  
+  }else{
+    return(nicheO)
+  }
+  
 }
 
 #corrplot(niche.overlap2(test,1:2),cl.lim=c(0,1))

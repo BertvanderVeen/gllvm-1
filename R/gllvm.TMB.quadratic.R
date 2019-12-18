@@ -402,12 +402,15 @@
                     }
                   }
                   }else{
-                    lambda<-lambda2
-                    lambda[lower.tri(lambda)]<-lambda1
+                    lambda2<-matrix(0,nrow=p,ncol=num.lv)
+                    lambda3<-lambda2
+                    lambda3[lower.tri(lambda3,diag=T)]<-lambda1
                     for(j in 1:p){
-                      lambda2[j,]<-coef(glm.cons(y[,j]~0+u1^2+offset(b1[1,j]+u1%*%t(lambda)[,j]),family="poisson",cons.inter = -1,cons=-1))
+                      off<-b1[1,j]+u1%*%t(lambda3[j,,drop=F])
+                      lambda2[j,]<-coef(glm.cons(y[,j]~0+u1^2+offset(off),family=family,cons=-1,cons.inter = -1))
                     }
                   }
+                  lambda2[lambda2==0]<--0.001
                   lambda2<-t(lambda2)
                   }else{
                     lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv,ncol=ifelse(single.curve==T,1,p))
