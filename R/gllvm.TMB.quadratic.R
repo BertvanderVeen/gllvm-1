@@ -287,7 +287,20 @@
                   }
                 } 
                 #lambda2 <- matrix(apply(lambda2,2,mean),ncol=num.lv)#perhaps think about doing something else here still? i.e. start at..tol from lingllvm?
-                lambda2 <- matrix(-0.5,ncol=num.lv)#perhaps think about doing something else here still? i.e. start at..tol from lingllvm?
+                if(is.null(start.fit)&single.curve==T|starting.val=="lingllvm"){
+                  start<-1
+                  lambda2 <- matrix(-0.5,ncol=num.lv)
+                }else if(!is.null(start.fit)){
+                  if(class(start.fit)!="gllvm.quadratic"){
+                    start<-1
+                    lambda2 <- matrix(-0.5,ncol=num.lv)
+                  }else{
+                    start <- 0
+                  }
+                }else{
+                  start<-0
+                }
+                
                 if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
                 if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
                 if(!is.null(X)){Xd <- cbind(1,X)} else {Xd <- matrix(1,n)}
@@ -296,18 +309,18 @@
                 if(family == "negative.binomial") { familyn <- 1}
                 if(family == "binomial") { familyn <- 2}
                 if(family == "ordinal") { familyn <- 3}
- 
+                if(start)
                 if(row.eff=="random"){
                   if(ridge==T){
                     if(ridge.quadratic==F){
                       objr <- TMB::MakeADFun(
-                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=1), silent=TRUE,
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
                         parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")
                     }else{
                       objr <- TMB::MakeADFun(
-                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=1), silent=TRUE,
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
                         parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")
@@ -315,13 +328,13 @@
                   }else{
                     if(ridge.quadratic==F){
                       objr <- TMB::MakeADFun(
-                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=1), silent=TRUE,
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
                         parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")
                     }else{
                       objr <- TMB::MakeADFun(
-                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=1), silent=TRUE,
+                        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
                         parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")   
@@ -689,8 +702,13 @@
               tr<-try({
                 if(sd.errors && !is.infinite(out$logL)) {
                   if(trace) cat("Calculating standard errors for parameters...\n")
-                  if(getDoParWorkers()>1)openmp(getDoParWorkers())
+                  #set parallel workers with openmp for the calculation of standard errors, if n.init>1
+                  if(getDoParWorkers()>1&n.init>1&parallel==T){
+                    n.cores.old<-openmp()
+                    openmp(getDoParWorkers())
+                  }
                   sdr <- optimHess(pars, objr$fn, objr$gr, control = list(reltol=reltol,maxit=maxit))#maxit=maxit
+                  if(getDoParWorkers()>1&n.init>1&parallel==T)openmp(n.cores.old)#reset back to old configuration
                   m <- dim(sdr)[1]; incl <- rep(TRUE,m); incld <- rep(FALSE,m); inclr <- rep(FALSE,m)
                   incl[names(objr$par)=="B"] <- FALSE
                   
