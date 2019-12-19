@@ -541,7 +541,7 @@ CAstart <- function(mu, family, y, num.lv, start.method=start.method, jitter.var
     tol<-vegan::tolerance(ca,choices=1:num.lv)
     if(any(tol==0))tol[tol==0]<-1
     lambda2<--0.5/tol^2
-    gamma <- 1/tol^2*vegan::scores(ca,choices=1:num.lv)$species
+    gamma <- vegan::scores(ca,choices=1:num.lv)$species
 
     index <- vegan::scores(ca,choices=1:num.lv)$sites
     
@@ -559,13 +559,20 @@ CAstart <- function(mu, family, y, num.lv, start.method=start.method, jitter.var
     gamma <- t(t(gamma.new)*sig)
     index<-(index%*%qr.Q(qr.gamma))
     index <- t(t(index)*sig)
-    gamma[1,2]<-0
-    diag(gamma)<-abs(diag(gamma))
   } else {
     sig <- sign(diag(gamma));
     gamma <- t(t(gamma)*sig)
     index <- t(t(index)*sig)
   }
+  if(p>n) {
+    sdi <- sqrt(diag(cov(index)))
+    sdt <- sqrt(diag(cov(gamma)))
+    indexscale <- diag(x =1/sdi, nrow = length(sdi))
+    index <- index%*%indexscale
+    gammascale <- diag(x = 0.8/sdt, nrow = length(sdi))
+    gamma <- gamma%*%gammascale
+  }
+  
   lambda2<--.5/tol^2
   
   # for(j in 1:p){
