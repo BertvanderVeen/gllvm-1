@@ -15,7 +15,7 @@
                                             seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                             n.init=1,start.params=NULL,
                                             optimizer="optim",starting.val="lingllvm",diag.iter=1,
-                                            Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.lingllvm = "res", single.curve = FALSE, parallel=FALSE, opt=2) {
+                                            Lambda.start=c(0.1,0.5), jitter.var=0, ridge=FALSE, ridge.quadratic = FALSE, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.lingllvm = "res", single.curve = FALSE, parallel=FALSE, opt=2, start.opt="species") {
               
               n <- dim(y)[1]
               p <- dim(y)[2]
@@ -286,22 +286,17 @@
                     
                   }
                 } 
-                #lambda2 <- matrix(apply(lambda2,2,mean),ncol=num.lv)#perhaps think about doing something else here still? i.e. start at..tol from lingllvm?
-                if(is.null(start.fit)&single.curve==T|starting.val=="lingllvm"){
-                  start<-1
-                  lambda2 <- matrix(-0.5,ncol=num.lv)
-                }else if(!is.null(start.fit)){
-                  if(class(start.fit)!="gllvm.quadratic"){
-                    start<-1
-                    lambda2 <- matrix(-0.5,ncol=num.lv)
-                  }else{
-                    start <- 0
-                  }
-                }else{
-                  start<-0
-                }
                 
-                if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
+                if(starting.val=="lingllvm")start.opt=="common"
+                if(single.curve==T)start.opt=="common"
+                if(!is.null(start.params)){if(class(start.params)=="gllvm")start.opt=="common"}
+                
+                if(start.opt=="common"){
+                  lambda2 <- matrix(-0.5,ncol=num.lv)
+                  start <- 1
+                }
+                #lambda2 <- matrix(apply(lambda2,2,mean),ncol=num.lv)#perhaps think about doing something else here still? i.e. start at..tol from lingllvm?
+                  if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
                 if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
                 if(!is.null(X)){Xd <- cbind(1,X)} else {Xd <- matrix(1,n)}
                 extra <- 0
@@ -309,7 +304,6 @@
                 if(family == "negative.binomial") { familyn <- 1}
                 if(family == "binomial") { familyn <- 2}
                 if(family == "ordinal") { familyn <- 3}
-                if(start)
                 if(row.eff=="random"){
                   if(ridge==T){
                     if(ridge.quadratic==F){
