@@ -287,10 +287,11 @@
                   }
                 } 
                 
+                if(start.opt!="common"){
                 if(starting.val=="lingllvm")start.opt=="common"
                 if(single.curve==T)start.opt=="common"
                 if(!is.null(start.params)){if(class(start.params)=="gllvm")start.opt=="common"}
-                
+              }  
                 if(start.opt=="common"){
                   lambda2 <- matrix(-0.5,ncol=num.lv)
                   start <- 1
