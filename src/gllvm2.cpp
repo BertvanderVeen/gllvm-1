@@ -144,7 +144,7 @@ Type objective_function<Type>::operator() ()
   matrix <Type> newlam2(num_lv,p);
    if(start==0){
     newlam2 = lambda2.cwiseAbs(); //positive only  
-   }else{
+   }else if(start==1){
      for (int j=0; j<p; j++){
        for (int q=0; q<num_lv; q++){
          newlam2(q,j) = fabs(lambda2(q,0)); //positive only

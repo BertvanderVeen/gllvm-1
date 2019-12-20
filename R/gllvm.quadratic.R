@@ -210,8 +210,8 @@
 
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 1, trace = FALSE, trace2 = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
-    start.fit = NULL, starting.val = "res", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
-    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", starting.val.lingllvm = "res", single.curve = FALSE, parallel=FALSE, opt=1, start.opt="species") {
+    start.fit = NULL, starting.val = "lingllvm", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0.2, ridge = FALSE, 
+    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", starting.val.lingllvm = "res", single.curve = FALSE, parallel=FALSE, opt=1, start.opt="common") {
     #build in gradient check
     randomX <- NULL
     term <- NULL
@@ -394,7 +394,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.quadratic(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                                         row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                         n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
-                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, starting.val.lingllvm = starting.val.lingllvm, single.curve = single.curve, opt = opt)
+                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, ridge = ridge, ridge.quadratic = ridge.quadratic, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, starting.val.lingllvm = starting.val.lingllvm, single.curve = single.curve, opt = opt, parallel = parallel, start.opt = start.opt)
         }
 
     out$X.design <- fitg$X.design
