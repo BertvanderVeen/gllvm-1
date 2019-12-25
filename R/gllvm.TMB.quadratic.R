@@ -100,6 +100,19 @@
                 }else{
                   diag.iter2 <- diag.iter
                 }
+                if(length(jitter.var)>1){
+                  jitter.var2<-jitter.var[1]
+                  
+                  if(length(jitter.var)>2){
+                    jitter.var3 <- jitter.var[3]
+                  }else{
+                    jitter.var3<-0
+                  }
+                  jitter.var<-jitter.var[2]
+                }else{
+                  jitter.var2 <- jitter.var
+                  jitter.var3 <- jtter.var
+                }
                 if(length(n.init)==1){
                   n.init2<-1 
                 }else{
@@ -107,8 +120,16 @@
                   n.init<-n.init[2]
                 }
               }else{
-                if(length(n.init)>1)
-                n.init <- n.init[2]
+                if(length(n.init)>1)n.init <- n.init[2]
+                if(length(jitter.var)>1){
+                  if(length(jitter.var)>2){
+                    jtter.var3 <- jitter.var[3]
+                  }else{
+                    jitter.var3 <- 0
+                  }
+                  jitter.var <- jitter.var[2]
+                  
+                }
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
               }
                 if(n.init[1]>1)seed <- sample(1:10000, n.init)
@@ -118,7 +139,7 @@
                 if(starting.val!="lingllvm"){
                   fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
                 }else{
-                    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed[i])
+                    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed[i])
                     start.params <- fit
                 }
                 sigma <- 1
@@ -298,6 +319,8 @@
                 }else{
                   start<-0
                 }
+                u <- u+mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);
+                
                 #lambda2 <- matrix(apply(lambda2,2,mean),ncol=num.lv)#perhaps think about doing something else here still? i.e. start at..tol from lingllvm?
                   if(length(Lambda.start)<2){ Ar <- rep(1,n)} else {Ar <- rep(Lambda.start[2],n)}
                 if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
@@ -403,6 +426,7 @@
                   b1 <- matrix(param1[nam=="b"],num.X+1,p)
                   lambda1 <- param1[nam=="lambda"]
                   u1 <- matrix(param1[nam=="u"],n,num.lv)
+                  
                   #WA does very well if we have a good estimation of the LV, something that GLLVM is very very good at. So, these should be very nice starting values to continue
                   if(single.curve==FALSE&start.opt!="species"){
                   lambda2<-matrix(0,nrow=p,ncol=num.lv)
@@ -426,6 +450,7 @@
                   }else{
                     lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv,ncol=ifelse(single.curve==T,1,p))
                   }
+                  u1 <- u1+mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var3);
                   #lambda2<-matrix(0,nrow=p,ncol=num.lv)
                   #alternative for starting values lambda2
                   #for(j in 1:p){
