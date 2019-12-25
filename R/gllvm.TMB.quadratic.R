@@ -123,12 +123,14 @@
                 if(length(n.init)>1)n.init <- n.init[2]
                 if(length(jitter.var)>1){
                   if(length(jitter.var)>2){
-                    jtter.var3 <- jitter.var[3]
+                    jitter.var3 <- jitter.var[3]
                   }else{
                     jitter.var3 <- 0
                   }
                   jitter.var <- jitter.var[2]
-                  
+                  jitter.var3 <- jitter.var[1]
+                }else{
+                  jitter.var3 <- 0
                 }
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
               }
