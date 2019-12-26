@@ -95,26 +95,29 @@
               old.logL <- Inf
               if(starting.val=="lingllvm"){
                 if(length(diag.iter)>1){
-                  diag.iter2<-diag.iter[1]
-                  diag.iter<-diag.iter[2]
+                  diag.iter2<-diag.iter[2]
+                  diag.iter<-diag.iter[1]
                 }else{
                   diag.iter2 <- diag.iter
+                  diag.iter <- 0
                 }
                 if(length(jitter.var)>1){
-                  jitter.var2<-jitter.var[1]
+                  jitter.var2<-jitter.var[2]
                   
                   if(length(jitter.var)>2){
                     jitter.var3 <- jitter.var[3]
                   }else{
                     jitter.var3<-0
                   }
-                  jitter.var<-jitter.var[2]
+                  jitter.var<-jitter.var[1]
                 }else{
                   jitter.var2 <- jitter.var
-                  jitter.var3 <- jtter.var
+                  jitter.var3 <- 0
+                  jitter.var <- 0
                 }
                 if(length(n.init)==1){
-                  n.init2<-1 
+                  n.init2<-n.init
+                  n.init <- 1
                 }else{
                   n.init2<-n.init[1]
                   n.init<-n.init[2]
@@ -122,15 +125,18 @@
               }else{
                 if(length(n.init)>1)n.init <- n.init[2]
                 if(length(jitter.var)>1){
+                  jitter.var2<-jitter.var[2]
+                  
                   if(length(jitter.var)>2){
                     jitter.var3 <- jitter.var[3]
                   }else{
-                    jitter.var3 <- 0
+                    jitter.var3<-0
                   }
-                  jitter.var <- jitter.var[2]
-                  jitter.var3 <- jitter.var[1]
+                  jitter.var<-jitter.var[1]
                 }else{
+                  jitter.var2 <- jitter.var
                   jitter.var3 <- 0
+                  jitter.var <- 0
                 }
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
               }
@@ -139,7 +145,7 @@
                 #helper function for parallel optimization
               makeMod<-function(i){
                 if(starting.val!="lingllvm"){
-                  fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[i], starting.val = starting.val, jitter.var = jitter.var, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
+                  fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[i], starting.val = starting.val, jitter.var = jitter.var2, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
                 }else{
                     fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed[i])
                     start.params <- fit
