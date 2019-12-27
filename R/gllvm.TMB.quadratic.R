@@ -450,9 +450,9 @@
                     lambda3[lower.tri(lambda3,diag=T)]<-lambda1
                     for(j in 1:p){
                       off<-b1[1,j]+u1%*%t(lambda3[j,,drop=F])
-                      lambda2[j,]<-coef(glm.cons(y[,j]~0+u1^2+offset(off),family=family,cons=-1,cons.inter = -1))
+                      lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~0+I(u1^2)+offset(off),family=family,cons=-1,cons.inter = -1))
                     }
-                  }
+                  }#should code in a option for ordinal and NB..can do with manual optim code?
                   lambda2[lambda2==0]<--0.001
                   lambda2<-t(lambda2)
                   }else{
