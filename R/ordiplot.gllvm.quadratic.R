@@ -236,7 +236,7 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         if(length(which(excl))==ncol(object$y)){
           stop("Optima are too far removed from the latent varaibles to visualize")
         }else{
-          message(paste("Columns", paste(row.names(optima[excl, ]), collapse = ", "), "have optima too far removed from the latent variables and will not be visualized (if bell=T)", 
+          message("Species ", paste(paste(row.names(optima[excl, ,drop=F]), collapse = ", "), " optima too far removed from the latent variables and will not be visualized (if bell=T)", 
                         sep = " "))
           optima <- optima[!excl, , drop = F]
           quadr.coef <- quadr.coef[!excl, , drop = F] 

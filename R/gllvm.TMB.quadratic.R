@@ -102,14 +102,14 @@
                   diag.iter <- 0
                 }
                 if(length(jitter.var)>1){
-                  jitter.var2<-jitter.var[2]
+                  jitter.var2<-jitter.var[1]
                   
                   if(length(jitter.var)>2){
                     jitter.var3 <- jitter.var[3]
                   }else{
                     jitter.var3<-0
                   }
-                  jitter.var<-jitter.var[1]
+                  jitter.var<-jitter.var[2]
                 }else{
                   jitter.var2 <- jitter.var
                   jitter.var3 <- 0
@@ -125,14 +125,14 @@
               }else{
                 if(length(n.init)>1)n.init <- n.init[2]
                 if(length(jitter.var)>1){
-                  jitter.var2<-jitter.var[2]
+                  jitter.var2<-jitter.var[1]
                   
                   if(length(jitter.var)>2){
                     jitter.var3 <- jitter.var[3]
                   }else{
                     jitter.var3<-0
                   }
-                  jitter.var<-jitter.var[1]
+                  jitter.var<-jitter.var[2]
                 }else{
                   jitter.var2 <- jitter.var
                   jitter.var3 <- 0
