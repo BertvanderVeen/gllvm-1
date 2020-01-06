@@ -130,7 +130,7 @@
               }
                 
               if(starting.val=="lingllvm"){
-                fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed[i])
+                fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed)
                 start.params <- fit
               }
               if(n.init[1]>1)seed <- sample(1:10000, n.init)
