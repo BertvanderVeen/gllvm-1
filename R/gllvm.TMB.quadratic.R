@@ -128,18 +128,18 @@
                 }
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
               }
-                if(n.init[1]>1)seed <- sample(1:10000, n.init)
                 
+              if(starting.val=="lingllvm"){
+                fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed[i])
+                start.params <- fit
+              }
+              if(n.init[1]>1)seed <- sample(1:10000, n.init)
                 #helper function for parallel optimization
               makeMod<-function(i){
+                sigma <- 1
                 if(starting.val!="lingllvm"){
                   fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[i], starting.val = starting.val, jitter.var = jitter.var2, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
-                }else{
-                    fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed[i])
-                    start.params <- fit
                 }
-                sigma <- 1
-                
                 if (is.null(start.params)) {
                   beta0 <- fit$params[, 1]
                   betas <- NULL
@@ -331,30 +331,30 @@
                 if(family == "ordinal") { familyn <- 3}
                 if(row.eff=="random"){
                   if(ridge==T){
-                    if(ridge.quadratic==F){
+                    if(ridge.quadratic==F|start.struc=="common"){#to prevent species-specific ridge regularization on species common parameters
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
-                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2= matrix(0,nrow=num.lv,ncol=p)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")
                     }else{
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
-                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=matrix(0,nrow=num.lv,ncol=p)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")
                     }
                   }else{
-                    if(ridge.quadratic==F){
+                    if(ridge.quadratic==F|start.struc=="common"){
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
-                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=matrix(0,nrow=num.lv,ncol=p)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")
                     }else{
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
-                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=matrix(0,nrow=num.lv,ncol=p)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")   
                       
@@ -363,30 +363,30 @@
                   
                 } else {
                   if(ridge==T){
-                    if(ridge.quadratic==F){
+                    if(ridge.quadratic==F|start.struc=="common"){
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
-                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=matrix(0,nrow=num.lv,ncol=p)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")##GLLVM
                     }else{
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
-                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=matrix(0,nrow=num.lv,ncol=p)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")##GLLVM
                     }
                   }else{
-                    if(ridge.quadratic==F){
+                    if(ridge.quadratic==F|start.struc=="common"){
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
-                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=matrix(0,nrow=num.lv,ncol=p)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")##GLLVM
                     }else{
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=start), silent=TRUE,
-                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta,lg_gamma=rep(0,num.lv), lg_gamma2=rep(0,num.lv)),
+                        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta, lg_gamma=rep(0,num.lv), lg_gamma2=matrix(0,nrow=num.lv,ncol=p)),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
                         DLL = "gllvm2")##GLLVM
                     }
@@ -472,25 +472,27 @@
                   }
                   
                   lg_Ar1 <- param1[nam=="lg_Ar"]
-                  lg_gamma <- param1[nam=="lg_gamma"]
-                  lg_gamma2 <- param1[nam=="lg_gamma2"]
+                    lg_gamma <- param1[nam=="lg_gamma"]
+                    lg_gamma2 <- matrix(param1[nam=="lg_gamma2"],ncol=p,nrow=num.lv)
+
                   zeta <- param1[nam=="zeta"]
+                  
                   if(equal.tolerances==FALSE&start.struc!="species"){
                     lambda2<-t(matrix(-0.01,ncol=num.lv,nrow=p))
-                    fx<-list(lambda=factor(rep(NA,(p*num.lv)-1)),r0=factor(rep(NA,n)),Au=factor(rep(NA,(num.lv*(num.lv+1)/2)*n)),lg_phi=factor(rep(NA,p)),lg_gamma=factor(rep(NA,num.lv)),lg_gamma2=factor(rep(NA,num.lv)),b=factor(rep(NA,p)),B=factor(NA),u=factor(rep(NA,n*num.lv)),log_sigma=factor(NA),zeta=factor(rep(NA,length(unlist(zeta)))),lg_Ar=factor(rep(NA,n)))
+                    fx<-list(lambda=factor(rep(NA,(p*num.lv)-1)),r0=factor(rep(NA,n)),Au=factor(rep(NA,(num.lv*(num.lv+1)/2)*n)),lg_phi=factor(rep(NA,p)),lg_gamma=factor(rep(NA,num.lv)),lg_gamma2=factor(rep(NA,num.lv*p)),b=factor(rep(NA,p)),B=factor(NA),u=factor(rep(NA,n*num.lv)),log_sigma=factor(NA),zeta=factor(rep(NA,length(unlist(zeta)))),lg_Ar=factor(rep(NA,n)))
                     if(row.eff == "random"){
                       if(ridge==T){
                         if(ridge.quadratic==F){
                           objr <- TMB::MakeADFun(
                             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=as.integer(equal.tolerances)), silent=TRUE,
                             parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            ,map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                            map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
                             DLL = "gllvm2")
                         }else{
                           objr <- TMB::MakeADFun(
                             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=as.integer(equal.tolerances)), silent=TRUE,
                             parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            ,map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                            map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
                             DLL = "gllvm2")
                         }
                       }else{
@@ -498,13 +500,13 @@
                           objr <- TMB::MakeADFun(
                             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=as.integer(equal.tolerances)), silent=TRUE,
                             parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            ,map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                            map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
                             DLL = "gllvm2")
                         }else{
                           objr <- TMB::MakeADFun(
                             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=as.integer(equal.tolerances)), silent=TRUE,
                             parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            ,map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                            map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
                             DLL = "gllvm2")
                         }
                       }
@@ -515,13 +517,13 @@
                           objr <- TMB::MakeADFun(
                             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=as.integer(equal.tolerances)), silent=TRUE,
                             parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            ,map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                            map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
                             DLL = "gllvm2")#GLLVM#
                         }else{
                           objr <- TMB::MakeADFun(
                             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=1, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=as.integer(equal.tolerances)), silent=TRUE,
                             parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            ,map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                            map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
                             DLL = "gllvm2")#GLLVM#
                         }
                       }else{
@@ -529,13 +531,13 @@
                           objr <- TMB::MakeADFun(
                             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=as.integer(equal.tolerances)), silent=TRUE,
                             parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            ,map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                            map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
                             DLL = "gllvm2")#GLLVM#
                         }else{
                           objr <- TMB::MakeADFun(
                             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, ridge=0, ridge_quadratic=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0),start=as.integer(equal.tolerances)), silent=TRUE,
                             parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta, lg_gamma=lg_gamma, lg_gamma2=lg_gamma2), #log(phi)
-                            ,map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                            map=fx,inner.control=list(mgcmax = 1e+200,maxit = maxit),
                             DLL = "gllvm2")#GLLVM#
                         }
                       }
@@ -752,8 +754,9 @@
                     names(out$params$gamma) <- paste("LV",1:num.lv,sep="")
                   }
                   if(ridge.quadratic==T){
-                    out$params$gamma2 <- exp(param[gi2])
-                    names(out$params$gamma2) <- paste("LV",1:num.lv,"^2",sep="")
+                    out$params$gamma2 <- t(matrix(exp(param[gi2]),ncol=p,nrow=num.lv))
+                    colnames(out$params$gamma2) <- paste("LV",1:num.lv,"^2",sep="")
+                    rownames(out$params$gamma2) <- colnames(y)
                   }
                   if(num.lv>1) {
                     colnames(out$lvs) <- paste("LV", 1:num.lv, sep="")

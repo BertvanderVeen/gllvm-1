@@ -43,7 +43,7 @@ Type objective_function<Type>::operator() ()
   PARAMETER_VECTOR(lg_phi);
   PARAMETER(log_sigma);// log(SD for row effect)
   PARAMETER_VECTOR(lg_gamma);
-  PARAMETER_VECTOR(lg_gamma2);
+  PARAMETER_MATRIX(lg_gamma2);
   DATA_INTEGER(num_lv);
   DATA_INTEGER(family);
   DATA_INTEGER(start);
@@ -64,7 +64,7 @@ Type objective_function<Type>::operator() ()
   
   vector<Type> iphi = exp(lg_phi);
   vector<Type> gamma = exp(lg_gamma);
-  vector<Type> gamma2 = exp(lg_gamma2);
+  matrix<Type> gamma2(num_lv,p);
   vector<Type> Ar = exp(lg_Ar);
   Type sigma = exp(log_sigma);
   
@@ -74,8 +74,14 @@ Type objective_function<Type>::operator() ()
   C.fill(0.0);
   
   matrix<Type> newlam(num_lv,p);
-  
-  
+
+  if(ridge_quadratic>0){
+    for (int j=0; j<p; j++){
+      for (int q=0; q<num_lv; q++){
+        gamma2(q,j) = exp(lg_gamma2(q,j));
+      }
+    }
+  }
   for (int j=0; j<p; j++){
     for (int i=0; i<num_lv; i++){
       if (j < i){
@@ -302,30 +308,23 @@ Type objective_function<Type>::operator() ()
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
   }
-  if(ridge>0){
+  if(ridge>0 && num_lv>1){
     //shrinks LVs
-    for (int q=0; q<num_lv; q++) {
-      Type penal = 0.0;
-      for (int q2=q; q2<num_lv; q2++) {
-        penal += pow((newlam.row(q2).array()*newlam.row(q2).array()+newlam2.row(q2).array()*newlam2.row(q2).array()).sum(),0.5);
-      }
-      nll += penal*gamma(q);
-    //Additional shrinkage quadratic effect
-    
-    
-    }  
+      for(int q=0; q<(num_lv-1); q++){
+     nll += pow((newlam.row(q).array()*newlam.row(q).array()+newlam2.row(q).array()*newlam2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum(),0.5)*gamma(q);     
+     nll += pow((newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum(),0.5)*gamma(q+1);     
   }
-  if(ridge_quadratic>0){
-    for (int q=0; q<num_lv; q++) {
-      Type penal = 0.0;
-      for (int q2=q; q2<num_lv; q2++) {
-        penal += pow((newlam2.row(q2).array()*newlam2.row(q2).array()).sum(),0.5);
-      }
-      
-      nll += penal*gamma2(q);
-    }
   }
   
+  if(ridge_quadratic>0 && num_lv>1){
+    //shrinks LVs
+    for(int j=0; j<p; j++){
+    for(int q=0; q<(num_lv-1); q++){
+      nll += pow(newlam2(q,j)*newlam2(q,j) + newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q,j);     
+      nll += pow(newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q+1,j);
+    }
+  }
+  }
   
   nll -= -0.5*(u.array()*u.array()).sum() - n*log(sigma)*random(0);// -0.5*t(u_i)*u_i
 
