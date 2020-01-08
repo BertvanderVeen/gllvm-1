@@ -674,9 +674,11 @@
                 optr <- results[[which.min(unlist(bestLL))]]$optr; 
                 fit <- results[[which.min(unlist(bestLL))]]$fit;
                 timeo <- results[[which.min(unlist(bestLL))]]$timeo},silent=T)
+                LL <- unlist(bestLL)
               }else{
                 objr <- results$objr
                 optr <- results$optr
+                LL <- objr$fn(optr$par)
                 fit <- results$fit
                 timeo <- results$timeo
               }
@@ -915,7 +917,7 @@
               out$TMBfn <- objr
               out$TMBfn$par <- objr$env$last.par.best #optr$par #ensure params in this fn take final values
               out$logL <- -out$logL
-              
+              out$LL <- -LL #for now to return all LL from n.init
               out$start.struc <- start.struc
               out$equal.tolerances <- equal.tolerances
               
