@@ -415,7 +415,7 @@
                 }
                 if(inherits(optr,"try-error")) warning(optr[1]);
                 #if(!inherits(optr,"try-error")&equal.tolerances!=TRUE){
-                if(diag.iter>0 && Lambda.struc=="unstructured" && num.lv>1 && !inherits(optr,"try-error")|equal.tolerances==F){
+                if(diag.iter>0 && Lambda.struc=="unstructured" && num.lv>1 && !inherits(optr,"try-error")|equal.tolerances==F&start.struc=="common"){
                   objr1 <- objr
                   optr1 <- optr
                   param1 <- optr$par
@@ -476,7 +476,7 @@
 
                   zeta <- param1[nam=="zeta"]
                   
-                  if(equal.tolerances==FALSE){#&start.struc!="species"){
+                  if(equal.tolerances==FALSE&start.struc!="common"){#&start.struc!="species"){
                     lambda2<-t(matrix(-0.01,ncol=num.lv,nrow=p))
                     fx<-list(lambda=factor(rep(NA,(p*num.lv)-1)),r0=factor(rep(NA,n)),Au=factor(rep(NA,(num.lv*(num.lv+1)/2)*n)),lg_phi=factor(rep(NA,p)),lg_gamma=factor(rep(NA,num.lv)),lg_gamma2=factor(rep(NA,num.lv*p)),b=factor(rep(NA,p)),B=factor(NA),u=factor(rep(NA,n*num.lv)),log_sigma=factor(NA),zeta=factor(rep(NA,length(unlist(zeta)))),lg_Ar=factor(rep(NA,n)))
                     if(row.eff == "random"){
