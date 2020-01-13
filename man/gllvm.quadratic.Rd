@@ -9,12 +9,12 @@ gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
   offset = NULL, sd.errors = TRUE, Lambda.struc = "unstructured",
   diag.iter = 1, trace = FALSE, trace2 = FALSE, n.init = 1,
   reltol = 1e-08, seed = NULL, maxit = 1000, start.fit = NULL,
-  starting.val = "res", optimizer = "optim", Lambda.start = c(0.1,
-  0.5), jitter.var = 0, ridge = FALSE, ridge.quadratic = FALSE,
-  start.method = "FA", par.scale = 1, fn.scale = 1,
-  grad.check = FALSE, zeta.struc = "species",
-  starting.val.lingllvm = "res", single.curve = FALSE,
-  parallel = FALSE, opt = 1)
+  starting.val = "lingllvm", optimizer = "optim",
+  Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE,
+  ridge.quadratic = FALSE, start.method = "FA", par.scale = 1,
+  fn.scale = 1, grad.check = FALSE, zeta.struc = "species",
+  starting.val.lingllvm = "res", equal.tolerances = FALSE,
+  parallel = FALSE, opt = 1, start.struc = "species")
 }
 \arguments{
 \item{y}{(n x m) matrix of responses.}
@@ -79,7 +79,7 @@ gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
 
 \item{starting.val.lingllvm}{Procedure to generate starting values for linear GLLVM if \code{starting.val="lingllvm"}. See also \link{gllvm}.}
 
-\item{single.curve}{whether to fit quadratic model with equal tolerances (one quadratic coefficient per latent variable) or species-specific tolerances.}
+\item{equal.tolerances}{whether to fit quadratic model with equal tolerances (one quadratic coefficient per latent variable) or species-specific tolerances.}
 
 \item{parallel}{whether to turn of support for parallel computing. Note that either \link{openmp} must be used if \code{n.init=1}. Or a parallel back-end supported by \link{foreach}.}
 }
