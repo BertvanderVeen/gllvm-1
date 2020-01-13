@@ -179,7 +179,7 @@
                       
                     }
                     if(start.params$family=="negative.binomial"){
-                      phi <- start.params$phi
+                      phi <- start.params$params$phi
                     }
                     beta0 <- start.params$params$beta0 ## column intercepts
                     betas <- NULL
@@ -227,7 +227,7 @@
                   }
                 }
                 phis <- NULL
-                if (family == "negative.binomial") {
+                if (family == "negative.binomial"&starting.val!="lingllvm") {
                   phis <- fit$phi
                   if (any(phis > 20))
                     phis[phis > 20] <- 20
@@ -261,7 +261,6 @@
                 # diag(lambdas) <- log(diag(lambdas)) !!!
                 lambda <- lambdas[lower.tri(lambdas,diag = TRUE)]
                 u <- lvs
-                #print(u)#to check why with start.fit it doesnt work
                 
                 if(!is.null(phis)) { 
                   phi <- phis 
@@ -304,7 +303,7 @@
                     
                   }
                 } 
-                
+                if(equal.tolerances==T)start.struc<-"common"
                 if(start.struc!="common"){
                 if(starting.val=="lingllvm")lambda2 <- matrix(-0.01,ncol=num.lv, nrow=p)
                 if(!is.null(start.params)){if(class(start.params)=="gllvm")lambda2 <- matrix(-0.01,ncol=num.lv, nrow=p)}
@@ -477,7 +476,7 @@
 
                   zeta <- param1[nam=="zeta"]
                   
-                  if(equal.tolerances==FALSE&start.struc!="species"){
+                  if(equal.tolerances==FALSE){#&start.struc!="species"){
                     lambda2<-t(matrix(-0.01,ncol=num.lv,nrow=p))
                     fx<-list(lambda=factor(rep(NA,(p*num.lv)-1)),r0=factor(rep(NA,n)),Au=factor(rep(NA,(num.lv*(num.lv+1)/2)*n)),lg_phi=factor(rep(NA,p)),lg_gamma=factor(rep(NA,num.lv)),lg_gamma2=factor(rep(NA,num.lv*p)),b=factor(rep(NA,p)),B=factor(NA),u=factor(rep(NA,n*num.lv)),log_sigma=factor(NA),zeta=factor(rep(NA,length(unlist(zeta)))),lg_Ar=factor(rep(NA,n)))
                     if(row.eff == "random"){
