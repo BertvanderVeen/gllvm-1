@@ -475,10 +475,11 @@
                     lg_gamma2 <- matrix(param1[nam=="lg_gamma2"],ncol=p,nrow=num.lv)
 
                   zeta <- param1[nam=="zeta"]
-                  
-                  if(equal.tolerances==FALSE&start.struc!="common"){#&start.struc!="species"){
+                  #estimate quadratic scores conditional on first fit
+                  #equal.tolerances==FALSE&start.struc=="common"&diag.iter==0
+                  if(F){#&start.struc!="species"){
                     lambda2<-t(matrix(-0.01,ncol=num.lv,nrow=p))
-                    fx<-list(lambda=factor(rep(NA,(p*num.lv)-1)),r0=factor(rep(NA,n)),Au=factor(rep(NA,(num.lv*(num.lv+1)/2)*n)),lg_phi=factor(rep(NA,p)),lg_gamma=factor(rep(NA,num.lv)),lg_gamma2=factor(rep(NA,num.lv*p)),b=factor(rep(NA,p)),B=factor(NA),u=factor(rep(NA,n*num.lv)),log_sigma=factor(NA),zeta=factor(rep(NA,length(unlist(zeta)))),lg_Ar=factor(rep(NA,n)))
+                    fx<-list(lambda=factor(rep(NA,(p*num.lv)-(num.lv-1))),r0=factor(rep(NA,n)),Au=factor(rep(NA,(num.lv*(num.lv+1)/2)*n)),lg_phi=factor(rep(NA,p)),lg_gamma=factor(rep(NA,num.lv)),lg_gamma2=factor(rep(NA,num.lv*p)),b=factor(rep(NA,p)),B=factor(NA),u=factor(rep(NA,n*num.lv)),log_sigma=factor(NA),zeta=factor(rep(NA,length(unlist(zeta)))),lg_Ar=factor(rep(NA,n)))
                     if(row.eff == "random"){
                       if(ridge==T){
                         if(ridge.quadratic==F){
@@ -559,7 +560,7 @@
                     }
                     lambda2<-matrix(optr2$par,nrow=num.lv,ncol=p)
                   }else{
-                    lambda2<-matrix(param1[nam=="lambda2"],ncol=p,nrow=num.lv)
+                    lambda2<-matrix(0.01,ncol=p,nrow=num.lv)
                   }
                   
                   if(row.eff == "random"){
@@ -677,7 +678,7 @@
               }else{
                 objr <- results$objr
                 optr <- results$optr
-                LL <- objr$fn(optr$par)
+                LL <- objr$env$value.best
                 fit <- results$fit
                 timeo <- results$timeo
               }
@@ -914,7 +915,7 @@
               if(is.null(formula1)){ out$formula <- formula} else {out$formula <- formula1}
               
               out$TMBfn <- objr
-              out$TMBfn$par <- objr$env$last.par.best #optr$par #ensure params in this fn take final values
+              out$TMBfn$par <- -objr$env$last.par.best #optr$par #ensure params in this fn take final values
               out$logL <- -out$logL
               out$LL <- -LL #for now to return all LL from n.init
               out$start.struc <- start.struc
