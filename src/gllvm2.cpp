@@ -99,8 +99,8 @@ Type objective_function<Type>::operator() ()
     }
   }
   
-  parallel_accumulator<Type> nll(this); // initial value of log-likelihood
-  
+  //parallel_accumulator<Type> nll(this); // initial value of log-likelihood
+ Type nll = 0;
   C += r0*xr + offset;
   
   if(random(0)>0){
@@ -330,6 +330,39 @@ Type objective_function<Type>::operator() ()
 
   if(trace==1){
     show_fe_exceptions(); 
+  }
+  
+  SIMULATE {
+    matrix<Type> mu = r0*xr + offset;
+
+    if(model<1){
+      mu += x*b;
+    } else {
+      matrix<Type> eta1=x*B;
+      int m=0;
+      for (int j=0; j<p;j++){
+        for (int i=0; i<n; i++) {
+          mu(i,j)+=b(0,j)+eta1(m,0);
+          m++;
+        }
+      }
+    }
+
+    mu += u*newlam - (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
+    matrix<Type>sims(n,p);
+    if(family==0){
+      for (int j=0; j<p;j++){
+        for (int i=0; i<n; i++) {
+          sims(i,j) = rpois(exp(mu(i,j)));
+        }
+      }
+    }
+    // }else if(family==1){
+    //   
+    // }
+    
+    REPORT(sims);          // Report the simulation
+ 
   }
   
   return nll;
