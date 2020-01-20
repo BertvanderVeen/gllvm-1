@@ -93,9 +93,9 @@ Type objective_function<Type>::operator() ()
         }
       }
       // set diag>0 !!!!!!!!!!!
-      if (j == i){
-        newlam(i,j) = fabs(newlam(i,j));
-      }
+      // if (j == i){
+      //   newlam(i,j) = (newlam(i,j));
+      // }
     }
   }
   
@@ -149,17 +149,17 @@ Type objective_function<Type>::operator() ()
   //lambda2 = lambda2.cwiseAbs(); //sign constraint quadratic effect
   matrix <Type> newlam2(num_lv,p);
    if(start==0){
-    newlam2 = lambda2.cwiseAbs(); //positive only  
+    newlam2 = lambda2; //positive only  
    }else if(start==1){
      for (int j=0; j<p; j++){
        for (int q=0; q<num_lv; q++){
-         newlam2(q,j) = fabs(lambda2(q,0)); //positive only
+         newlam2(q,j) = (lambda2(q,0)); //positive only
        }
      }
      
    }
   
-  matrix <Type> eta = C + u*newlam - (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
+  matrix <Type> eta = C + u*newlam + (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
   
   array<Type> D(num_lv,num_lv,p);
   D.fill(0.0);
@@ -169,7 +169,7 @@ Type objective_function<Type>::operator() ()
         if(q1!=q2){
           //D(q1,q2,j) = 0.0;
         }else{
-          D(q1,q2,j) = 2*newlam2(q1,j);  
+          D(q1,q2,j) = -2*newlam2(q1,j);  
         }
       }
     }
