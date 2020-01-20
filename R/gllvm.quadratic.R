@@ -443,7 +443,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
         cat("Random row effects ended up almost zero. Might be a false convergence or local maxima. You can try a simpler model, less latent variables or change the optimizer.")
     }
     if(grad.check==T&any(out$TMBfn$gr(out$TMBfn$par)>0.001)){
-      cat( paste("Large gradient value(s) detected ", "(max was ",round(max(out$TMBfn$gr(out$TMBfn$par)),3), "). Model might not have converged. \n",sep=""))
+      cat( paste("Large gradient value(s) detected ", "(max was ",round(max(out$TMBfn$gr(out$TMBfn$env$last.par.best)),3), "). Model might not have converged. \n",sep=""))
     }
   
     out$convergence <- fitg$convergence
