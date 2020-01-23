@@ -37,16 +37,16 @@ Type objective_function<Type>::operator() ()
   PARAMETER_MATRIX(B);
   PARAMETER_VECTOR(lambda);
   PARAMETER_MATRIX(lambda2);
+  PARAMETER_VECTOR(lambda3);
   
   //latent variables, u, are treated as parameters
   PARAMETER_MATRIX(u);
   PARAMETER_VECTOR(lg_phi);
   PARAMETER(log_sigma);// log(SD for row effect)
-  PARAMETER_VECTOR(lg_gamma);
-  PARAMETER_MATRIX(lg_gamma2);
+  DATA_VECTOR(gamma);
+  DATA_MATRIX(gamma2);
   DATA_INTEGER(num_lv);
   DATA_INTEGER(family);
-  DATA_INTEGER(start);
   
   PARAMETER_VECTOR(Au);
   PARAMETER_VECTOR(lg_Ar);
@@ -54,8 +54,6 @@ Type objective_function<Type>::operator() ()
   //DATA_SCALAR(extra);
   //DATA_INTEGER(method);// 0=VA, 1=LA
   DATA_INTEGER(model);
-  DATA_INTEGER(ridge);
-  DATA_INTEGER(ridge_quadratic);
   DATA_VECTOR(random);//random row
   DATA_INTEGER(zetastruc);
   
@@ -63,8 +61,6 @@ Type objective_function<Type>::operator() ()
   int p = y.cols();
   
   vector<Type> iphi = exp(lg_phi);
-  vector<Type> gamma = exp(lg_gamma);
-  matrix<Type> gamma2(num_lv,p);
   vector<Type> Ar = exp(lg_Ar);
   Type sigma = exp(log_sigma);
   
@@ -75,13 +71,6 @@ Type objective_function<Type>::operator() ()
   
   matrix<Type> newlam(num_lv,p);
 
-  if(ridge_quadratic>0){
-    for (int j=0; j<p; j++){
-      for (int q=0; q<num_lv; q++){
-        gamma2(q,j) = exp(lg_gamma2(q,j));
-      }
-    }
-  }
   for (int j=0; j<p; j++){
     for (int i=0; i<num_lv; i++){
       if (j < i){
@@ -147,40 +136,32 @@ Type objective_function<Type>::operator() ()
     }
   }
   //lambda2 = lambda2.cwiseAbs(); //sign constraint quadratic effect
+  
+  
+  
   matrix <Type> newlam2(num_lv,p);
-   if(start==0){
-    newlam2 = lambda2; //positive only  
-   }else if(start==1){
-     for (int j=0; j<p; j++){
-       for (int q=0; q<num_lv; q++){
-         newlam2(q,j) = (lambda2(q,0)); //positive only
-       }
-     }
-     
-   }
-  
-  matrix <Type> eta = C + u*newlam + (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
-  
+  for (int j=0; j<p; j++){
+    for (int q=0; q<lambda2.rows(); q++){
+      newlam2(q,j) = abs(lambda2(q,j)) + abs(lambda3(q));
+    }
+  }
+
+  matrix <Type> eta = C + u*newlam - (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
+
   array<Type> D(num_lv,num_lv,p);
   D.fill(0.0);
   for (int j=0; j<p; j++){
-    for (int q1=0; q1<num_lv; q1++){
-      for (int q2=0; q2<num_lv; q2++){
-        if(q1!=q2){
-          //D(q1,q2,j) = 0.0;
-        }else{
-          D(q1,q2,j) = -2*newlam2(q1,j);  
-        }
-      }
+    for (int q=0; q<num_lv; q++){
+          D(q,q,j) = 2*newlam2(q,j);
     }
   }
-  
+
   //trace of quadratic effect
   for (int i=0; i<n; i++) {
     for (int j=0; j<p;j++){
       eta(i,j) -= 0.5*((D.col(j).matrix()*A.col(i).matrix()).trace());
     }
-  }     
+  }
   if(family==0){
     //likelihood
     matrix <Type> e_eta(n,p);
@@ -210,7 +191,7 @@ Type objective_function<Type>::operator() ()
         Type detB = pow(B.determinant(),-0.5);
         Type detA = pow(A.col(i).matrix().determinant(),-0.5);
         zetanew(i,j) = iphi(j) + exp(C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
-        
+
         nll -= y(i,j) * eta(i,j) - (y(i,j) + iphi(j))*log(zetanew(i,j)) - iphi(j)*((y(i,j) + iphi(j))/zetanew(i,j)) + lgamma(y(i,j)+iphi(j)) - lfactorial(y(i,j)) + iphi(j)*log(iphi(j)) - lgamma(iphi(j));
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
@@ -225,15 +206,15 @@ Type objective_function<Type>::operator() ()
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
-    
+
   } else if(family==3 && zetastruc==1){
 
     int ymax =  CppAD::Integer(y.maxCoeff());
     int K = ymax - 1;
-    
+
     matrix <Type> zetanew(p,K);
     zetanew.fill(0.0);
-    
+
     int idx = 0;
       for(int j=0; j<p; j++){
         int ymaxj = CppAD::Integer(y.col(j).maxCoeff());
@@ -245,7 +226,7 @@ Type objective_function<Type>::operator() ()
               }else{
                 zetanew(j,k+1) = zeta(idx+k);
               }
-              
+
             }
           }
           idx += Kj-1;
@@ -264,20 +245,20 @@ Type objective_function<Type>::operator() ()
               }else if(ymaxj>2){
               for (int l=2; l<ymaxj; l++) {
                 if(y(i,j)==l && l != ymaxj){
-                  nll -= log(pnorm(zetanew(j,l-1)-eta(i,j), Type(0), Type(1))-pnorm(zetanew(j,l-2)-eta(i,j), Type(0), Type(1))); 
+                  nll -= log(pnorm(zetanew(j,l-1)-eta(i,j), Type(0), Type(1))-pnorm(zetanew(j,l-2)-eta(i,j), Type(0), Type(1)));
                 }
               }
               }
-              nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();   
+              nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
             }
             nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
           }
-          
+
   } else if(family==3 && zetastruc==0){
-    
+
     int ymax =  CppAD::Integer(y.maxCoeff());
     int K = ymax - 1;
-    
+
     vector <Type> zetanew(K);
     zetanew.fill(0.0);
     for(int k=0; k<(K-1); k++){
@@ -303,35 +284,33 @@ Type objective_function<Type>::operator() ()
             }
           }
         }
-        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();   
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
   }
-  if(ridge>0 && num_lv>1){
-    //shrinks LVs
+    //shrinks LVs, linear ridge
       for(int q=0; q<(num_lv-1); q++){
-     nll += pow((newlam.row(q).array()*newlam.row(q).array()+newlam2.row(q).array()*newlam2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum(),0.5)*gamma(q);     
-     nll += pow((newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum(),0.5)*gamma(q+1);     
+     nll += pow((newlam.row(q).array()*newlam.row(q).array()+lambda2.row(q).array()*lambda2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum(),0.5)*gamma(q);
+     nll += pow((newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum(),0.5)*gamma(q+1);
   }
-  }
-  
-  if(ridge_quadratic>0 && num_lv>1){
-    //shrinks LVs
-    for(int j=0; j<p; j++){
-    for(int q=0; q<(num_lv-1); q++){
-      nll += pow(newlam2(q,j)*newlam2(q,j) + newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q,j);     
-      nll += pow(newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q+1,j);
+
+  //should remove the mean here..
+
+    //shrinks LVs, quadratic ridge
+    for(int j=0; j<lambda.cols(); j++){
+    for(int q=0; q<num_lv; q++){
+      nll += pow(lambda2(q,j)*lambda2(q,j),0.5)*gamma2(q,j);//should be lamda2...
+    //  nll += pow(newlam2(q,j)*newlam2(q,j) + newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q,j); //should not be hierarchical
+      //nll += pow(newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q+1,j);
     }
   }
-  }
-  
   nll -= -0.5*(u.array()*u.array()).sum() - n*log(sigma)*random(0);// -0.5*t(u_i)*u_i
 
   if(trace==1){
-    show_fe_exceptions(); 
+    show_fe_exceptions();
   }
-  
+
   SIMULATE {
     matrix<Type> mu = r0*xr + offset;
 
@@ -358,12 +337,12 @@ Type objective_function<Type>::operator() ()
       }
     }
     // }else if(family==1){
-    //   
+    //
     // }
-    
+
     REPORT(sims);          // Report the simulation
- 
+
   }
-  
+
   return nll;
 }
