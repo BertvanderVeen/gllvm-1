@@ -209,7 +209,7 @@
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 0, trace = FALSE, trace2 = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 1000, 
     start.fit = NULL, starting.val = "lingllvm", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
-    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE, opt=1, start.struc="species", gamma1=1, gamma2=1) {
+    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE, opt=1, start.struc="species", gamma1=0, gamma2=0) {
     #build in gradient check
     randomX <- NULL
     term <- NULL

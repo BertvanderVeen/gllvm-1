@@ -141,7 +141,7 @@
                 }else if(length(gamma1)==num.lv){
                   #do nothing
                 }else{
-                  stop("Gamma1 not the correct length. Should be the same as the number of latent variables.")
+                  stop("Invalid gamma1 supplied")
                 }
  
                 if(is.matrix(gamma2)){
@@ -151,6 +151,8 @@
                 }else if(!is.matrix(gamma2)){
                   if(length(gamma2)==num.lv|length(gamma2)==1){
                     gamma2<-matrix(gamma2,nrow=num.lv,ncol=p)
+                  }else if(length(gamma2)==p){
+                    gamma2<-matrix(gamma2,nrow=num.lv,ncol=p,byrow=T)
                   }else{
                     stop("Invalid gamma2 supplied")
                   }
