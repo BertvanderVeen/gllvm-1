@@ -146,7 +146,7 @@
  
                 if(is.matrix(gamma2)){
                   if(!all(dim(matrix)!=c(num.lv,p))){
-                    stop("gamma2 of wrong dimension. Should be nrow=num.lv, ncol=p")
+                    stop("Gamma2 of wrong dimension. Should be nrow=num.lv, ncol=p")
                   }
                 }else if(!is.matrix(gamma2)){
                   if(length(gamma2)==num.lv|length(gamma2)==1){
@@ -346,6 +346,7 @@
                 if(family == "negative.binomial") { familyn <- 1}
                 if(family == "binomial") { familyn <- 2}
                 if(family == "ordinal") { familyn <- 3}
+                
                 if(row.eff=="random"){
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2), silent=TRUE,
@@ -393,44 +394,6 @@
                   b1 <- matrix(param1[nam=="b"],num.X+1,p)
                   lambda1 <- param1[nam=="lambda"]
                   u1 <- matrix(param1[nam=="u"],n,num.lv)
-                  
-                  #WA does very well if we have a good estimation of the LV, something that GLLVM is very very good at. So, these should be very nice starting values to continue
-                  
-                  #the type of starting values matter massively, just -0.01 is better than WA OR zetadiv.
-                  
-                  # if(equal.tolerances==FALSE&start.struc!="species"){
-                  # lambda2<-matrix(-0.01,nrow=p,ncol=num.lv)
-                  # if(opt==1|family=="ordinal"|family=="negative.binomial"){
-                  # for(j in 1:p){
-                  #   for(q in 1:num.lv){
-                  #     lambda2[j,q]<--.5/(sum((u1[,q]-(sum(y[,j]*u1[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
-                  #   }
-                  # }
-                  # }else{
-                  #   lambda2<-matrix(0,nrow=p,ncol=num.lv)
-                  #   lambda3<-lambda2
-                  #   lambda3[lower.tri(lambda3,diag=T)]<-lambda1
-                  #   for(j in 1:p){
-                  #     off<-b1[1,j]+u1%*%t(lambda3[j,,drop=F])
-                  #     lambda2[j,]<-coef(zetadiv::glm.cons(y[,j]~0+I(u1^2)+offset(off),family=family,cons=-1,cons.inter = -1))
-                  #   }
-                  # }#should code in a option for ordinal and NB..can do with manual optim code?
-                  # lambda2[lambda2==0]<--0.001
-                  # lambda2<-t(lambda2)
-                  # }else{
-                  #   lambda2 <- matrix(-1*abs(param1[nam=="lambda2"]),nrow=num.lv,ncol=ifelse(equal.tolerances==T,1,p))
-                  # }
-                  # lambda2<-matrix(0,nrow=p,ncol=num.lv)
-                  # #alternative for starting values lambda2
-                  # for(j in 1:p){
-                  #  for(q in 1:num.lv){
-                  #    lambda2[j,q]<--.5/(sum((u1[,q]-(sum(y[,j]*u1[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
-                  #  }
-                  # }
-                  # if(any(is.infinite(lambda2))){
-                  #  lambda2[is.infinite(lambda2)]<--0.5
-                  # }
-                  #lambda2<-t(lambda2)
                   lg_phi1 <- param1[nam=="lg_phi"]
                   log_sigma1 <- param1[nam=="log_sigma"]
                   #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
@@ -442,10 +405,9 @@
                   lg_Ar1 <- param1[nam=="lg_Ar"]
                  
                   zeta <- param1[nam=="zeta"]
-                  #estimate quadratic scores conditional on first fit
-                  #equal.tolerances==FALSE&start.struc=="common"&diag.iter==0
                   lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=ifelse(equal.tolerances==T,1,p)))
                   lambda3 <- param1[nam=="lambda3"]
+                  
                   if(row.eff == "random"){
                         objr <- TMB::MakeADFun(
                           data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2), silent=TRUE,
@@ -489,9 +451,50 @@
                 }
                 return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
               }
-              
-              
-              
+              # 
+              # #find best ridge parameter values?
+              # data <- objr$env$data
+              # pars <- objr$env$last.par.best
+              # parslist <- objr$env$parList(objr$env$last.par.best)
+              # LL <- objr$env$value.best
+              # 
+              # for(i in 2:15){
+              #   data$gamma2 <- matrix(i,ncol=p,nrow=num.lv)
+              #     objr <- TMB::MakeADFun(
+              #       data = data, silent=TRUE,
+              #       parameters = parslist,
+              #       inner.control=list(mgcmax = 1e+200,maxit = maxit),
+              #       DLL = "gllvm2")
+              # 
+              #     if(optimizer=="nlminb") {
+              #       timeo <- system.time(optr <- try(nlminb(pars, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit,trace=trace2)),silent = !trace2))
+              #     }
+              #     if(optimizer=="optim") {
+              #       if(!is.null(par.scale)){
+              #         if(par.scale=="coef"){
+              #           parscale<-abs(objr$par)#this trick comes from https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.12044
+              #           parscale[parscale==0]<-1
+              #         }else if(is.numeric(par.scale)){
+              #           parscale<-rep(par.scale,length(objr$par))
+              #         }
+              #       }else{
+              #         parscale <- rep(1,length(objr$par))
+              #       }
+              #       if(is.null(fn.scale)|!is.numeric(fn.scale)){
+              #         fnscale<-1
+              #       }else{
+              #         fnscale<-fn.scale
+              #       }
+              #       timeo <- system.time(optr <- try(optim(pars, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
+              #     }
+              #     
+              #   if(LL>objr$env$value.best){
+              #     gamma2 <- data$gamma2
+              #     LL <- objr$env$value.best
+              #   }
+              #   
+              # }
+              # 
               
                 if(n.init>1&parallel==TRUE){
                   #clusterEvalQ(cl,library.dynam("gllvm2","gllvm.quadratic",lib.loc="C:/Users/beve/Documents/R/win-library/3.6/"))
@@ -650,12 +653,12 @@
                 if(sd.errors && !is.infinite(out$logL)) {
                   if(trace) cat("Calculating standard errors for parameters...\n")
                   #set parallel workers with openmp for the calculation of standard errors, if n.init>1
-                  if(getDoParWorkers()>1&n.init>1&parallel==T){
-                    n.cores.old<-openmp()
-                    openmp(getDoParWorkers())
-                  }
+                  # if(getDoParWorkers()>1&n.init>1&parallel==T){
+                  #   n.cores.old<-openmp()
+                  #   openmp(getDoParWorkers())
+                  # } #later for parallel computation of SE
                   sdr <- optimHess(pars, objr$fn, objr$gr, control = list(reltol=reltol,maxit=maxit))#maxit=maxit
-                  if(getDoParWorkers()>1&n.init>1&parallel==T)openmp(n.cores.old)#reset back to old configuration
+                  #if(getDoParWorkers()>1&n.init>1&parallel==T)openmp(n.cores.old)#reset back to old configuration
                   m <- dim(sdr)[1]; incl <- rep(TRUE,m); incld <- rep(FALSE,m); inclr <- rep(FALSE,m)
                   incl[names(objr$par)=="B"] <- FALSE
                   
@@ -697,9 +700,12 @@
                     # diag(out$sd$theta) <- diag(out$sd$theta)*diag(out$params$theta) !!!
                     se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv,byrow=T);
                     colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
-                    rownames(se.lambdas2) <- colnames(out$y);
-                    out$sd$theta <- cbind(out$sd$theta,se.lambdas2); se <- se[-(1:(p * num.lv))]
-                  
+                    rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
+                    se.lambdas3 <-  matrix(se[1:num.lv],p,num.lv,byrow=T);
+                    colnames(se.lambdas3) <- paste("LV", 1:num.lv, "^2",sep="");se <- se[-(1:(num.lv))]
+                    out$sd$optima <- -out$sd$theta/(2*(se.lambdas2+se.lambdas3));
+                    out$sd$theta <- cbind(out$sd$theta,se.lambdas2);
+                    
                   out$sd$beta0 <- sebetaM[,1]; names(out$sd$beta0) <- colnames(out$y);
                   if(!is.null(X)){
                     out$sd$Xcoef <- matrix(sebetaM[,-1],nrow = nrow(sebetaM));
