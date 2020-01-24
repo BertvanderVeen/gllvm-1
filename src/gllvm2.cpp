@@ -290,10 +290,19 @@ Type objective_function<Type>::operator() ()
     }
   }
     //shrinks LVs, linear ridge
+    if(lambda.cols()==1){
       for(int q=0; q<(num_lv-1); q++){
-     nll += pow((newlam.row(q).array()*newlam.row(q).array()+lambda2.row(q).array()*lambda2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum(),0.5)*gamma(q);
-     nll += pow((newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum(),0.5)*gamma(q+1);
-  }
+        nll += pow((newlam.row(q).array()*newlam.row(q).array()+newlam2.row(q).array()*newlam2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum(),0.5)*gamma(q);
+        nll += pow((newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum(),0.5)*gamma(q+1);
+      }
+      
+    }else{
+      for(int q=0; q<(num_lv-1); q++){
+        nll += pow((newlam.row(q).array()*newlam.row(q).array()+lambda2.row(q).array()*lambda2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum(),0.5)*gamma(q);
+        nll += pow((newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum(),0.5)*gamma(q+1);
+      }
+    }
+  
 
   //should remove the mean here..
 
