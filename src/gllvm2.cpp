@@ -140,11 +140,21 @@ Type objective_function<Type>::operator() ()
   
   
   matrix <Type> newlam2(num_lv,p);
-  for (int j=0; j<p; j++){
-    for (int q=0; q<lambda2.rows(); q++){
-      newlam2(q,j) = abs(lambda2(q,j)) + abs(lambda3(q));
+  int nTol = lambda2.cols();
+  if(nTol==1){
+    for (int j=0; j<p; j++){
+      for (int q=0; q<num_lv; q++){
+        newlam2(q,j) = abs(lambda2(q,0)) + abs(lambda3(q));
+      }
+    }  
+  }else{
+    for (int j=0; j<p; j++){
+      for (int q=0; q<num_lv; q++){
+        newlam2(q,j) = abs(lambda2(q,j)) + abs(lambda3(q));
+      }
     }
   }
+  
 
   matrix <Type> eta = C + u*newlam - (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
 
@@ -290,16 +300,16 @@ Type objective_function<Type>::operator() ()
     }
   }
     //shrinks LVs, linear ridge
-    if(lambda.cols()==1){
+    if(nTol==1){
       for(int q=0; q<(num_lv-1); q++){
-        nll += pow((newlam.row(q).array()*newlam.row(q).array()+newlam2.row(q).array()*newlam2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum(),0.5)*gamma(q);
-        nll += pow((newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum(),0.5)*gamma(q+1);
+        nll += (newlam.row(q).array()*newlam.row(q).array()+newlam2.row(q).array()*newlam2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma(q);
+        nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma(q+1);
       }
-      
+
     }else{
       for(int q=0; q<(num_lv-1); q++){
-        nll += pow((newlam.row(q).array()*newlam.row(q).array()+lambda2.row(q).array()*lambda2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum(),0.5)*gamma(q);
-        nll += pow((newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum(),0.5)*gamma(q+1);
+        nll += (newlam.row(q).array()*newlam.row(q).array()+lambda2.row(q).array()*lambda2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum()*gamma(q);
+        nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum()*gamma(q+1);
       }
     }
   
@@ -309,7 +319,7 @@ Type objective_function<Type>::operator() ()
     //shrinks LVs, quadratic ridge
     for(int j=0; j<lambda.cols(); j++){
     for(int q=0; q<num_lv; q++){
-      nll += pow(lambda2(q,j)*lambda2(q,j),0.5)*gamma2(q,j);//should be lamda2...
+      nll += lambda2(q,j)*lambda2(q,j)*gamma2(q,j);//should be lamda2...
     //  nll += pow(newlam2(q,j)*newlam2(q,j) + newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q,j); //should not be hierarchical
       //nll += pow(newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q+1,j);
     }
