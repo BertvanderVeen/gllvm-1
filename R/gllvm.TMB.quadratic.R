@@ -579,7 +579,7 @@
               if(p>1) {
                 theta[lower.tri(theta,diag=TRUE)] <- param[li];
                 theta3<-abs(param[l3i])
-                theta2<--(abs(matrix(param[l2i],nrow=p,ncol=num.lv,byrow=T))+matrix(theta3,ncol=num.lv,nrow=p,byrow=T))
+                theta2<--(abs(matrix(param[l2i],nrow=p,ncol=num.lv,byrow=T)))#+matrix(theta3,ncol=num.lv,nrow=p,byrow=T))
                 theta<-cbind(theta,theta2)
                 
               } else {theta <- param[li]
