@@ -2,20 +2,20 @@
             ## GLLVM, with estimation done via Variational approximation using TMB-package
             ## Original author: Jenni Niku, Bert van der Veen
             ##########################################################################################
-             # y<-as.matrix(spider$abund)
-             # X = NULL; formula = NULL; num.lv = 2; family = "poisson";
-             # Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = FALSE;
-             # seed = NULL;maxit = 10000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
-             # n.init=2;start.params=NULL;
-             # optimizer="optim";starting.val="zero";diag.iter=0;
-             # Lambda.start=c(0.1,0.5); jitter.var=0; ridge=FALSE; ridge.quadratic = FALSE; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; equal.tolerances=F; start.struc="species"; gamma1=1;gamma2=1
+             y<-as.matrix(spider$abund)
+             X = NULL; formula = NULL; num.lv = 2; family = "poisson";
+             Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = FALSE;
+             seed = NULL;maxit = 10000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
+             n.init=2;start.params=NULL;
+             optimizer="optim";starting.val="zero";diag.iter=0;
+             Lambda.start=c(0.1,0.5); jitter.var=0; ridge=FALSE; ridge.quadratic = FALSE; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; equal.tolerances=F; start.struc="species"; gamma1=1;gamma2=1
 
             gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                             Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
                                             seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                             n.init=1,start.params=NULL,
                                             optimizer="optim",starting.val="lingllvm",diag.iter=1,
-                                            Lambda.start=c(0.1,0.5), jitter.var=0, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE,start.struc="species", gamma1=0,gamma2=0) {
+                                            Lambda.start=c(0.1,0.5), jitter.var=0, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE,start.struc="species", gamma1=0,gamma2=0) {
               
               n <- dim(y)[1]
               p <- dim(y)[2]
@@ -128,9 +128,13 @@
                 }
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
               }
-                
+              
+              if(is.null(maxit.lingllvm)){
+                maxit.lingllvm <- maxit
+              }  
+              
               if(starting.val=="lingllvm"){
-                fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed)
+                fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit.lingllvm, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed)
                 start.params <- fit
               }
               if(n.init[1]>1)seed <- sample(1:10000, n.init)
@@ -185,10 +189,10 @@
                   lvs <- matrix(fit$index, ncol = num.lv)
                   if(!is.null(X)){
                     lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
-                    lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
+                    if(equal.tolerances==F)lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
                   }else if(is.null(X)){
                     lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
-                    lambda2 <- fit$params[,-c(1:(num.lv+1))]  
+                    if(equal.tolerances==F)lambda2 <- fit$params[,-c(1:(num.lv+1))]  
                   }
                   
                   #subtract a fraction from the 0 quadratic scores, otherwise the optimization can't get away from the 0s where necessary.
@@ -408,7 +412,9 @@
                  
                   zeta <- param1[nam=="zeta"]
                   lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=ifelse(equal.tolerances==T,1,p)))
-                  lambda3 <- param1[nam=="lambda3"]
+                  lambda3 <- abs(param1[nam=="lambda3"])
+                  lambda3<-ifelse(lambda3<0.5,0.5,lambda3)#to make sure the optimizer can get this away from zero if there's lttle support
+                  #not sure yet how this affects the poisson simulations, before this was removed and the c++ script included lambda2+lambda3 instead of just lambda3, in newlam2, if equal.tol=T/start.struc="common"
                   
                   if(row.eff == "random"){
                         objr <- TMB::MakeADFun(
@@ -563,7 +569,7 @@
 
               bi <- names(param)=="b"
               li <- names(param)=="lambda"
-              l2i <- names(param)=="lambda2"
+              if(equal.tolerances==F)l2i <- names(param)=="lambda2"
               l3i <- names(param)=="lambda3"
               ui <- names(param)=="u"
               if(row.eff!=FALSE) {
@@ -579,7 +585,12 @@
               if(p>1) {
                 theta[lower.tri(theta,diag=TRUE)] <- param[li];
                 theta3<-abs(param[l3i])
-                theta2<--(abs(matrix(param[l2i],nrow=p,ncol=num.lv,byrow=T))+matrix(theta3,ncol=num.lv,nrow=p,byrow=T))
+                if(equal.tolerances==F){
+                  theta2<--(abs(matrix(param[l2i],nrow=p,ncol=num.lv,byrow=T))+matrix(theta3,ncol=num.lv,nrow=p,byrow=T))
+                }else{
+                  theta2<--matrix(theta3,ncol=num.lv,nrow=p,byrow=T)
+                }
+                
                 theta<-cbind(theta,theta2)
                 
               } else {theta <- param[li]
@@ -602,7 +613,7 @@
                     colnames(out$lvs) <- paste("LV", 1:num.lv, sep="")
                     colnames(out$params$theta) <- c(paste("LV", 1:num.lv, sep=""),paste("LV", 1:num.lv, "^2", sep=""))
                     rownames(out$params$theta) <- colnames(out$y)}
-                    out$params$theta2 <- theta3
+                    out$params$theta2 <- -theta3
                   names(beta0) <- colnames(out$y); out$params$beta0 <- beta0;
                   if(!is.null(X)){betas <- matrix(betas,ncol=ncol(X)); out$params$Xcoef <- betas;
                   rownames(out$params$Xcoef) <- colnames(out$y); colnames(out$params$Xcoef) <- colnames(X); }
@@ -666,7 +677,9 @@
                   
                   incl[names(objr$par)=="lg_Ar"] <- FALSE;
                   incl[names(objr$par)=="Au"] <- FALSE;
-
+                  if(equal.tolerances==T){
+                    incl[names(objr$par)=="lambda2"] <- FALSE;
+                  }
                   if(row.eff=="random") {
                     inclr[names(objr$par)=="r0"] <- TRUE;
                     incl[names(objr$par)=="lg_Ar"] <- FALSE; incld[names(objr$par)=="lg_Ar"] <- TRUE
@@ -700,13 +713,19 @@
                     rownames(se.lambdas) <- colnames(out$y)
                     out$sd$theta <- se.lambdas; se <- se[-(1:(p * num.lv - sum(0:(num.lv-1))))];
                     # diag(out$sd$theta) <- diag(out$sd$theta)*diag(out$params$theta) !!!
-                    se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv,byrow=T);
-                    colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
-                    rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
+                    if(equal.tolerances==F)se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv,byrow=T);
+                    if(equal.tolerances==F)colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
+                    if(equal.tolerances==F)rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
                     se.lambdas3 <-  matrix(se[1:num.lv],p,num.lv,byrow=T);
                     colnames(se.lambdas3) <- paste("LV", 1:num.lv, "^2",sep="");se <- se[-(1:(num.lv))]
-                    out$sd$optima <- -out$sd$theta/(2*(se.lambdas2+se.lambdas3));
-                    out$sd$theta <- cbind(out$sd$theta,se.lambdas2);
+                    if(equal.tolerances==F){
+                      out$sd$optima <- out$sd$theta/(2*(se.lambdas2+se.lambdas3));
+                      out$sd$theta <- cbind(out$sd$theta,se.lambdas2);  
+                    }else{
+                      out$sd$optima <- -out$sd$theta/(2*(se.lambdas3));
+                      out$sd$theta <- cbind(out$sd$theta);
+                    }
+                    out$sd$theta2 <- se.lambdas3[1,]
                     
                   out$sd$beta0 <- sebetaM[,1]; names(out$sd$beta0) <- colnames(out$y);
                   if(!is.null(X)){
