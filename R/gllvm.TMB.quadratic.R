@@ -411,11 +411,11 @@
                   lg_Ar1 <- param1[nam=="lg_Ar"]
                  
                   zeta <- param1[nam=="zeta"]
-                  lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=ifelse(equal.tolerances==T,1,p)))
+                  if(equal.tolerances==F)lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=ifelse(equal.tolerances==T,1,p)))
                   lambda3 <- abs(param1[nam=="lambda3"])
-                  lambda3<-ifelse(lambda3<0.5,0.5,lambda3)#to make sure the optimizer can get this away from zero if there's lttle support
-                  #not sure yet how this affects the poisson simulations, before this was removed and the c++ script included lambda2+lambda3 instead of just lambda3, in newlam2, if equal.tol=T/start.struc="common"
+                  lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
                   
+                  if(equal.tolerances==F)lambda2<-matrix(lambda3,ncol=p,nrow=num.lv)
                   if(row.eff == "random"){
                         objr <- TMB::MakeADFun(
                           data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2), silent=TRUE,
