@@ -7,8 +7,8 @@
              # Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = FALSE;
              # seed = NULL;maxit = 10000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
              # n.init=2;start.params=NULL;
-             # optimizer="optim";starting.val="zero";diag.iter=0;
-             # Lambda.start=c(0.1,0.5); jitter.var=0; ridge=FALSE; ridge.quadratic = FALSE; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; equal.tolerances=F; start.struc="species"; gamma1=1;gamma2=1
+             # optimizer="optim";starting.val="zero";diag.iter=1;
+             # Lambda.start=c(0.1,0.5); jitter.var=0; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; equal.tolerances=F; start.struc="common"; gamma1=0;gamma2=0
 
             gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                             Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
@@ -388,10 +388,12 @@
                     fnscale<-fn.scale
                   }
                   timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
-                }
+                
+                  }
                 if(inherits(optr,"try-error")) warning(optr[1]);
                 #if(!inherits(optr,"try-error")&equal.tolerances!=TRUE){
-                if(diag.iter>0 && Lambda.struc=="unstructured" && num.lv>1 && !inherits(optr,"try-error")|equal.tolerances==F&start.struc=="common"){
+                
+                if(diag.iter>0 && Lambda.struc=="unstructured" && num.lv>1 && !inherits(optr,"try-error")){
                   objr1 <- objr
                   optr1 <- optr
                   param1 <- optr$par
@@ -404,16 +406,83 @@
                   log_sigma1 <- param1[nam=="log_sigma"]
                   #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
                   #this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
-                  if(diag.iter>0){Au1<- c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))}else{
-                    Au1 <- param1[names(param1)=="Au"]
+                  Au1<- c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
+                  
+                  lg_Ar1 <- param1[nam=="lg_Ar"]
+                  
+                  zeta <- param1[nam=="zeta"]
+                  
+                  if(equal.tolerances==F&start.struc!="common"){
+                    lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
+                  }else{
+                    lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=1))
+                  }
+                  lambda3 <- abs(param1[nam=="lambda3"])
+                  #lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
+                  
+                    if(row.eff == "random"){
+                    objr <- TMB::MakeADFun(
+                      data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2), silent=TRUE,
+                      parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3,u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
+                      inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                      DLL = "gllvm2")
+                  } else {
+                    objr <- TMB::MakeADFun(
+                      data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2), silent=TRUE,
+                      parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
+                      inner.control=list(mgcmax = 1e+200,maxit = maxit),
+                      DLL = "gllvm2")#GLLVM#
                   }
                   
+                  if(optimizer=="nlminb") {
+                    timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit,trace=trace2)),silent = !trace2))
+                  }
+                  if(optimizer=="optim") {
+                    if(!is.null(par.scale)){
+                      if(par.scale=="coef"){
+                        parscale<-abs(objr$par)#this trick comes from https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.12044
+                        parscale[parscale==0]<-1
+                      }else if(is.numeric(par.scale)){
+                        parscale<-rep(par.scale,length(objr$par))
+                      }
+                    }else{
+                      parscale <- rep(1,length(objr$par))
+                    }
+                    if(is.null(fn.scale)|!is.numeric(fn.scale)){
+                      fnscale<-1
+                    }else{
+                      fnscale<-fn.scale
+                    }
+                    timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
+                  }
+                  if(optimizer=="optim"){
+                    if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+                  }else{
+                    if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+                  }
+                }
+                if(inherits(optr,"try-error")) warning(optr[1]);
+                if(equal.tolerances==F&start.struc=="common"){
+                  objr1 <- objr
+                  optr1 <- optr
+                  param1 <- optr$par
+                  nam <- names(param1)
+                  r1 <- matrix(param1[nam=="r0"])
+                  b1 <- matrix(param1[nam=="b"],num.X+1,p)
+                  lambda1 <- param1[nam=="lambda"]
+                  u1 <- matrix(param1[nam=="u"],n,num.lv)
+                  lg_phi1 <- param1[nam=="lg_phi"]
+                  log_sigma1 <- param1[nam=="log_sigma"]
+                  #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
+                  #this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
+                  Au1 <- param1[names(param1)=="Au"]
+
                   lg_Ar1 <- param1[nam=="lg_Ar"]
                  
                   zeta <- param1[nam=="zeta"]
-                  if(equal.tolerances==F)lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=ifelse(equal.tolerances==T,1,p)))
+                  lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
                   lambda3 <- abs(param1[nam=="lambda3"])
-                  lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
+                  #lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
                   
                   if(equal.tolerances==F)lambda2<-matrix(lambda3,ncol=p,nrow=num.lv)
                   if(row.eff == "random"){
@@ -452,9 +521,9 @@
                     timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
                   }
                   if(optimizer=="optim"){
-                    if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+                    if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; equal.tolerances=T}
                   }else{
-                    if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; Lambda.struc="diagonal"}
+                    if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; equal.tolerances=T}
                   }
                 }
                 return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
