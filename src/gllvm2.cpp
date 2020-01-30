@@ -45,6 +45,7 @@ Type objective_function<Type>::operator() ()
   PARAMETER(log_sigma);// log(SD for row effect)
   DATA_VECTOR(gamma);
   DATA_MATRIX(gamma2);
+  DATA_VECTOR(theta4);
   DATA_INTEGER(num_lv);
   DATA_INTEGER(family);
   
@@ -144,13 +145,13 @@ Type objective_function<Type>::operator() ()
   if(nTol==1){
     for (int j=0; j<p; j++){
       for (int q=0; q<num_lv; q++){
-        newlam2(q,j) = abs(lambda3(q));
+        newlam2(q,j) = abs(lambda3(q)) + theta4(q);
       }
     }  
   }else{
     for (int j=0; j<p; j++){
       for (int q=0; q<num_lv; q++){
-        newlam2(q,j) = abs(lambda2(q,j)) + abs(lambda3(q));
+        newlam2(q,j) = abs(lambda2(q,j)) + abs(lambda3(q)) + theta4(q);
       }
     }
   }
