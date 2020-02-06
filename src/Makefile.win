@@ -1,7 +1,0 @@
-all: gllvm2.dll
-	# Comment here preserves the prior tab
-gllvm2.dll: gllvm2.cpp
-	Rscript --vanilla -e "TMB::compile('gllvm2.cpp', '-O1 -g',DLLFLAGS='')"
-
-clean:
-	rm -rf *.dll
