@@ -12,7 +12,7 @@ Depends: TMB, mvabund, foreach, gllvm
 Encoding: UTF-8
 LazyData: true
 LinkingTo: TMB, RcppEigen
-RoxygenNote: 7.0.0
+RoxygenNote: 7.0.2
 NeedsCompilation: yes
 URL: https://github.com/BertvanderVeen/gllvm-1/tree/goGLLVM
 Suggests: 

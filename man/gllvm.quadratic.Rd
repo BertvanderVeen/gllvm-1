@@ -4,17 +4,47 @@
 \alias{gllvm.quadratic}
 \title{Generalized Linear Latent Variable Models}
 \usage{
-gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
-  formula = NULL, num.lv = 2, family, row.eff = FALSE,
-  offset = NULL, sd.errors = TRUE, Lambda.struc = "unstructured",
-  diag.iter = 1, trace = FALSE, trace2 = FALSE, n.init = 1,
-  reltol = 1e-08, seed = NULL, maxit = 1000, start.fit = NULL,
-  starting.val = "lingllvm", optimizer = "optim",
-  Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE,
-  ridge.quadratic = FALSE, start.method = "FA", par.scale = 1,
-  fn.scale = 1, grad.check = FALSE, zeta.struc = "species",
-  starting.val.lingllvm = "res", equal.tolerances = FALSE,
-  parallel = FALSE, opt = 1, start.struc = "species")
+gllvm.quadratic(
+  y = NULL,
+  X = NULL,
+  TR = NULL,
+  data = NULL,
+  formula = NULL,
+  num.lv = 2,
+  family,
+  row.eff = FALSE,
+  offset = NULL,
+  sd.errors = TRUE,
+  Lambda.struc = "unstructured",
+  diag.iter = 0,
+  trace = FALSE,
+  trace2 = FALSE,
+  n.init = 1,
+  reltol = 1e-08,
+  seed = NULL,
+  maxit = 1000,
+  start.fit = NULL,
+  starting.val = "lingllvm",
+  optimizer = "optim",
+  Lambda.start = c(0.1, 0.5),
+  jitter.var = 0,
+  ridge = FALSE,
+  ridge.quadratic = FALSE,
+  start.method = "FA",
+  par.scale = 1,
+  fn.scale = 1,
+  grad.check = FALSE,
+  zeta.struc = "species",
+  maxit.lingllvm = NULL,
+  starting.val.lingllvm = "res",
+  equal.tolerances = FALSE,
+  parallel = FALSE,
+  opt = 1,
+  start.struc = "species",
+  gamma1 = 0,
+  gamma2 = 0,
+  theta4 = NULL
+)
 }
 \arguments{
 \item{y}{(n x m) matrix of responses.}
@@ -62,10 +92,6 @@ gllvm.quadratic(y = NULL, X = NULL, TR = NULL, data = NULL,
 \item{Lambda.start}{starting values for variances in VA distributions for latent variables in variational approximation method. Defaults to 0.1.}
 
 \item{jitter.var}{jitter variance for starting values of latent variables. Defaults to 0, meaning no jittering.}
-
-\item{ridge}{\code{TRUE} fits a ridge penalty to shrink the latent variable (linear and quadratic effects)}
-
-\item{ridge.quadratic}{\code{TRUE} fits a ridge penalty to shrink the quadratic effect of the latent variable}
 
 \item{start.method}{ordination method to retrieve starting values. The default is Factor analysis (FA), with alternative Correspondence Analysis (CA).}
 

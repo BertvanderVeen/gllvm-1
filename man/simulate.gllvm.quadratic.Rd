@@ -5,8 +5,7 @@
 \alias{simulate}
 \title{Simulate data from gllvm fit}
 \usage{
-\method{simulate}{gllvm.quadratic}(object, nsim = 1,
-  conditional = FALSE, seed = NULL, ...)
+\method{simulate}{gllvm.quadratic}(object, nsim = 1, conditional = FALSE, seed = NULL, ...)
 }
 \arguments{
 \item{object}{an object of class 'gllvm'.}

@@ -5,12 +5,28 @@
 \alias{ordiplot}
 \title{Plot latent variables from gllvm model}
 \usage{
-\method{ordiplot}{gllvm.quadratic}(object, biplot = FALSE,
-  ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL,
-  jitter = FALSE, jitter.amount = 0.2, s.colors = 1,
-  symbols = FALSE, cex.spp = 0.7, bell = TRUE, env.ranges = FALSE,
-  type = "response", intercept = TRUE, legend = FALSE,
-  scale = "species", predict.region = FALSE, level = 0.95, ...)
+\method{ordiplot}{gllvm.quadratic}(
+  object,
+  biplot = FALSE,
+  ind.spp = NULL,
+  alpha = 0.5,
+  main = NULL,
+  which.lvs = NULL,
+  jitter = FALSE,
+  jitter.amount = 0.2,
+  s.colors = 1,
+  symbols = FALSE,
+  cex.spp = 0.7,
+  bell = TRUE,
+  env.ranges = FALSE,
+  type = "response",
+  intercept = TRUE,
+  legend = FALSE,
+  scale = "species",
+  predict.region = FALSE,
+  level = 0.95,
+  ...
+)
 }
 \arguments{
 \item{object}{an object of class 'gllvm'.}

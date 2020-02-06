@@ -1,25 +1,11 @@
 #define TMB_LIB_INIT R_init_qgllvm
 #include <TMB.hpp>
 #include<math.h>
-#include <fenv.h>
 
 //--------------------------------------------------------
 //GLLVM
 //Author: Bert van der Veen
 //------------------------------------------------------------
-void show_fe_exceptions(void)
-{
-  printf("current exceptions raised: ");
-  if(fetestexcept(FE_DIVBYZERO))     printf(" FE_DIVBYZERO");
-  if(fetestexcept(FE_INEXACT))       printf(" FE_INEXACT");
-  if(fetestexcept(FE_INVALID))       printf(" FE_INVALID");
-  if(fetestexcept(FE_OVERFLOW))      printf(" FE_OVERFLOW");
-  if(fetestexcept(FE_UNDERFLOW))     printf(" FE_UNDERFLOW");
-  if(fetestexcept(FE_ALL_EXCEPT)==0) printf(" none");
-  feclearexcept(FE_ALL_EXCEPT);
-  printf("\n");
-}
-
 template<class Type>
 Type objective_function<Type>::operator() ()
 {
@@ -29,9 +15,7 @@ Type objective_function<Type>::operator() ()
   DATA_MATRIX(x);
   DATA_MATRIX(xr);
   DATA_MATRIX(offset);
-  
-  DATA_INTEGER(trace);
-  
+
   PARAMETER_MATRIX(r0);
   PARAMETER_MATRIX(b);
   PARAMETER_MATRIX(B);
@@ -326,10 +310,6 @@ Type objective_function<Type>::operator() ()
     }
   }
   nll -= -0.5*(u.array()*u.array()).sum() - n*log(sigma)*random(0);// -0.5*t(u_i)*u_i
-
-  if(trace==1){
-    show_fe_exceptions();
-  }
 
   SIMULATE {
     matrix<Type> mu = r0*xr + offset;
