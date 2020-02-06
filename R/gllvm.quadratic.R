@@ -447,6 +447,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
     out$convergence <- fitg$convergence
     out$Hess = fitg$Hess
     out$LL <- fitg$LL
+    out$ridge <- fitg$ridge
       
     out$call <- match.call()
     class(out) <- "gllvm.quadratic"

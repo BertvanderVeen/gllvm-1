@@ -600,7 +600,7 @@
                 }
               
               if(n.init>1){
-                try({bestLL <- lapply(results, function(x)x$objr$env$value.best);
+                try({bestLL <- lapply(results, function(x)x$objr$fn(x$optr$par));
                 objr <- results[[which.min(unlist(bestLL))]]$objr;
                 optr <- results[[which.min(unlist(bestLL))]]$optr; 
                 fit <- results[[which.min(unlist(bestLL))]]$fit;
@@ -609,13 +609,13 @@
               }else{
                 objr <- results$objr
                 optr <- results$optr
-                LL <- objr$env$value.best
+                LL <- objr$fn(optr$par)
                 fit <- results$fit
                 timeo <- results$timeo
               }
                 
               if(inherits(optr,"try-error")) warning(optr[1]);
-              param<-objr$env$last.par.best
+              param<-objr$fn(optr$par)
               if(family =="negative.binomial") {
                 phis <- exp(param[names(param)=="lg_phi"])
               }
@@ -849,11 +849,12 @@
               if(is.null(formula1)){ out$formula <- formula} else {out$formula <- formula1}
               
               out$TMBfn <- objr
-              out$TMBfn$par <- -objr$env$last.par.best #optr$par #ensure params in this fn take final values
+              out$TMBfn$par <- optr$par
               out$logL <- -out$logL
               out$LL <- -LL #for now to return all LL from n.init
               out$start.struc <- start.struc
               out$equal.tolerances <- equal.tolerances
+              out$ridge <- list(gamma1,gamma2)
               
               #if(num.lv > 0) out$logL = out$logL + n*0.5*num.lv
               if(row.eff == "random") out$logL = out$logL + n*0.5
