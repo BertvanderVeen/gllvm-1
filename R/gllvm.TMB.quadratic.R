@@ -615,7 +615,7 @@
               }
                 
               if(inherits(optr,"try-error")) warning(optr[1]);
-              param<-objr$fn(optr$par)
+              param<-optr$par
               if(family =="negative.binomial") {
                 phis <- exp(param[names(param)=="lg_phi"])
               }
