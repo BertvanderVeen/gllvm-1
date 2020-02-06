@@ -366,14 +366,14 @@
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
                         parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), lambda3=rep(1,num.lv),u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                        DLL = "gllvm2")
+                        DLL = "qgllvm")
 
                 } else {
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
                         parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), lambda3=rep(1,num.lv), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta),
                         inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                        DLL = "gllvm2")##GLLVM
+                        DLL = "qgllvm")##GLLVM
                 }
                 
                 if(optimizer=="nlminb") {
@@ -433,13 +433,13 @@
                       data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
                       parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3,u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
                       inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                      DLL = "gllvm2")
+                      DLL = "qgllvm")
                   } else {
                     objr <- TMB::MakeADFun(
                       data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
                       parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
                       inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                      DLL = "gllvm2")#GLLVM#
+                      DLL = "qgllvm")#GLLVM#
                   }
                   
                   if(optimizer=="nlminb") {
@@ -498,13 +498,13 @@
                           data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
                           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3,u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
                           inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                          DLL = "gllvm2")
+                          DLL = "qgllvm")
                   } else {
                         objr <- TMB::MakeADFun(
                           data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, trace = as.integer(trace2), zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
                           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
                           inner.control=list(mgcmax = 1e+200,maxit = maxit),
-                          DLL = "gllvm2")#GLLVM#
+                          DLL = "qgllvm")#GLLVM#
                   }
                  
                   if(optimizer=="nlminb") {
@@ -549,7 +549,7 @@
               #       data = data, silent=TRUE,
               #       parameters = parslist,
               #       inner.control=list(mgcmax = 1e+200,maxit = maxit),
-              #       DLL = "gllvm2")
+              #       DLL = "qgllvm")
               # 
               #     if(optimizer=="nlminb") {
               #       timeo <- system.time(optr <- try(nlminb(pars, objr$fn, objr$gr,control = list(rel.tol=reltol, iter.max=maxit, eval.max=maxit,trace=trace2)),silent = !trace2))
@@ -582,7 +582,7 @@
               # 
               
                 if(n.init>1&parallel==TRUE){
-                  #clusterEvalQ(cl,library.dynam("gllvm2","gllvm.quadratic",lib.loc="C:/Users/beve/Documents/R/win-library/3.6/"))
+                  #clusterEvalQ(cl,library.dynam("qgllvm","gllvm.quadratic",lib.loc="C:/Users/beve/Documents/R/win-library/3.6/"))
                   #start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
                   try(results<-foreach(i=1:n.init, .export=ls(),.multicombine=T, .inorder=F, .packages="gllvm") %dopar% {
                     madeMod<-makeMod(i)
