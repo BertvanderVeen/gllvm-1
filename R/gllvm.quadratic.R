@@ -190,7 +190,7 @@
 #'}
 #' @export
 #'
-#'@useDynLib gllvm2, .registration = TRUE
+#'@useDynLib qgllvm, .registration = TRUE
 #'@import foreach
 #'@importFrom gllvm gllvm
 #'@importFrom vegan scores
