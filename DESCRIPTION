@@ -1,4 +1,4 @@
-Package: gllvm.quadratic
+Package: qgllvm
 Type: Package
 Title: quadratic GLLVM
 Version: 0.0.0
