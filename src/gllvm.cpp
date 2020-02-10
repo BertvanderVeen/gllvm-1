@@ -104,7 +104,7 @@ Type objective_function<Type>::operator() ()
   
   using namespace density;
   
-  Type nll = 0.0; // initial value of log-likelihood
+  parallel_accumulator<Type> nll(this);
   
   
   if(method<1){
