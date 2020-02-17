@@ -297,13 +297,9 @@ Type objective_function<Type>::operator() ()
         nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum()*gamma(q+1);
       }
     }
-  
-
-  //should remove the mean here..
 
     //shrinks LVs, quadratic ridge
-   // for(int j=0; j<lambda.cols(); j++){
-  for(int j=0; j<p; j++){
+   for(int j=0; j<lambda.cols(); j++){
     for(int q=0; q<num_lv; q++){
       nll += lambda2(q,j)*lambda2(q,j)*gamma2(q,j);//should be lamda2...
     //  nll += pow(newlam2(q,j)*newlam2(q,j) + newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q,j); //should not be hierarchical
