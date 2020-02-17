@@ -171,6 +171,7 @@
                 }
                 #helper function for parallel optimization
               makeMod<-function(i){
+                ridge<<-list(gamma1,gamma2)
                 sigma <- 1
                 if(starting.val!="lingllvm"){
                   fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[i], starting.val = starting.val, jitter.var = jitter.var2, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
