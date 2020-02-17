@@ -537,6 +537,7 @@
                 }
                 return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
               }
+              ridge<<-ridge
               # 
               # #find best ridge parameter values?
               # data <- objr$env$data
