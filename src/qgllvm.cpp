@@ -73,8 +73,8 @@ Type objective_function<Type>::operator() ()
     }
   }
   
-  //parallel_accumulator<Type> nll(this); // initial value of log-likelihood
- Type nll = 0;
+ parallel_accumulator<Type> nll(this); // initial value of log-likelihood
+ //Type nll = 0;
   C += r0*xr + offset;
   
   if(random(0)>0){
