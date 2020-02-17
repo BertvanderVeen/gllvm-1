@@ -129,9 +129,7 @@
                 if(length(diag.iter)>1)diag.iter<-diag.iter[2]
               }
               
-              if(is.null(maxit.lingllvm)){
-                maxit.lingllvm <- maxit
-              }  
+
               
               if(is.null(theta4)){
                 theta4<-rep(0,num.lv)
@@ -142,6 +140,9 @@
               }
               
               if(starting.val=="lingllvm"){
+                if(is.null(maxit.lingllvm)){
+                  maxit.lingllvm <- maxit
+                }  
                 fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit.lingllvm, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed)
                 start.params <- fit
               }
@@ -171,7 +172,6 @@
                 }
                 #helper function for parallel optimization
               makeMod<-function(i){
-                ridge<<-list(gamma1,gamma2)
                 sigma <- 1
                 if(starting.val!="lingllvm"){
                   fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[i], starting.val = starting.val, jitter.var = jitter.var2, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
@@ -537,7 +537,6 @@
                 }
                 return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
               }
-              ridge<<-ridge
               # 
               # #find best ridge parameter values?
               # data <- objr$env$data
