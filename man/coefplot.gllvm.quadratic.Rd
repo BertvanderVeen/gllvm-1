@@ -31,7 +31,7 @@
 
 \item{xlim.list}{list of vectors with length of two to define the intervals for an x axis in each covariate plot. Defaults to NULL when the interval is defined by the range of point estimates and confidence intervals}
 
-\item{...\tadditional}{graphical arguments.}
+\item{...}{additional graphical arguments.}
 }
 \description{
 Plots covariate coefficients and their confidence intervals.

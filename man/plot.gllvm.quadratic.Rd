@@ -27,6 +27,8 @@
 
 \item{var.colors}{colors for responses, vector with length of number of response variables or 1. Defaults to NULL, when different responses have different colors.}
 
+\item{add.smooth}{logical indicating if a smoother should be added.}
+
 \item{envelopes}{logical, indicating if simulated point-wise confidence interval envelope will be added to Q-Q plot, defaults to \code{TRUE}}
 
 \item{reps}{number of replications when simulating confidence envelopes for normal Q-Q plot}
@@ -35,9 +37,7 @@
 
 \item{n.plot}{number of species (response variables) to be plotted. Defaults to \code{NULL} when all response variables are plotted. Might be useful when data is very high dimensional.}
 
-\item{add.smooth\tlogical}{indicating if a smoother should be added.}
-
-\item{...\tadditional}{graphical arguments.}
+\item{...}{additional graphical arguments.}
 }
 \description{
 Five plots (selectable by which) are currently available: a plot of residuals against

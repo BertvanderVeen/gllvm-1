@@ -13,7 +13,7 @@
 
 \item{level}{the confidence level. Scalar between 0 and 1.}
 
-\item{...\tnot}{used.}
+\item{...}{not used.}
 }
 \description{
 Computes confidence intervals for  parameters in a fitted gllvm model.

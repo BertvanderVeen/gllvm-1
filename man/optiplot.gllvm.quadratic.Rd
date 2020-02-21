@@ -52,7 +52,7 @@
 
 \item{level}{level for prediction regions of sites and optima.}
 
-\item{...\tadditional}{graphical arguments.}
+\item{...}{additional graphical arguments.}
 }
 \description{
 Plots latent variables and their corresponding species optima.

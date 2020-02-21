@@ -22,7 +22,7 @@ Function returns following components:
 Calculates the residual covariance matrix for gllvm model.
 }
 \details{
-Residual covariance matrix, storing information on species co-occurrence that is not explained by the environmental variables (if included), is calculated using the matrix of latent variables loadings, that is,  \Sigma_{j,k} =\eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'} + .
+Residual covariance matrix, storing information on species co-occurrence that is not explained by the environmental variables (if included), is calculated using the matrix of latent variables loadings, that is,  \eqn{\Sigma_{j,k} =\eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'}} + .
 
 When the responses are modelled using the negative binomial distribution, the residual variances for each species must be adjusted for overdispersion. This is done by the term \eqn{\psi^{(1)}(1/\phi_j)} (\code{adjust = 1}), where \eqn{\psi^{(1)}} is the trigamma function.
 
@@ -41,7 +41,7 @@ Then binary response is defined as \eqn{Y_{ij} = 1}, if \eqn{Y^*_{ij} > 0} and 0
 Now we have that \eqn{\mu_{ij} = P(Y_{ij} = 1) = P(Y^*_{ij} > 0) = P(\eta_{ij} > -e_{ij}) = P(e_{ij} <= \eta_{ij})} which leads to the probit model.
 On linear predictor scale we then have that
 \deqn{V(\eta_{ij} + e_{ij}) = V(\eta_{ij}) + V(e_{ij}).}
-For the probit model, j,k = 1\ldots p \Sigma_{j,k} \eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'+ I_m}.
+For the probit model, j,k = 1\ldots p \eqn{\Sigma_{j,k} = \Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'+ I_m}.
 }
 \examples{
 # Load a dataset from the mvabund package
