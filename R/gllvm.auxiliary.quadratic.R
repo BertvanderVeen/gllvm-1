@@ -670,14 +670,14 @@ sdA<-function(fit){
   CovAerr
 }
 # draw an ellipse
-ellipse<-function(center, covM, rad, col, lty){
+ellipse<-function(center, covM, rad, col=4, lwd = 1, lty = 1){
   seg <- 51
   Qc <- chol(covM, pivot = TRUE)
   angles <- (0:seg) * 2 * pi / seg
   unit.circ <- cbind(cos(angles), sin(angles))
   order <- order(attr(Qc, "pivot"))
   ellips <- t(center + rad * t(unit.circ %*% Qc[, order]))
-  lines(ellips, col = col, lty=lty)
+  lines(ellips, col = col, lwd = lwd, lty = lty)
 }
 
 gamEnvelope <- function(x, y,line.col = "red", envelope.col = c("blue","lightblue"), col = 1, envelopes = TRUE, ...){
