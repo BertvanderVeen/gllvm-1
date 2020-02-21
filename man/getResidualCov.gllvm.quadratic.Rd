@@ -8,7 +8,7 @@
 \method{getResidualCov}{gllvm.quadratic}(object, adjust = 1)
 }
 \arguments{
-\item{object}{an object of class 'gllvm'.}
+\item{object}{an object of class 'gllvm.quadratic'.}
 
 \item{adjust}{The type of adjustment used for negative binomial and binomial distribution when computing residual correlation matrix. Options are 0 (no adjustment) and 1 (the default adjustment), see details.}
 }
@@ -19,10 +19,10 @@ Function returns following components:
  \item{trace.q }{trace of the residual covariance matrix per latent variable}
 }
 \description{
-Calculates the residual covariance matrix for gllvm model.
+Calculates the residual covariance matrix for a gllvm model.
 }
 \details{
-Residual covariance matrix, storing information on species co-occurrence that is not explained by the environmental variables (if included), is calculated using the matrix of latent variables loadings, that is,  \eqn{\Sigma_{j,k} =\eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'}} + .
+Residual covariance matrix, storing information on species co-occurrence that is not explained by the environmental variables (if included), is calculated using the matrix of latent variables loadings, that is,  \eqn{\Sigma_{j,k} = \Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'}.
 
 When the responses are modelled using the negative binomial distribution, the residual variances for each species must be adjusted for overdispersion. This is done by the term \eqn{\psi^{(1)}(1/\phi_j)} (\code{adjust = 1}), where \eqn{\psi^{(1)}} is the trigamma function.
 

@@ -248,7 +248,7 @@
   }
   
   
-  #'@export ordiplot
+  #'@export optiplot
   optiplot <- function(object, ...) {
     UseMethod(generic = "optiplot")
   }

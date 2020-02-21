@@ -20,6 +20,7 @@
   scale = FALSE,
   predict.region = FALSE,
   level = 0.95,
+  alpha.col = 0.4,
   ...
 )
 }
@@ -51,6 +52,8 @@
 \item{predict.region}{logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.}
 
 \item{level}{level for prediction regions of sites and optima.}
+
+\item{alpha.col}{used to control the transparency of confidence interval ribbons in 1D plot}
 
 \item{...}{additional graphical arguments.}
 }
