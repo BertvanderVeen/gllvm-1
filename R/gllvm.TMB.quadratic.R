@@ -795,12 +795,13 @@
                     if(equal.tolerances==F)colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
                     if(equal.tolerances==F)rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
                     se.lambdas3 <-  matrix(se[1:num.lv],p,num.lv,byrow=T);
+                    se.lambdas2 <- se.lambdas2 + se.lambdas3;
                     colnames(se.lambdas3) <- paste("LV", 1:num.lv, "^2",sep="");se <- se[-(1:(num.lv))]
                     if(equal.tolerances==F){
-                      out$sd$optima <- out$sd$theta/(2*(se.lambdas2+se.lambdas3));
+                      out$sd$optima <- out$sd$theta/(2*(se.lambdas2));
                       out$sd$theta <- cbind(out$sd$theta,se.lambdas2);  
                     }else{
-                      out$sd$optima <- -out$sd$theta/(2*(se.lambdas3));
+                      out$sd$optima <- -out$sd$theta/(2*(se.lambdas2));
                       out$sd$theta <- cbind(out$sd$theta);
                     }
                     out$sd$theta2 <- se.lambdas3[1,]
