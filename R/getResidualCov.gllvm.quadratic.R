@@ -10,7 +10,7 @@
 #'  \item{trace.q }{trace of the residual covariance matrix per latent variable}
 #'
 #' @details 
-#' Residual covariance matrix, storing information on species co-occurrence that is not explained by the environmental variables (if included), is calculated using the matrix of latent variables loadings, that is,  \Sigma_{j,k} =\eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'} + .
+#' Residual covariance matrix, storing information on species co-occurrence that is not explained by the environmental variables (if included), is calculated using the matrix of latent variables loadings, that is,  \eqn{\Sigma_{j,k} =\eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'}} + .
 #' 
 #' When the responses are modelled using the negative binomial distribution, the residual variances for each species must be adjusted for overdispersion. This is done by the term \eqn{\psi^{(1)}(1/\phi_j)} (\code{adjust = 1}), where \eqn{\psi^{(1)}} is the trigamma function.
 #' 
