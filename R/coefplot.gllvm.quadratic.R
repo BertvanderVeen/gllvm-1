@@ -8,7 +8,7 @@
 #' @param mfrow same as \code{mfrow} in \code{par}. If \code{NULL} (default) it is determined automatically.
 #' @param mar vector of length 4, which defines the margin sizes: \code{c(bottom, left, top, right)}. Defaults to \code{c(4,5,2,1)}.
 #' @param xlim.list list of vectors with length of two to define the intervals for an x axis in each covariate plot. Defaults to NULL when the interval is defined by the range of point estimates and confidence intervals
-#' @param ...\tadditional graphical arguments.
+#' @param ... additional graphical arguments.
 #'
 #' @author Jenni Niku <jenni.m.e.niku@@jyu.fi>, Francis K.C. Hui, Sara Taskinen
 #'

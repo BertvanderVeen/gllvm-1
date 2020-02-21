@@ -2,7 +2,7 @@
 #' @description  Extracts Log-likelihood from 'gllvm' objects.
 #'
 #' @param object   an object of class 'gllvm'.
-#' @param ...\tnot used.
+#' @param ... not used.
 #'
 #' @author David I. Warton, Jenni Niku
 #'

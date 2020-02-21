@@ -4,7 +4,7 @@
 #' @param object an object of class 'gllvm'.
 #' @param level the confidence level. Scalar between 0 and 1.
 #' @param parm a specification of which parameters are to be given confidence intervals, a vector of names. If missing, all parameters are considered.
-#' @param ...\tnot used.
+#' @param ... not used.
 #'
 #' @author Jenni Niku <jenni.m.e.niku@@jyu.fi>
 #'

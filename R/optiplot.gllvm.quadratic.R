@@ -15,7 +15,7 @@
   #' @param legend when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot
   #' @param predict.region logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.
   #' @param level level for prediction regions of sites and optima.
-  #' @param ...\tadditional graphical arguments.
+  #' @param ... additional graphical arguments.
   #'
   #' @details
   #' Function constructs a plot of species optima.

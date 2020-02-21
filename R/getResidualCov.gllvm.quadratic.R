@@ -29,7 +29,7 @@
 #' Now we have that \eqn{\mu_{ij} = P(Y_{ij} = 1) = P(Y^*_{ij} > 0) = P(\eta_{ij} > -e_{ij}) = P(e_{ij} <= \eta_{ij})} which leads to the probit model.
 #' On linear predictor scale we then have that
 #' \deqn{V(\eta_{ij} + e_{ij}) = V(\eta_{ij}) + V(e_{ij}).}
-#' For the probit model, j,k = 1\ldots p \Sigma_{j,k} \eqn{\Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'+ I_m}.
+#' For the probit model, j,k = 1\ldots p \eqn{\Sigma_{j,k} = \Theta_j\Theta_k' + 2diag(D_j)diag(\D_k)'+ I_m}.
 #'
 #' @author Francis K.C. Hui, Jenni Niku, David I. Warton
 #'

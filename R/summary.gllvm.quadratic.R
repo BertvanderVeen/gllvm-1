@@ -2,7 +2,7 @@
 #' @description A summary of the fitted 'gllvm' object, including function call, distribution family and model parameters.
 #'
 #' @param object   an object of class 'gllvm'
-#' @param ...\tnot used.
+#' @param ... not used.
 #'
 #' @author Jenni Niku <jenni.m.e.niku@@jyu.fi>
 #'

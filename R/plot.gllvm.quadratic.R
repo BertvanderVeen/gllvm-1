@@ -6,12 +6,12 @@
 #' @param which if a subset of the plots is required, specify a subset of the numbers 1:5, see caption below.
 #' @param caption captions to appear above the plots.
 #' @param var.colors colors for responses, vector with length of number of response variables or 1. Defaults to NULL, when different responses have different colors.
-#' @param add.smooth\tlogical indicating if a smoother should be added.
+#' @param add.smooth logical indicating if a smoother should be added.
 #' @param envelopes logical, indicating if simulated point-wise confidence interval envelope will be added to Q-Q plot, defaults to \code{TRUE}
 #' @param reps number of replications when simulating confidence envelopes for normal Q-Q plot
 #' @param envelope.col colors for envelopes, vector with length of two
 #' @param n.plot number of species (response variables) to be plotted. Defaults to \code{NULL} when all response variables are plotted. Might be useful when data is very high dimensional.
-#' @param ...\tadditional graphical arguments.
+#' @param ... additional graphical arguments.
 #'
 #' @details
 #' plot.gllvm is used for model diagnostics. Dunn-Smyth residuals (randomized quantile residuals) (Dunn and Smyth, 1996) are used in plots. Colors indicate different species.
