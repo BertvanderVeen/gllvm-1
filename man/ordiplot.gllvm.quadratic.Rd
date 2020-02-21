@@ -3,6 +3,7 @@
 \name{ordiplot.gllvm.quadratic}
 \alias{ordiplot.gllvm.quadratic}
 \alias{ordiplot}
+\alias{ordiplot.gllvm}
 \title{Plot latent variables from gllvm model}
 \usage{
 \method{ordiplot}{gllvm.quadratic}(
@@ -11,20 +12,17 @@
   ind.spp = NULL,
   alpha = 0.5,
   main = NULL,
-  which.lvs = NULL,
+  which.lvs = c(1, 2),
+  predict.region = FALSE,
+  level = 0.95,
   jitter = FALSE,
   jitter.amount = 0.2,
   s.colors = 1,
   symbols = FALSE,
   cex.spp = 0.7,
-  bell = TRUE,
-  env.ranges = FALSE,
-  type = "response",
-  intercept = TRUE,
-  legend = FALSE,
-  scale = "species",
-  predict.region = FALSE,
-  level = 0.95,
+  lwd.ellips = 0.5,
+  col.ellips = 4,
+  lty.ellips = 1,
   ...
 )
 }
@@ -41,6 +39,10 @@
 
 \item{which.lvs}{indices of two latent variables to be plotted if number of the latent variables is more than 2. A vector with length of two. Defaults to \code{c(1,2)}.}
 
+\item{predict.region}{logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.}
+
+\item{level}{level for prediction regions.}
+
 \item{jitter}{if \code{TRUE}, jittering is applied on points.}
 
 \item{jitter.amount}{numeric, positive value indicating an amount of jittering for each point, defaults to 0.2 (jitter range).}
@@ -51,39 +53,31 @@
 
 \item{cex.spp}{size of species labels in biplot}
 
-\item{bell}{logical, if TRUE plots bell-shapes (1D) or biplot with (scaled) predicted optima and 95 percent of the predicted environmental ranges (2D)}
+\item{lwd.ellips}{line width for prediction ellipses. See graphical parameter lwd.}
 
-\item{env.ranges}{logical, if TRUE plots predicted species distributions in 2D}
+\item{col.ellips}{colors for prediction ellipses.}
 
-\item{type}{when predicting bell-shapes, can be used to predict on the response or link scale. Default is response (except for ordinal, for which the only option is "link").}
+\item{lty.ellips}{line type for prediction ellipses. See graphical parameter lty.}
 
-\item{intercept}{when predicting bell-shapes, can be used to include species-intercepts in the plot. Default is TRUE}
-
-\item{legend}{when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot}
-
-\item{scale}{For 2D plots, either "species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.}
-
-\item{predict.region}{logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.}
-
-\item{leve}{level for prediction regions.}
-
-\item{...\tadditional}{graphical arguments.}
+\item{...}{additional graphical arguments.}
 }
 \description{
 Plots latent variables and their corresponding coefficients (biplot).
 }
 \details{
 Function constructs a scatter plot of two latent variables, i.e. an ordination plot. If only one latent
-variable is in the fitted model, latent variables are plotted against their row indices \code{bell=F}.
-or if \code{bell=T} against their predictions.
+variable is in the fitted model, latent variables are plotted against their corresponding row indices.
+The latent variables are labeled using the row index of the response matrix y.
 
 Coefficients related to latent variables are plotted in the same figure with the latent
-variables if \code{biplot = TRUE, bell = F}. They are labeled using the column names of y. The number
+variables if \code{biplot = TRUE}. They are labeled using the column names of y. The number
 of latent variable coefficients to be plotted can be controlled by ind.spp. An argument alpha
 is used to control the relative scaling of the latent variables and their coefficients.
 If \code{alpha = 0.5}, the latent variables and their coefficients are on the same scale.
-
-If \code{bell=T} and two latent variables are selected (which.lvs), species optima are plotted with predicted environmental ranges.
+For details for constructing a biplot, see Gabriel (1971).
+}
+\note{
+- If error is occurred when using \code{ordiplot()}, try full name of the function \code{ordiplot.gllvm()} as functions named 'ordiplot' might be found in other packages as well.
 }
 \examples{
 #'## Load a dataset from the mvabund package
@@ -95,6 +89,9 @@ ordiplot(fit)
 # Biplot with 10 species
 ordiplot(fit, biplot = TRUE, ind.spp = 10)
 
+}
+\references{
+Gabriel, K. R. (1971). The biplot graphic display of matrices with application to principal component analysis. Biometrika, 58, 453-467.
 }
 \author{
 Jenni Niku <jenni.m.e.niku@jyu.fi>, Francis K.C. Hui

@@ -97,7 +97,7 @@ Type objective_function<Type>::operator() ()
           A(r,c,i)=Au(num_lv*n+k*n+i);
           A(c,r,i)=A(r,c,i);
         }
-        k++;
+        k++;  
       }}
   }
   /*Calculates the commonly used (1/2) theta'_j A_i theta_j
