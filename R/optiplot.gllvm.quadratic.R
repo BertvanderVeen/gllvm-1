@@ -15,6 +15,7 @@
   #' @param legend when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot
   #' @param predict.region logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.
   #' @param level level for prediction regions of sites and optima.
+  #' @param alpha.col used to control the transparency of confidence interval ribbons in 1D plot
   #' @param ... additional graphical arguments.
   #'
   #' @details
@@ -38,7 +39,7 @@
   #'@export
   #'@export optiplot.gllvm.quadratic
   optiplot.gllvm.quadratic <- function(object,  ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, 
-                                       s.colors = 1, cex.spp = 0.7, opt.ranges=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, predict.region = FALSE, level = 0.95,...) {
+                                       s.colors = 1, cex.spp = 0.7, opt.ranges=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, predict.region = FALSE, level = 0.95, alpha.col = 0.4, ...) {
     if(class(object)!="gllvm.quadratic")
       stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.")
     
@@ -121,7 +122,7 @@
             curveUpCI<-curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=thetaCIupper[largest.lnorms,,drop=F][j,which.lvs],u2=thetaCIupper[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j], lty="dashed", add=T)  
           }
           
-          cols2 <- adjustcolor(cols[j], alpha.f = alpha)
+          cols2 <- scales::alpha(cols[j], alpha.col)
           polygon(c(curveLowCI$x,rev(curveLowCI$x)),c(curveLowCI$y,rev(curveUpCI$y)),border=NA,col=cols2)
         }
         if(legend==F){
@@ -234,7 +235,7 @@
       text(optima, labels = row.names(optima), col = cols, cex=cex.spp)
       if(opt.ranges!=F){
         for (j in 1:nrow(optima)) {
-          ellipse(optima[j,which.lvs], covM = diag(optSD[j,]), rad = sqrt(qchisq(level, df=object$num.lv)), col=scales::alpha(cols[j], 0.7), lty="dashed")#these ignore scaling for now
+          ellipse(optima[j,which.lvs], covM = diag(optSD[j,]), rad = sqrt(qchisq(level, df=object$num.lv)), col=scales::alpha(cols[j], alpha.col), lty="dashed")#these ignore scaling for now
           #need to draw a line for the species optima that are fixed at zero
           #car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col=scales::alpha(cols[j], 0.7), lty = "dashed", lwd=1)
         }
