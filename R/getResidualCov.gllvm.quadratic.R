@@ -1,7 +1,7 @@
 #' @title Extract residual covariance matrix from gllvm object
-#' @description  Calculates the residual covariance matrix for gllvm model.
+#' @description  Calculates the residual covariance matrix for a gllvm model.
 #'
-#' @param object  an object of class 'gllvm'.
+#' @param object  an object of class 'gllvm.quadratic'.
 #' @param adjust  The type of adjustment used for negative binomial and binomial distribution when computing residual correlation matrix. Options are 0 (no adjustment) and 1 (the default adjustment), see details.
 #'
 #' @return Function returns following components:
