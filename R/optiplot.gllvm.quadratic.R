@@ -9,13 +9,17 @@
   #' @param s.colors colors for sites
   #' @param cex.spp size of species labels in biplot
   #' @param scale For 2D plots, either "FALSE",species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
-  #' @param opt.ranges Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges
+  #' @param opt.region Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges
   #' @param type Can be used to predict on the response or link scale. Default is response (except for ordinal, for which the only option is "link").
   #' @param intercept Can be used to include species-intercepts in the plot. Default is TRUE
   #' @param legend when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot
-  #' @param predict.region logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.
-  #' @param level level for prediction regions of sites and optima.
-  #' @param alpha.col used to control the transparency of confidence interval ribbons in 1D plot
+  #' @param site.region logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.
+  #' @param level level for prediction regions. Can be a vector of size two, then the first index is the level for the site prediction regions and the second for optima.
+  #' @param lty.ellips line type for prediction ellipses. Can be a vector of size two. See graphical parameter lty.
+  #' @param lwd.ellips line width for prediction ellipses. Can be a vector of size two. See graphical parameter lwd.
+  #' @param col.ellips colors for site prediction ellipses.
+  #' @param level level for prediction regions. Can be a vector of size two. Defaults to 0.95.
+  #' @param alpha.col used to control the transparency of confidence interval ribbons in 1D plot, and prediction regions in 2D plot.
   #' @param ... additional graphical arguments.
   #'
   #' @details
@@ -39,7 +43,7 @@
   #'@export
   #'@export optiplot.gllvm.quadratic
   optiplot.gllvm.quadratic <- function(object,  ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, 
-                                       s.colors = 1, cex.spp = 0.7, opt.ranges=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, predict.region = FALSE, level = 0.95, alpha.col = 0.4, ...) {
+                                       s.colors = 1, cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", lwd.ellips = 1,...) {
     if(class(object)!="gllvm.quadratic")
       stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.")
     
@@ -111,7 +115,7 @@
           if(type=="link"){func <-function(x,beta,u,u2)beta+x*u+x^2*u2}else{func <-function(x,beta,u,u2)linkinv(beta+x*u+x^2*u2)}
           curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],add=T)  
         }
-        if(opt.ranges=="statistical"){
+        if(opt.region=="statistical"){
           thetaCIlower <- object$params$theta - 1.96*object$sd$theta
           thetaCIupper <- object$params$theta + 1.96*object$sd$theta
           if(intercept==F){
@@ -122,7 +126,7 @@
             curveUpCI<-curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=thetaCIupper[largest.lnorms,,drop=F][j,which.lvs],u2=thetaCIupper[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j], lty="dashed", add=T)  
           }
           
-          cols2 <- scales::alpha(cols[j], alpha.col)
+          cols2 <- scales::alpha(cols[j], ifelse(length(alpha.col)>2),alpha.col[2],alpha.col[1])
           polygon(c(curveLowCI$x,rev(curveLowCI$x)),c(curveLowCI$y,rev(curveUpCI$y)),border=NA,col=cols2)
         }
         if(legend==F){
@@ -150,11 +154,11 @@
       # quadr.coef[which(round(quadr.coef, 2) == 0)] <- 0
       excl <- sapply(1:nrow(optima), function(j) any(optima[j, ] > 10 | optima[j, ] < -10))
       
-      if(opt.ranges=="environmental")optSD <- 1/sqrt(-2 * quadr.coef)
-      if(opt.ranges=="statistical")optSD <- object$sd$optima[,which.lvs]
+      if(opt.region=="environmental")optSD <- 1/sqrt(-2 * quadr.coef)
+      if(opt.region=="statistical")optSD <- object$sd$optima[,which.lvs]
       #need to sort optSD by largestlnorms
       #and take ind.spp
-      if(opt.ranges!=F){
+      if(opt.region!=F){
         optSD <- optSD[largest.lnorms,]
       }
       if (length(which(excl))!=0) {
@@ -164,7 +168,7 @@
           message("Species ", paste(paste(row.names(optima[excl, ,drop=F]), collapse = ", "), " optima too far removed from the latent variables and will not be visualized (if bell=T)", 
                                     sep = " "))
           optima <- optima[!excl, , drop = F]
-          if(opt.ranges!=F)optSD <- optSD[!excl, , drop = F] 
+          if(opt.region!=F)optSD <- optSD[!excl, , drop = F] 
           
           cols <- cols[!excl]
         }
@@ -175,22 +179,22 @@
       
       if(scale=="species"){
         optima <- sweep(optima,2,((getResidualCov(object)$trace.q+getResidualCov(object)$trace.q2)/sum(getResidualCov(object)$trace.q)),"*")
-        if(opt.ranges!=F)optSD <-  sweep(optSD,2,((getResidualCov(object)$trace.q+getResidualCov(object)$trace.q2)/getResidualCov(object)$trace),"*")
+        if(opt.region!=F)optSD <-  sweep(optSD,2,((getResidualCov(object)$trace.q+getResidualCov(object)$trace.q2)/getResidualCov(object)$trace),"*")
       }else if(scale=="sites"){
         lvs<-sweep(lvs,2, ((getResidualCov(object)$trace.q+getResidualCov(object)$trace.q2)/sum(getResidualCov(object)$trace.q)),"*")
       }
-      #else if (scale == "tolerances"&opt.ranges!=FALSE) {
+      #else if (scale == "tolerances"&opt.region!=FALSE) {
       #  optima <- optima/tolerances
       #  lvs <- lvs/apply(tolerances, 2, mean)
       #  tolerances <- tolerances/tolerances
       #}
       
-      if(opt.ranges==F){
+      if(opt.region==F){
         plot(rbind(optima, lvs), xlab = paste("LV", which.lvs[1]), 
              ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
       }
       
-      if(opt.ranges%in%c("statistical","environmental")){
+      if(opt.region%in%c("statistical","environmental")){
         lower <- optima - 1.96 * optSD#need to adapt this, not the right size at the moment
         upper <- optima + 1.96 * optSD
         if(any(!apply(cbind(lower,upper),1,function(x)all(x>-100&x<100)))){
@@ -207,19 +211,16 @@
              ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
       }
       
-      if(predict.region){
+      if (site.region) {
+        if(length(col.ellips)!=n){ col.ellips =rep(col.ellips,n)}
+        
         sdb<-sdA(object)
         object$A<-sdb+object$A
-        r=0
-        #if(object$row.eff=="random") r=1
+        
         for (i in 1:n) {
-          if(object$Lambda.struc == "diagonal"){
-            covm <- diag(object$A[i,which.lvs+r]);
-          } else {
-            #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
-            covm <- object$A[i,which.lvs+r,which.lvs+r];
-          }
-          ellipse(lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)), col="gray", lty="solid")#these ignore scaling for now
+          #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
+          covm <- object$A[i,which.lvs,which.lvs];
+          ellipse( object$lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(ifelse(length(level)>1,level[1],level), df=object$num.lv)), col = scales::alpha(col.ellips[i],ifelse(length(alpha.col)>1,alpha.col[1],alpha.col)), lwd = ifelse(length(lwd.ellips)>1,lwd.ellips[1],lwd.ellips), lty = ifelse(length(lty.ellips)>1,lty.ellips[1],lty.ellips))
         }
       }
       
@@ -233,9 +234,9 @@
       
       text(lvs, labels = row.names(object$y),col="gray")
       text(optima, labels = row.names(optima), col = cols, cex=cex.spp)
-      if(opt.ranges!=F){
+      if(opt.region!=F){
         for (j in 1:nrow(optima)) {
-          ellipse(optima[j,which.lvs], covM = diag(optSD[j,]), rad = sqrt(qchisq(level, df=object$num.lv)), col=scales::alpha(cols[j], alpha.col), lty="dashed")#these ignore scaling for now
+          ellipse(optima[j,which.lvs], covM = diag(optSD[j,]), rad = sqrt(qchisq(ifelse(length(level)>1,level[2],level), df=object$num.lv)), col=scales::alpha(cols[j], ifelse(length(alpha.col)>1,alpha.col[2],alpha.col)), lty=ifelse(length(lty.ellips)>1,lty.ellips[2],lty.ellips), lwd=ifelse(length(lwd.ellips)>1,lwd.ellips[2],lwd.ellips))#these ignore scaling for now
           #need to draw a line for the species optima that are fixed at zero
           #car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col=scales::alpha(cols[j], 0.7), lty = "dashed", lwd=1)
         }
