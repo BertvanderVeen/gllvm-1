@@ -126,7 +126,7 @@
             curveUpCI<-curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=thetaCIupper[largest.lnorms,,drop=F][j,which.lvs],u2=thetaCIupper[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j], lty="dashed", add=T)  
           }
           
-          cols2 <- scales::alpha(cols[j], ifelse(length(alpha.col)>2),alpha.col[2],alpha.col[1])
+          cols2 <- scales::alpha(cols[j], ifelse(length(alpha.col)>2,alpha.col[2],alpha.col[1]))
           polygon(c(curveLowCI$x,rev(curveLowCI$x)),c(curveLowCI$y,rev(curveUpCI$y)),border=NA,col=cols2)
         }
         if(legend==F){
