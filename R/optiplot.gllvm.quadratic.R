@@ -161,11 +161,11 @@
                 X<-cbind(1,curvePlot$x,curvePlot$x^2,curvePlot$x^2)
               }
               if(intercept==F){
-                V.theta <- V[c(seq(1,p*num.lv*2,by=p)+j,(1+ncol(V)-num.lv):ncol(V)),c(seq(1,p*num.lv*2,by=p)+j,(1+ncol(V)-num.lv):ncol(V))]
+                V.theta <- V[c(seq(1,p*object$num.lv*2,by=p)+j,(1+ncol(V)-object$num.lv):ncol(V)),c(seq(1,p*object$num.lv*2,by=p)+j,(1+ncol(V)-object$num.lv):ncol(V))]
                 V.theta2 <- V[seq(1,ncol(V.theta),object$num.lv)+which.lvs-1,seq(1,ncol(V.theta),object$num.lv)+which.lvs-1]
               }else{
                 #this needs to account for the right species still..
-                V.theta <- V[c(seq(1,p+p*num.lv*2,by=p)+j,(1+ncol(V)-num.lv):ncol(V)),c(seq(1,p+p*num.lv*2,by=p)+j,(1+ncol(V)-num.lv):ncol(V))]
+                V.theta <- V[c(seq(1,p+p*object$num.lv*2,by=p)+j,(1+ncol(V)-object$num.lv):ncol(V)),c(seq(1,p+p*object$num.lv*2,by=p)+j,(1+ncol(V)-object$num.lv):ncol(V))]
                 V.theta2 <- V.theta[c(1,seq(2,ncol(V.theta),object$num.lv)+(which.lvs-1)),c(1,seq(2,ncol(V.theta),object$num.lv)+(which.lvs-1))]
               }
               
