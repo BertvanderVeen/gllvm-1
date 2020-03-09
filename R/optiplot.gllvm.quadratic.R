@@ -172,8 +172,14 @@
               #need to do this per species and X needs to be the x evaluated at the grid
               se<- sqrt(rowSums(X*(X%*%V.theta2)))
               n <- nrow(object$y)
-              curveLowCI <- curvePlot$y + se * qt(0.025, n - 3)
-              curveUpCI <- curvePlot$y - se * qt(0.025, n - 3)
+              if(intercept==T){
+                curveLowCI <- curvePlot$y + se * qt(0.025, n - 3)
+                curveUpCI <- curvePlot$y - se * qt(0.025, n - 3)  
+              }else{
+                curveLowCI <- curvePlot$y + se * qt(0.025, n - 2)
+                curveUpCI <- curvePlot$y - se * qt(0.025, n - 2)
+              }
+              
               
               cols2 <- scales::alpha(cols[j], ifelse(length(alpha.col)>2,alpha.col[2],alpha.col[1]))
               polygon(c(curvePlot$x,rev(curvePlot$x)),c(curveLowCI,rev(curveUpCI)),border=NA,col=cols2)
