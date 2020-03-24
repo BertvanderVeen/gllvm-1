@@ -1,7 +1,7 @@
 start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family, 
                                              offset= NULL, trial.size = 1, num.lv = 0, start.lvs = NULL, 
                                              seed = NULL,starting.val="res",formula=NULL, 
-                                             jitter.var=0,yXT=NULL, row.eff=FALSE, randomX = NULL, start.method=start.method, zeta.struc = zeta.struc) {
+                                             jitter.var=0,yXT=NULL, row.eff=FALSE, randomX = NULL, start.method="FA", zeta.struc = "species") {
   if(!is.null(seed)) set.seed(seed)
   N<-n <- nrow(y); p <- ncol(y); y <- as.matrix(y)
   num.T <- 0; if(!is.null(TR)) num.T <- dim(TR)[2]

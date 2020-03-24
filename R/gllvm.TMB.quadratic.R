@@ -265,13 +265,11 @@
                 phis <- NULL
                 if (family == "negative.binomial"&starting.val!="lingllvm") {
                   phis <- fit$phi
-                  if (any(phis > 20))
-                    phis[phis > 20] <- 20
-                  if (any(phis < 0.20))
-                    phis[phis < 0.2] <- 0.2
+                  if (any(phis > 25)) phis[phis > 25] <- 25
+                  if (any(phis < 0.04)) phis[phis < 0.04] <- 0.04
                   fit$phi <- phis
                   phis <- 1/phis
-                } 
+                }
                 if(is.null(start.params)|family!="ordinal"){
                 if(family=="ordinal"){
                   K = max(y00)-min(y00)
@@ -361,7 +359,7 @@
                 if(family == "negative.binomial") { familyn <- 1}
                 if(family == "binomial") { familyn <- 2}
                 if(family == "ordinal") { familyn <- 3}
-                
+
                 if(row.eff=="random"){
                       objr <- TMB::MakeADFun(
                         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
@@ -401,7 +399,6 @@
                   }
                 if(inherits(optr,"try-error")) warning(optr[1]);
                 #if(!inherits(optr,"try-error")&equal.tolerances!=TRUE){
-                
                 if(diag.iter>0 && Lambda.struc=="unstructured" && num.lv>1 && !inherits(optr,"try-error")){
                   objr1 <- objr
                   optr1 <- optr
@@ -415,7 +412,7 @@
                   log_sigma1 <- param1[nam=="log_sigma"]
                   #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
                   #this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
-                  Au1<- c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
+                  Au1<-c(pmax(param1[nam=="Au"],rep(log(1e-4), num.lv*n)), rep(0,num.lv*(num.lv-1)/2*n)) #c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
                   
                   lg_Ar1 <- param1[nam=="lg_Ar"]
                   
@@ -484,7 +481,7 @@
                   log_sigma1 <- param1[nam=="log_sigma"]
                   #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
                   #this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
-                  Au1 <- param1[names(param1)=="Au"]
+                  Au1 <- param1[nam=="Au"]
 
                   lg_Ar1 <- param1[nam=="lg_Ar"]
                  

@@ -9,12 +9,10 @@ print.gllvm.quadratic <- function(x, ...) {
     print(x$method)
     cat("\n")
     cat("log-likelihood: ", x$logL, "\n")
-    if (!is.null(x$params$inv.phi)) {
-        x$params$inv.phi <- NULL
-    }
+    if(!is.null(x$params$inv.phi)){ x$params$inv.phi <- NULL; }
     crit <- inf.criteria(x)
     df <- crit$k
-    cat("Degrees of freedom: ", df, "\n")
+    cat("Residual degrees of freedom: ", length(x$y) - df, "\n")
     cat("AIC: ", crit$AIC, "\n")
     cat("AICc: ", crit$AICc, "\n")
     cat("BIC: ", crit$BIC, "\n")
