@@ -299,7 +299,6 @@ Type objective_function<Type>::operator() ()
     }
 
     //shrinks LVs, quadratic ridge
-  Type penal = 0;
    for(int j=0; j<lambda2.cols(); j++){
     for(int q=0; q<num_lv; q++){
       nll += lambda2(q,j)*lambda2(q,j)*gamma2(q,j);//should be lamda2...
