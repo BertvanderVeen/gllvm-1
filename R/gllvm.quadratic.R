@@ -332,7 +332,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
     }
     
     if (any(colSums(y) == 0)) 
-        stop("There are responses full of zeros, model can not be fitted. \n")
+        warning("There are responses full of zeros, model can not be fitted. \n")
     
     if (row.eff %in% c("fixed", "random", TRUE)) {
         if (p < 2) 

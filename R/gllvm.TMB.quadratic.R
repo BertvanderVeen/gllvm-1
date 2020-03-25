@@ -34,7 +34,7 @@
                 link="probit"
               }
               if(num.lv==0){
-                stop("Can't fit the species packing model without latent variables")
+                stop("Need to at least include one LV in the model. If you want to fit a GLM, please use gllvm() instead.")
               }
               if(family == "ordinal") {
                 y00<-y
