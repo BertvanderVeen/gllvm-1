@@ -82,6 +82,8 @@ residuals.gllvm.quadratic <- function(object, ...) {
         mu <- mu + 1e-10
     if (object$family == "binomial") 
         mu <- binomial(link = object$link)$linkinv(eta.mat)
+    if (object$family == "gaussian")
+        mu <- (eta.mat)
     
     ds.res <- matrix(NA, n, p)
     rownames(ds.res) <- rownames(y)
@@ -102,10 +104,30 @@ residuals.gllvm.quadratic <- function(object, ...) {
                   u = 1e-16
                 ds.res[i, j] <- qnorm(u)
             }
+            if (object$family == "gaussian") {
+                phis <- object$params$phi
+                a <- pnorm(as.vector(unlist(y[i, j])), mu[i, j], sd = phis[j])
+                b <- pnorm(as.vector(unlist(y[i, j])), mu[i, j], sd = phis[j])
+                u <- runif(n = 1, min = a, max = b)
+                if(u==1) u=1-1e-16
+                if(u==0) u=1e-16
+                ds.res[i, j] <- qnorm(u)
+            }
+            if (object$family == "gamma") {
+                phis <- object$params$phi # - 1
+                a <- pgamma(as.vector(unlist(y[i, j])), shape = 1/phis[j], scale = phis[j]*mu[i, j])
+                b <- pgamma(as.vector(unlist(y[i, j])), shape = 1/phis[j], scale = phis[j]*mu[i, j])
+                u <- runif(n = 1, min = a, max = b)
+                if(u==1) u=1-1e-16
+                if(u==0) u=1e-16
+                ds.res[i, j] <- qnorm(u)
+            }
             if (object$family == "negative.binomial") {#still fix this, need to find correct size and prob
                 phis <- object$params$phi + 1e-05 # for nb1
-                a <- pnbinom(as.vector(unlist(y[i, j]))-1,mu = mu[i, j], size=mu[i,j]*phis[j])
-                b <- pnbinom(as.vector(unlist(y[i, j])),mu = mu[i, j], size=mu[i,j]*phis[j])
+                #a <- pnbinom(as.vector(unlist(y[i, j]))-1,mu = mu[i, j], size=mu[i,j]*phis[j])
+                #b <- pnbinom(as.vector(unlist(y[i, j])),mu = mu[i, j], size=mu[i,j]*phis[j])
+                a <- pnbinom(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], size = 1 / phis[j])
+                b <- pnbinom(as.vector(unlist(y[i, j])), mu = mu[i, j], size = 1 / phis[j])
                   u <- runif(n = 1, min = a, max = b)
                   if(a<b){
                     u <- runif(n = 1, min = a, max = b)

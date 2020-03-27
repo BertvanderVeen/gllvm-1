@@ -87,7 +87,7 @@ simulate.gllvm.quadratic = function(object, nsim = 1, conditional = FALSE, seed 
       
     }
     newDat = switch(object$family, binomial = rbinom(nTot, size = 1, prob = prs), poisson = rpois(nTot, prs), negative.binomial = rnbinom(nTot, 
-        size = phis*prs, mu = prs), ordinal = sims, stop(gettextf("family '%s' not implemented ", object$family), domain = NA))
+        size = 1/phis, mu = prs), ordinal = sims, stop(gettextf("family '%s' not implemented ", object$family), domain = NA))
     # reformat as data frame with the appropriate labels
     newDat = as.data.frame(matrix(newDat, ncol = nCols))
     dimnames(newDat) = dimnames(prs)

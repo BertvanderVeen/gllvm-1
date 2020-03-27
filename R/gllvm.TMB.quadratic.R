@@ -174,7 +174,8 @@
               makeMod<-function(i){
                 sigma <- 1
                 if(starting.val!="lingllvm"){
-                  fit <- start.values.gllvm.TMB.quadratic(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[i], starting.val = starting.val, jitter.var = jitter.var2, row.eff = row.eff, start.method=start.method, zeta.struc = zeta.struc)
+                  start.values.gllvm.TMB<-getFromNamespace("start.values.gllvm.TMB","gllvm")
+                  fit <- start.values.gllvm.TMB(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[i], starting.val = starting.val, jitter.var = jitter.var2, row.eff = row.eff, zeta.struc = zeta.struc)
                 }
                 if (is.null(start.params)) {
                   beta0 <- fit$params[, 1]
@@ -183,7 +184,7 @@
                     betas <- c(fit$params[, 2:(num.X + 1)])
                   lambdas <- NULL
                   
-                  lambdas <- as.matrix(fit$params[,(ncol(fit$params)-num.lv*2+1):(ncol(fit$params)-num.lv)])
+                  lambdas <- as.matrix(fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)])
                   lambdas[upper.tri(lambdas)] <- 0
                   
                   row.params <- NULL
@@ -197,10 +198,10 @@
                   lvs <- NULL
                   lvs <- matrix(fit$index, ncol = num.lv)
                   if(!is.null(X)){
-                    lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
+                    #lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
                     if(equal.tolerances==F)lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
                   }else if(is.null(X)){
-                    lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
+                    #lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
                     if(equal.tolerances==F)lambda2 <- fit$params[,-c(1:(num.lv+1))]  
                   }
                   
@@ -214,7 +215,7 @@
                       if(start.params$zeta.struc=="common")zeta <- start.params$params$zeta[-1]
                       
                     }
-                    if(start.params$family=="negative.binomial"){
+                    if(start.params$family %in% c("negative.binomial","gaussian","gamma")){
                       phi <- start.params$params$phi
                     }
                     beta0 <- start.params$params$beta0 ## column intercepts
@@ -263,12 +264,18 @@
                   }
                 }
                 phis <- NULL
-                if (family == "negative.binomial"&starting.val!="lingllvm") {
+                if(family%in%c("gaussian","gamma")){
+                  phi <- fit$phi
+                }
+                
+                if (family == "negative.binomial") {
                   phis <- fit$phi
+                  if(starting.val!="lingllvm"){
                   if (any(phis > 25)) phis[phis > 25] <- 25
                   if (any(phis < 0.04)) phis[phis < 0.04] <- 0.04
                   fit$phi <- phis
                   phis <- 1/phis
+                  }
                 }
                 if(is.null(start.params)|family!="ordinal"){
                 if(family=="ordinal"){
@@ -346,6 +353,8 @@
                 
                 if(start.struc=="common"){
                   lambda2 <- matrix(-0.01,ncol=num.lv, nrow=1)
+                }else{
+                  lambda2 <- matrix(-0.01,ncol=num.lv, nrow=p)
                 }
                 
                 u <- u+mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);#mostly makes sense when using lingllvm
@@ -359,6 +368,8 @@
                 if(family == "negative.binomial") { familyn <- 1}
                 if(family == "binomial") { familyn <- 2}
                 if(family == "ordinal") { familyn <- 3}
+                #if(family == "gaussian") {family <- }
+                if(family == "gamma") { familyn <- 4}
 
                 if(row.eff=="random"){
                       objr <- TMB::MakeADFun(
@@ -614,7 +625,7 @@
                 
               if(inherits(optr,"try-error")) warning(optr[1]);
               param<-optr$par
-              if(family =="negative.binomial") {
+              if(family%in%c("negative.binomial","gaussian","gamma")) {
                 phis <- exp(param[names(param)=="lg_phi"])
               }
               if(family == "ordinal"){
@@ -673,7 +684,7 @@
               # diag(theta) <- exp(diag(theta)) !!!
               
               
-              if(family %in% c("negative.binomial","gaussian")) {
+              if(family %in% c("negative.binomial","gaussian","gamma")) {
                 phis <- exp(param[names(param)=="lg_phi"])
               }
               
@@ -695,9 +706,12 @@
                   if(family=="ordinal"){
                     out$params$zeta <- zetas
                   }
-                  if(family =="negative.binomial") {
+                  if(family %in% c("negative.binomial")) {
                     out$params$inv.phi <- phis; names(out$params$inv.phi) <- colnames(out$y);
                     out$params$phi <- 1/phis; names(out$params$phi) <- colnames(out$y);
+                  }
+                  if(family %in% c("gaussian","gamma")) {
+                    out$params$phi <- phis; names(out$params$phi) <- colnames(out$y);
                   }
                   if(row.eff!=FALSE) {
                     if(row.eff=="random"){ out$params$sigma=sigma; names(out$params$sigma)="sigma"}
@@ -768,7 +782,7 @@
                     incld[names(objr$par)=="u"] <- TRUE;
                     incld[names(objr$par)=="Au"] <- TRUE;
             
-                  if(family=="negative.binomial") incl[names(objr$par)=="lg_phi"] <- FALSE
+                  if(family %in% c("negative.binomial","gaussian","gamma")) incl[names(objr$par)=="lg_phi"] <- FALSE
                   if(family=="ordinal") incl[names(objr$par)=="zeta"] <- FALSE
                     
                   A.mat <- -sdr[incl, incl] # a x a
@@ -812,6 +826,11 @@
                   
                   if(family %in% c("negative.binomial")) {
                     se.lphis <- se[1:p];  out$sd$inv.phi <- se.lphis*out$params$inv.phi;
+                    out$sd$phi <- se.lphis*out$params$phi;
+                    names(out$sd$phi) <- colnames(y);  se <- se[-(1:p)]
+                  }
+                  if(family %in% c("gamma","gaussian")) {
+                    se.lphis <- se[1:p];  out$sd$phi <- se.lphis*out$params$phi;
                     out$sd$phi <- se.lphis*out$params$phi;
                     names(out$sd$phi) <- colnames(y);  se <- se[-(1:p)]
                   }

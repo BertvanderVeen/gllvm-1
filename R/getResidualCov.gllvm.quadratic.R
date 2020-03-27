@@ -56,6 +56,7 @@ getResidualCov.gllvm.quadratic = function(object, adjust = 1) {
         t(object$params$theta[, -c(1:object$num.lv)])
     ResCov.q <- sapply(1:object$num.lv, function(q) object$params$theta[, q] %*% t(object$params$theta[, q]), simplify = F)
     ResCov.q2 <- sapply(1:object$num.lv, function(q) 2 * object$params$theta[, q + object$num.lv] %*% t(object$params$theta[, q + object$num.lv]), simplify = F)
+    
     if (adjust > 0 && object$family %in% c("negative.binomial", "binomial")) {
         if (object$family == "negative.binomial") {
             ResCov <- ResCov + diag(trigamma(object$params$phi))  #adjusted for gamma parameterization with phi rather than inv.phi
@@ -63,6 +64,23 @@ getResidualCov.gllvm.quadratic = function(object, adjust = 1) {
             ResCov.q2 <- sapply(1:object$num.lv, function(q) ResCov.q2[[q]] + diag(trigamma(object$params$phi))/(object$num.lv*2), simplify = F)
             
             }
+        
+        if(object$family == "negative.binomial"){ 
+            if(adjust == 1) {
+                ResCov <- ResCov + diag(log(object$params$phi + 1))
+                ResCov.q <- sapply(1:object$num.lv, function(q) ResCov.q[[q]] +  diag(log(object$params$phi + 1))/(object$num.lv*2), simplify = F)
+                ResCov.q2 <- sapply(1:object$num.lv, function(q) ResCov.q2[[q]] +  diag(log(object$params$phi + 1))/(object$num.lv*2), simplify = F)
+            }
+            if(adjust == 2){
+                ResCov <- ResCov + diag(trigamma(1/object$params$phi))
+                ResCov.q <- sapply(1:object$num.lv, function(q) ResCov.q[[q]] +   diag(trigamma(1/object$params$phi))/(object$num.lv*2), simplify = F)
+                ResCov.q2 <- sapply(1:object$num.lv, function(q) ResCov.q2[[q]] +   diag(trigamma(1/object$params$phi))/(object$num.lv*2), simplify = F)
+                
+                
+            }
+            
+        }
+        
         
         if (object$family == "binomial") {
             if (object$link == "probit") 

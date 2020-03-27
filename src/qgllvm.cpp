@@ -175,19 +175,21 @@ Type objective_function<Type>::operator() ()
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
   }else if(family==1){
-    matrix <Type> zetanew(n,p);
-    matrix <Type> B(num_lv,num_lv);
-    matrix <Type> v(num_lv,1);
+   // matrix <Type> zetanew(n,p);
+   // matrix <Type> B(num_lv,num_lv);
+   // matrix <Type> v(num_lv,1);
     for (int i=0; i<n; i++) {
-      matrix <Type> Q = atomic::matinv(A.col(i).matrix());
+      //matrix <Type> Q = atomic::matinv(A.col(i).matrix());
       for (int j=0; j<p;j++){
-        B = (D.col(j).matrix()+Q);
-        v = (newlam.col(j)+Q*u.row(i).transpose());
-        Type detB = pow(B.determinant(),-0.5);
-        Type detA = pow(A.col(i).matrix().determinant(),-0.5);
-        zetanew(i,j) = iphi(j) + exp(C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
+      //  B = (D.col(j).matrix()+Q);
+      //  v = (newlam.col(j)+Q*u.row(i).transpose());
+      //  Type detB = pow(B.determinant(),-0.5);
+      //  Type detA = pow(A.col(i).matrix().determinant(),-0.5);
+       // zetanew(i,j) = iphi(j) + exp(C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
 
-        nll -= y(i,j) * eta(i,j) - (y(i,j) + iphi(j))*log(zetanew(i,j)) - iphi(j)*((y(i,j) + iphi(j))/zetanew(i,j)) + lgamma(y(i,j)+iphi(j)) - lfactorial(y(i,j)) + iphi(j)*log(iphi(j)) - lgamma(iphi(j));
+        //nll -= y(i,j) * eta(i,j) - (y(i,j) + iphi(j))*log(zetanew(i,j)) - iphi(j)*((y(i,j) + iphi(j))/zetanew(i,j)) + lgamma(y(i,j)+iphi(j)) - lfactorial(y(i,j)) + iphi(j)*log(iphi(j)) - lgamma(iphi(j));
+        //nll -=  y(i,j)*eta(i,j) - (y(i,j)+iphi(j))*log(iphi(j)+exp(eta(i,j))) + lgamma(y(i,j)+iphi(j)) + iphi(j)*log(iphi(j)) - lgamma(iphi(j)) -lfactorial(y(i,j));
+        nll -= -iphi(j)*eta(i,j) - (y(i,j)+iphi(j))*log(1+iphi(j)*exp(-eta(i,j))) + lgamma(y(i,j)+iphi(j))+ iphi(j)*log(iphi(j)) - lgamma(iphi(j))  -lfactorial(y(i,j));
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
@@ -280,6 +282,13 @@ Type objective_function<Type>::operator() ()
           }
         }
         nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+      }
+      nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+    }
+  }else if(family == 4){
+    for (int i=0; i<n; i++) {
+      for (int j=0; j<p;j++){
+        nll -= ( -eta(i,j) - exp(-eta(i,j))*y(i,j) )/iphi(j) + log(y(i,j)/iphi(j))/iphi(j) - log(y(i,j)) -lgamma(1/iphi(j));
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
