@@ -6,6 +6,88 @@
 //GLLVM
 //Author: Bert van der Veen
 //------------------------------------------------------------
+
+// template<class Type>
+// struct func {
+//   vector <Type> lambda;
+//   vector <Type> lambda2;
+//   Type C;
+//   Type y;
+//   Type iphi;
+//   int family;
+//   int num_lv;
+//    Type operator() (vector<Type> z) {
+//     Type ans = 0;
+//     Type linpred = 0;
+//     for (int q=0; q<num_lv; q++){
+//     linpred += C + z(q)*lambda(q) - z(q)*z(q)*lambda2(q);
+//     ans += dnorm(z(q),Type(0),Type(1),false);
+//     }
+//     if(family==4){
+//       ans += (exp(-linpred)*y)/iphi;//this needs to include other terms that it's multiplied by all the necessary parts, rather than ans
+//     }
+//     if(family==1){
+//       ans += (y+iphi)*log(1+iphi*exp(-linpred));//this needs to include other terms that it's multiplied by all the necessary parts, rather than ans
+//     }
+//     
+//     return ans;
+//   }
+// };
+
+template<class Type>
+struct func2 {
+  vector <Type> lambda;
+  vector <Type> lambda2;
+  matrix <Type> A;
+  vector <Type> a;
+  Type C;
+  
+  int num_lv;
+  Type operator() (vector<Type> z) {
+    
+    Type linpred = C;
+    for (int q=0; q<num_lv; q++){
+      linpred += z(q)*lambda(q) - z(q)*z(q)*lambda2(q);
+    }
+    
+    Type ans = exp(linpred)*exp(-density::MVNORM(A)(z-a));
+    
+    return ans;//still try to do this with matrix algebra and mvnorm self written out
+  }
+};
+template<class Type>
+struct func {
+  vector <Type> lambda;
+  vector <Type> lambda2;
+  matrix <Type> A;
+  vector <Type> a;
+  Type C;
+
+  int num_lv;
+  Type operator() (vector<Type> z) {
+    
+    Type linpred = C;
+    for (int q=0; q<num_lv; q++){
+     linpred -= z(q)*lambda(q) - z(q)*z(q)*lambda2(q);
+    }
+    
+    Type ans = exp(linpred)*exp(-density::MVNORM(A)(z-a));
+    
+    return ans;//still try to do this with matrix algebra and mvnorm self written out
+  }
+};
+
+// template<class Type>
+// vector<Type> integrate(vector<Type> lambda, vector<Type> lambda2, Type C, Type y, Type iphi, int family) {
+//   func<Type> f = {lambda, lambda2, C, y, iphi, family};
+//   vector<Type> a(lambda.size());
+//   vector<Type> b(lambda.size());
+//   a.fill(-5);
+//   b.fill(5);
+//   Type res = romberg::integrate(f, a, b);
+//   return res;
+// }
+
 template<class Type>
 Type objective_function<Type>::operator() ()
 {
@@ -15,7 +97,9 @@ Type objective_function<Type>::operator() ()
   DATA_MATRIX(x);
   DATA_MATRIX(xr);
   DATA_MATRIX(offset);
-
+  
+  //DATA_INTEGER(int_n);//number of quadrature points for Romberg integration in the future
+  DATA_INTEGER(n_int);
   PARAMETER_MATRIX(r0);
   PARAMETER_MATRIX(b);
   PARAMETER_MATRIX(B);
@@ -55,7 +139,7 @@ Type objective_function<Type>::operator() ()
   C.fill(0.0);
   
   matrix<Type> newlam(num_lv,p);
-
+  
   for (int j=0; j<p; j++){
     for (int i=0; i<num_lv; i++){
       if (j < i){
@@ -73,8 +157,8 @@ Type objective_function<Type>::operator() ()
     }
   }
   
- parallel_accumulator<Type> nll(this); // initial value of log-likelihood
- //Type nll = 0;
+  //parallel_accumulator<Type> nll(this); // initial value of log-likelihood
+  Type nll = 0;
   C += r0*xr + offset;
   
   if(random(0)>0){
@@ -101,7 +185,7 @@ Type objective_function<Type>::operator() ()
       }}
   }
   /*Calculates the commonly used (1/2) theta'_j A_i theta_j
-  A is a num.lv x nmu.lv x n array, theta is p x num.lv matrix*/
+   A is a num.lv x nmu.lv x n array, theta is p x num.lv matrix*/
   for (int i=0; i<n; i++) {
     nll -= 0.5*(log(A.col(i).matrix().determinant()) - A.col(i).matrix().trace());// log(det(A_i))-sum(trace(A_i))*0.5 sum.diag(A)
   }
@@ -140,17 +224,16 @@ Type objective_function<Type>::operator() ()
     }
   }
   
-
   matrix <Type> eta = C + u*newlam - (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
-
+  
   array<Type> D(num_lv,num_lv,p);
   D.fill(0.0);
   for (int j=0; j<p; j++){
     for (int q=0; q<num_lv; q++){
-          D(q,q,j) = 2*newlam2(q,j);
+      D(q,q,j) = 2*newlam2(q,j);
     }
   }
-
+  
   //trace of quadratic effect
   for (int i=0; i<n; i++) {
     for (int j=0; j<p;j++){
@@ -172,26 +255,37 @@ Type objective_function<Type>::operator() ()
         e_eta(i,j) = exp(C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
         nll -= y(i,j)*eta(i,j) - e_eta(i,j) - lfactorial(y(i,j));
       }
+      REPORT(e_eta);
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
   }else if(family==1){
-   // matrix <Type> zetanew(n,p);
-   // matrix <Type> B(num_lv,num_lv);
-   // matrix <Type> v(num_lv,1);
+    
+    // matrix <Type> zetanew(n,p);
+    // matrix <Type> B(num_lv,num_lv);
+    // matrix <Type> v(num_lv,1);
+    vector<Type> a(num_lv);
+    vector<Type> b(num_lv);
+    a.fill(-5);
+    b.fill(5);
+    matrix <Type> ans(n,p);
     for (int i=0; i<n; i++) {
       //matrix <Type> Q = atomic::matinv(A.col(i).matrix());
       for (int j=0; j<p;j++){
-      //  B = (D.col(j).matrix()+Q);
-      //  v = (newlam.col(j)+Q*u.row(i).transpose());
-      //  Type detB = pow(B.determinant(),-0.5);
-      //  Type detA = pow(A.col(i).matrix().determinant(),-0.5);
-       // zetanew(i,j) = iphi(j) + exp(C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
-
+        func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
+        ans(i,j) = romberg::integrate(f, a, b, n_int, num_lv);
+        //  B = (D.col(j).matrix()+Q);
+        //  v = (newlam.col(j)+Q*u.row(i).transpose());
+        //  Type detB = pow(B.determinant(),-0.5);
+        //  Type detA = pow(A.col(i).matrix().determinant(),-0.5);
+        // zetanew(i,j) = iphi(j) + exp(C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
+        
+        
         //nll -= y(i,j) * eta(i,j) - (y(i,j) + iphi(j))*log(zetanew(i,j)) - iphi(j)*((y(i,j) + iphi(j))/zetanew(i,j)) + lgamma(y(i,j)+iphi(j)) - lfactorial(y(i,j)) + iphi(j)*log(iphi(j)) - lgamma(iphi(j));
         //nll -=  y(i,j)*eta(i,j) - (y(i,j)+iphi(j))*log(iphi(j)+exp(eta(i,j))) + lgamma(y(i,j)+iphi(j)) + iphi(j)*log(iphi(j)) - lgamma(iphi(j)) -lfactorial(y(i,j));
-        nll -= -iphi(j)*eta(i,j) - (y(i,j)+iphi(j))*log(1+iphi(j)*exp(-eta(i,j))) + lgamma(y(i,j)+iphi(j))+ iphi(j)*log(iphi(j)) - lgamma(iphi(j))  -lfactorial(y(i,j));
+        nll -= -iphi(j)*eta(i,j) - (y(i,j)+iphi(j))*log(1+iphi(j)*ans(i,j)) + lgamma(y(i,j)+iphi(j))+ iphi(j)*log(iphi(j)) - lgamma(iphi(j))  -lfactorial(y(i,j));
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+      REPORT(ans);
     }
   } else if(family==2){
     matrix <Type> mu(n,p);
@@ -203,59 +297,59 @@ Type objective_function<Type>::operator() ()
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
-
+    
   } else if(family==3 && zetastruc==1){
-
+    
     int ymax =  CppAD::Integer(y.maxCoeff());
     int K = ymax - 1;
-
+    
     matrix <Type> zetanew(p,K);
     zetanew.fill(0.0);
-
+    
     int idx = 0;
+    for(int j=0; j<p; j++){
+      int ymaxj = CppAD::Integer(y.col(j).maxCoeff());
+      int Kj = ymaxj - 1;
+      if(Kj>1){
+        for(int k=0; k<(Kj-1); k++){
+          if(k==1){
+            zetanew(j,k+1) = fabs(zeta(idx+k));//second cutoffs must be positive
+          }else{
+            zetanew(j,k+1) = zeta(idx+k);
+          }
+          
+        }
+      }
+      idx += Kj-1;
+    }
+    
+    for (int i=0; i<n; i++) {
       for(int j=0; j<p; j++){
         int ymaxj = CppAD::Integer(y.col(j).maxCoeff());
-        int Kj = ymaxj - 1;
-          if(Kj>1){
-            for(int k=0; k<(Kj-1); k++){
-              if(k==1){
-                zetanew(j,k+1) = fabs(zeta(idx+k));//second cutoffs must be positive
-              }else{
-                zetanew(j,k+1) = zeta(idx+k);
-              }
-
+        //minimum category
+        if(y(i,j)==1){
+          nll -= log(pnorm(zetanew(j,0) - eta(i,j), Type(0), Type(1)));
+        }else if(y(i,j)==ymaxj){
+          //maximum category
+          int idx = ymaxj-2;
+          nll -= log(1 - pnorm(zetanew(j,idx) - eta(i,j), Type(0), Type(1)));
+        }else if(ymaxj>2){
+          for (int l=2; l<ymaxj; l++) {
+            if(y(i,j)==l && l != ymaxj){
+              nll -= log(pnorm(zetanew(j,l-1)-eta(i,j), Type(0), Type(1))-pnorm(zetanew(j,l-2)-eta(i,j), Type(0), Type(1)));
             }
           }
-          idx += Kj-1;
+        }
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
-
-          for (int i=0; i<n; i++) {
-            for(int j=0; j<p; j++){
-              int ymaxj = CppAD::Integer(y.col(j).maxCoeff());
-              //minimum category
-              if(y(i,j)==1){
-                nll -= log(pnorm(zetanew(j,0) - eta(i,j), Type(0), Type(1)));
-              }else if(y(i,j)==ymaxj){
-              //maximum category
-              int idx = ymaxj-2;
-                nll -= log(1 - pnorm(zetanew(j,idx) - eta(i,j), Type(0), Type(1)));
-              }else if(ymaxj>2){
-              for (int l=2; l<ymaxj; l++) {
-                if(y(i,j)==l && l != ymaxj){
-                  nll -= log(pnorm(zetanew(j,l-1)-eta(i,j), Type(0), Type(1))-pnorm(zetanew(j,l-2)-eta(i,j), Type(0), Type(1)));
-                }
-              }
-              }
-              nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
-            }
-            nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
-          }
-
+      nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+    }
+    
   } else if(family==3 && zetastruc==0){
-
+    
     int ymax =  CppAD::Integer(y.maxCoeff());
     int K = ymax - 1;
-
+    
     vector <Type> zetanew(K);
     zetanew.fill(0.0);
     for(int k=0; k<(K-1); k++){
@@ -285,41 +379,80 @@ Type objective_function<Type>::operator() ()
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
-  }else if(family == 4){
+  }else if(family==4){      
+    vector<Type> a(num_lv);
+    vector<Type> b(num_lv);
+    a.fill(-5);
+    b.fill(5);
+    matrix <Type> ans(n,p);
     for (int i=0; i<n; i++) {
       for (int j=0; j<p;j++){
-        nll -= ( -eta(i,j) - exp(-eta(i,j))*y(i,j) )/iphi(j) + log(y(i,j)/iphi(j))/iphi(j) - log(y(i,j)) -lgamma(1/iphi(j));
+        func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
+        ans(i,j) = romberg::integrate(f, a, b, n_int, num_lv);//should still catch Infs here..
+        // nll -= -lgamma(iphi(j)) + iphi(j)*log(iphi0(j)*y(i,j)) - iphi(j)*eta(i,j) - iphi(j)*y(i,j)* eta2.mean();
+        nll -=  ( -eta(i,j) - ans(i,j)*y(i,j) )/iphi(j) + log(y(i,j)/iphi(j))/iphi(j) - log(y(i,j)) -lgamma(1/iphi(j));
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+      REPORT(ans);
+      // Type test = density::MVNORM(A.col(0).matrix())(u.row(0));
+      // density::MVNORM_t<Type>nltest(A.col(0).matrix());
+      // Type test2 = nltest(u.row(0));
+      // REPORT(test);//these were exactly the same..
+      // REPORT(test2);
+    }
+    //report eta2, maybe write the MCI in a function.
+  }else if(family==5){
+    //here do poisson with numerical integration of exp(eta). Can compare as we have the closed form. Just add a Poisson2 family for now for testing.
+    vector<Type> a(num_lv);
+    vector<Type> b(num_lv);
+    a.fill(-5);
+    b.fill(5);
+    matrix <Type> ans(n,p);
+    for (int i=0; i<n; i++) {
+      for (int j=0; j<p;j++){
+        func2<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
+        ans(i,j) = romberg::integrate(f, a, b, n_int, num_lv);//should still catch Infs here..
+        // nll -= -lgamma(iphi(j)) + iphi(j)*log(iphi0(j)*y(i,j)) - iphi(j)*eta(i,j) - iphi(j)*y(i,j)* eta2.mean();
+        nll -=  eta(i,j)*y(i,j) - ans(i,j) -lfactorial(y(i,j));
+      }
+      nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+      REPORT(ans);
+      // Type test = density::MVNORM(A.col(0).matrix())(u.row(0));
+      // density::MVNORM_t<Type>nltest(A.col(0).matrix());
+      // Type test2 = nltest(u.row(0));
+      // REPORT(test);//these were exactly the same..
+      // REPORT(test2);
+    }
+  
+  }
+  
+  //shrinks LVs, linear ridge
+  if(nTol==1){
+    for(int q=0; q<(num_lv-1); q++){
+      nll += (newlam.row(q).array()*newlam.row(q).array()+newlam2.row(q).array()*newlam2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma(q);
+      nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma(q+1);
+    }
+    
+  }else{
+    for(int q=0; q<(num_lv-1); q++){
+      nll += (newlam.row(q).array()*newlam.row(q).array()+lambda2.row(q).array()*lambda2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum()*gamma(q);
+      nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum()*gamma(q+1);
     }
   }
-    //shrinks LVs, linear ridge
-    if(nTol==1){
-      for(int q=0; q<(num_lv-1); q++){
-        nll += (newlam.row(q).array()*newlam.row(q).array()+newlam2.row(q).array()*newlam2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma(q);
-        nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma(q+1);
-      }
-
-    }else{
-      for(int q=0; q<(num_lv-1); q++){
-        nll += (newlam.row(q).array()*newlam.row(q).array()+lambda2.row(q).array()*lambda2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum()*gamma(q);
-        nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum()*gamma(q+1);
-      }
-    }
-
-    //shrinks LVs, quadratic ridge
-   for(int j=0; j<lambda2.cols(); j++){
+  
+  //shrinks LVs, quadratic ridge
+  for(int j=0; j<lambda2.cols(); j++){
     for(int q=0; q<num_lv; q++){
       nll += lambda2(q,j)*lambda2(q,j)*gamma2(q,j);//should be lamda2...
-    //  nll += pow(newlam2(q,j)*newlam2(q,j) + newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q,j); //should not be hierarchical
+      //  nll += pow(newlam2(q,j)*newlam2(q,j) + newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q,j); //should not be hierarchical
       //nll += pow(newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q+1,j);
     }
   }
   nll -= -0.5*(u.array()*u.array()).sum() - n*log(sigma)*random(0);// -0.5*t(u_i)*u_i
-
+  
   SIMULATE {
     matrix<Type> mu = r0*xr + offset;
-
+    
     if(model<1){
       mu += x*b;
     } else {
@@ -332,7 +465,7 @@ Type objective_function<Type>::operator() ()
         }
       }
     }
-
+    
     mu += u*newlam - (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
     matrix<Type>sims(n,p);
     if(family==0){
@@ -345,10 +478,9 @@ Type objective_function<Type>::operator() ()
     // }else if(family==1){
     //
     // }
-
+    
     REPORT(sims);          // Report the simulation
-
+    
   }
-
   return nll;
 }
