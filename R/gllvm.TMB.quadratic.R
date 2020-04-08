@@ -2,13 +2,13 @@
 ## GLLVM, with estimation done via Variational approximation using TMB-package
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
- y<-simdat(mean,1,1)
- X = NULL; formula = NULL; num.lv = 2; family = "gamma";
- Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = TRUE;
- seed = NULL;maxit = 10000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
- n.init=1;start.params=NULL;
- optimizer="optim";starting.val="res";diag.iter=1;
- Lambda.start=c(0.1,0.5); jitter.var=0; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; equal.tolerances=F; start.struc="species"; gamma1=0;gamma2=0; theta4=0
+ #y<-simdat(mean,1,1)
+ ##X = NULL; formula = NULL; num.lv = 2; family = "gamma";
+ ##Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = TRUE;
+ ##seed = NULL;maxit = 10000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
+ ##n.init=1;start.params=NULL;
+ ##optimizer="optim";starting.val="res";diag.iter=1;
+ ##Lambda.start=c(0.1,0.5); jitter.var=0; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; equal.tolerances=F; start.struc="species"; gamma1=0;gamma2=0; theta4=0
 
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
