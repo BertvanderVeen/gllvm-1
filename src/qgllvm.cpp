@@ -98,7 +98,6 @@ Float eval(Float C, matrix<Float> lambda, matrix<Float> lambda2, matrix<Float> u
 template<class Float>
 struct integrand2 {
   typedef Float Scalar; // Required by integrate
-  Float C;
   matrix<Float> theta;
   matrix<Float> theta2;
   matrix<Float> u;
@@ -127,7 +126,7 @@ struct integrand2 {
     //vector <Float> u()
     
     
-    Float ans = C;
+    Float ans = 0;
     //for (int q=0; q<num_lv; q++){
     //  ans -= C + znew(0,q)*theta(0,q) - znew(0,q)*znew(0,q)*theta2(0,q);
     //}
@@ -149,7 +148,7 @@ struct integrand2 {
   Float integrate() {
     using namespace gauss_kronrod;
     // control<Float> c = {100, 1e-6, 1e-6};
-    Float ans = mvIntegrate(*this, control(100,1e-6,1e-6)).//100 subdivisions is default, 1e6 is more accurate than default(1e-4)
+    Float ans = mvIntegrate(*this, control(100,1e-4,1e-4)).//100 subdivisions is default, 1e6 is more accurate than default(1e-4)
     //can write a simple ifelse statement here for # of lVs as wrt doesn't accept a vector
     wrt(z1, -INFINITY, INFINITY).
     wrt(z2, -INFINITY, INFINITY) ();
@@ -160,9 +159,9 @@ struct integrand2 {
 };
 
 template<class Float>
-Float eval2(Float C, matrix<Float> lambda, matrix<Float> lambda2, matrix<Float> u, matrix<Float> A){//, matrix<Float> Linv) {
-  integrand2<Float> f = {C, lambda, lambda2, u, A};//, Linv};
-  return f.integrate();
+Float eval2(matrix<Float> lambda, matrix<Float> lambda2, matrix<Float> u, matrix<Float> A){//, matrix<Float> Linv) {
+  integrand2<Float> f = {lambda, lambda2, u, A};//, Linv};
+  return log(f.integrate());
 }//might want to register atomic this to reduce the tape size.
 
 
@@ -546,8 +545,9 @@ Type objective_function<Type>::operator() ()
         }
         
         // func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
-        ans(i,j) = eval2(C(i,j), newlamtemp, newlamtemp2, utemp, A.col(i).matrix());//, Linv);//necessary conversion I got from the adaptive_integration example. Otherwise, doesn't compile
-        nll -=  eta(i,j)*y(i,j) - ans(i,j) -lfactorial(y(i,j));
+        ans(i,j) = eval2(newlamtemp, newlamtemp2, utemp, A.col(i).matrix());//, Linv);//necessary conversion I got from the adaptive_integration example. Otherwise, doesn't compile
+        ans(i,j) += C(i,j);
+        nll -=  eta(i,j)*y(i,j) - exp(ans(i,j)) -lfactorial(y(i,j));
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
       REPORT(ans);
