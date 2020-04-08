@@ -1,92 +1,170 @@
-#define TMB_LIB_INIT R_init_qgllvm
 #include <TMB.hpp>
-#include<math.h>
-
 //--------------------------------------------------------
-//GLLVM
+//QGLLVM
 //Author: Bert van der Veen
 //------------------------------------------------------------
 
-// template<class Type>
-// struct func {
-//   vector <Type> lambda;
-//   vector <Type> lambda2;
-//   Type C;
-//   Type y;
-//   Type iphi;
-//   int family;
-//   int num_lv;
-//    Type operator() (vector<Type> z) {
-//     Type ans = 0;
-//     Type linpred = 0;
-//     for (int q=0; q<num_lv; q++){
-//     linpred += C + z(q)*lambda(q) - z(q)*z(q)*lambda2(q);
-//     ans += dnorm(z(q),Type(0),Type(1),false);
-//     }
-//     if(family==4){
-//       ans += (exp(-linpred)*y)/iphi;//this needs to include other terms that it's multiplied by all the necessary parts, rather than ans
-//     }
-//     if(family==1){
-//       ans += (y+iphi)*log(1+iphi*exp(-linpred));//this needs to include other terms that it's multiplied by all the necessary parts, rather than ans
-//     }
-//     
-//     return ans;
-//   }
-// };
-
-template<class Type>
-struct func2 {
-  vector <Type> lambda;
-  vector <Type> lambda2;
-  matrix <Type> A;
-  vector <Type> a;
-  Type C;
+template<class Float>
+struct integrand {
+  typedef Float Scalar; // Required by integrate
+  Float C;
+  matrix<Float> theta;
+  matrix<Float> theta2;
+  matrix<Float> u;
+  matrix<Float> A;
+  matrix<Float> Linv;
+  //vector<Float> z;//this doesn't work, breaks the whole thing. The integration variables need to be defined as separate floats.
+  Float z1;
+  Float z2;
   
-  int num_lv;
-  Type operator() (vector<Type> z) {
+  Float operator() () {
+    //transform znew to z so we integrate over a std normal and can define the integration limits.
+    // Z ~ N(u2,A), znew~N(0,I)
+    //Define L as lower cholesky of A^-1
+    int num_lv = A.cols();
+    matrix <Float> z(1,num_lv);
+    z(0,0) = z1;
+    z(0,1) = z2;
+    //    z << z1, z2;
     
-    Type linpred = C;
-    for (int q=0; q<num_lv; q++){
-      linpred += z(q)*lambda(q) - z(q)*z(q)*lambda2(q);
-    }
+    //vector<Float> z(2);
     
-    Type ans = exp(linpred)*exp(-density::MVNORM(A)(z-a));
     
-    return ans;//still try to do this with matrix algebra and mvnorm self written out
+    //Transform std normal vector to vector with mean and variance from VA using inverse of cholesky. Not very computationally efficient..
+    matrix <Float> znew = u + z*Linv;//.transpose();//no transpose as eigen gives the upper cholesky not the lower
+    //need to populate a vector again..
+    //vector <Float> u()
+    
+    
+    Float ans = -C;
+    //for (int q=0; q<num_lv; q++){
+    //  ans -= C + znew(0,q)*theta(0,q) - znew(0,q)*znew(0,q)*theta2(0,q);
+    //}
+    ans -= (znew.array()*theta.array()).sum() - (znew.array()*znew.array()*theta2.array()).sum();
+    //density needs to be evaluated at a vector
+    ans -= density::MVNORM(A)(znew.row(0)-u.row(0));
+    ans = exp(ans);
+    // Float ans = exp(- z(0)*theta(0) - z(1)*theta(1) + z(0)*z(0)*theta2(0)+ z(1)*z(1)*theta2(1)); 
+    // ans *= exp(-density::MVNORM(A)(z-u2));
+    // Avoid NaNs in the gradient:
+  //  if (ans == 0) ans = 0;
+    // Avoid NaNs in the tail of the distribution:
+  //  using atomic::tiny_ad::isfinite;
+  //  if (!isfinite(ans)) ans = 0;
+    return ans;
   }
-};
-template<class Type>
-struct func {
-  vector <Type> lambda;
-  vector <Type> lambda2;
-  matrix <Type> A;
-  vector <Type> a;
-  Type C;
-
-  int num_lv;
-  Type operator() (vector<Type> z) {
-    
-    Type linpred = C;
-    for (int q=0; q<num_lv; q++){
-     linpred -= z(q)*lambda(q) - z(q)*z(q)*lambda2(q);
-    }
-    
-    Type ans = exp(linpred)*exp(-density::MVNORM(A)(z-a));
-    
-    return ans;//still try to do this with matrix algebra and mvnorm self written out
+  
+  // Integrate wrt (x,y)
+  Float integrate() {
+    Float ans = gauss_kronrod::mvIntegrate(*this).
+    //can write a simple ifelse statement here for # of lVs as wrt doesn't accept a vector
+    wrt(z1, -INFINITY, INFINITY).
+    wrt(z2, -INFINITY, INFINITY) ();
+    return ans;
   }
+  
+  
 };
 
-// template<class Type>
-// vector<Type> integrate(vector<Type> lambda, vector<Type> lambda2, Type C, Type y, Type iphi, int family) {
-//   func<Type> f = {lambda, lambda2, C, y, iphi, family};
-//   vector<Type> a(lambda.size());
-//   vector<Type> b(lambda.size());
-//   a.fill(-5);
-//   b.fill(5);
-//   Type res = romberg::integrate(f, a, b);
-//   return res;
-// }
+//wrapper function that takes vector arguments. Then, based on num.lv I pass to various integrate functions
+// template<class Float>
+// Float eval(vector<Float> input) {
+//   int num_lv = CppAD::Integer(input[0]);
+//   Float C = input[1];
+//   matrix <Float> lambda(0,num_lv);
+//   matrix <Float> lambda2(0,num_lv);
+//   matrix <Float> u(0,num_lv);
+//   matrix <Float> A(num_lv,num_lv);
+// //these are matrices because I can pass matrices, but not vectors! Can create vectors though..weird
+//     for (int q=0; q<num_lv;q++){
+//        lambda(0,q) = input(2+q);
+//         lambda2(0,q) = input(2+num_lv+q);
+//         u(0,q) = input(2+num_lv*2+q);
+//       for (int q2=0; q2<num_lv;q2++){
+//         A(q2,q) = input(2+num_lv*3+num_lv*q+q2);
+//         //A.col(i).col(q)(q2);
+//       }
+//     }
+//   
+//   integrand<Float> f = {num_lv, C, lambda, lambda2, u, A};
+//   return f.integrate();
+// }//still register atomic if possible, type conversion still a problem for compilation
+template<class Float>
+Float eval(Float C, matrix<Float> lambda, matrix<Float> lambda2, matrix<Float> u, matrix<Float> A, matrix<Float> Linv) {
+  integrand<Float> f = {C, lambda, lambda2, u, A, Linv};
+  return f.integrate();
+}//might want to register atomic this to reduce the tape size.
+
+template<class Float>
+struct integrand2 {
+  typedef Float Scalar; // Required by integrate
+  Float C;
+  matrix<Float> theta;
+  matrix<Float> theta2;
+  matrix<Float> u;
+  matrix<Float> A;
+  // matrix<Float> Linv;
+  //vector<Float> z;//this doesn't work, breaks the whole thing. The integration variables need to be defined as separate floats.
+  Float z1;
+  Float z2;
+  
+  Float operator() () {
+    //transform znew to z so we integrate over a std normal and can define the integration limits.
+    // Z ~ N(u2,A), znew~N(0,I)
+    //Define L as lower cholesky of A^-1
+    int num_lv = A.cols();
+    matrix <Float> z(1,num_lv);
+    z(0,0) = z1;
+    z(0,1) = z2;
+    //    z << z1, z2;
+    
+    //vector<Float> z(2);
+    
+    
+    //Transform std normal vector to vector with mean and variance from VA using inverse of cholesky. Not very computationally efficient..
+    // matrix <Float> znew = u + z*Linv;//.transpose();//no transpose as eigen gives the upper cholesky not the lower
+    //need to populate a vector again..
+    //vector <Float> u()
+    
+    
+    Float ans = C;
+    //for (int q=0; q<num_lv; q++){
+    //  ans -= C + znew(0,q)*theta(0,q) - znew(0,q)*znew(0,q)*theta2(0,q);
+    //}
+    ans += (z.array()*theta.array()).sum() - (z.array()*z.array()*theta2.array()).sum();
+    //density needs to be evaluated at a vector
+    ans -= density::MVNORM(A)(z.row(0)-u.row(0));//could also evaluate this at z with std normal..
+    ans = exp(ans);
+    // Float ans = exp(- z(0)*theta(0) - z(1)*theta(1) + z(0)*z(0)*theta2(0)+ z(1)*z(1)*theta2(1)); 
+    // ans *= exp(-density::MVNORM(A)(z-u2));
+    // Avoid NaNs in the gradient:
+    //if (ans == 0) ans = 0;
+    // Avoid NaNs in the tail of the distribution:
+   // using atomic::tiny_ad::isfinite;
+    //if (!isfinite(ans)) ans = 0;
+    return ans;
+  }
+  
+  // Integrate wrt (x,y)
+  Float integrate() {
+    using namespace gauss_kronrod;
+    // control<Float> c = {100, 1e-6, 1e-6};
+    Float ans = mvIntegrate(*this, control(100,1e-6,1e-6)).//100 subdivisions is default, 1e6 is more accurate than default(1e-4)
+    //can write a simple ifelse statement here for # of lVs as wrt doesn't accept a vector
+    wrt(z1, -INFINITY, INFINITY).
+    wrt(z2, -INFINITY, INFINITY) ();
+    return ans;
+  }
+  
+  
+};
+
+template<class Float>
+Float eval2(Float C, matrix<Float> lambda, matrix<Float> lambda2, matrix<Float> u, matrix<Float> A){//, matrix<Float> Linv) {
+  integrand2<Float> f = {C, lambda, lambda2, u, A};//, Linv};
+  return f.integrate();
+}//might want to register atomic this to reduce the tape size.
+
 
 template<class Type>
 Type objective_function<Type>::operator() ()
@@ -99,7 +177,7 @@ Type objective_function<Type>::operator() ()
   DATA_MATRIX(offset);
   
   //DATA_INTEGER(int_n);//number of quadrature points for Romberg integration in the future
-  DATA_INTEGER(n_int);
+  //DATA_INTEGER(n_int);
   PARAMETER_MATRIX(r0);
   PARAMETER_MATRIX(b);
   PARAMETER_MATRIX(B);
@@ -255,24 +333,52 @@ Type objective_function<Type>::operator() ()
         e_eta(i,j) = exp(C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
         nll -= y(i,j)*eta(i,j) - e_eta(i,j) - lfactorial(y(i,j));
       }
-      REPORT(e_eta);
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
+    matrix <Type> Q =  atomic::matinv(A.col(0).matrix());
+    //Get lower cholesky.
+    matrix <Type> L = Q.llt().matrixL();
+    //Transform std normal vector to vector with mean and variance from VA using inverse of cholesky. Not very computationally efficient..
+    matrix <Type> znew = u.row(0)*L.inverse();
+    REPORT(L);
+    REPORT(Q);
+    REPORT(znew);
+    REPORT(e_eta);
+    //input << A.col(0).col(0), A.col(0).col(1);
   }else if(family==1){
     
     // matrix <Type> zetanew(n,p);
     // matrix <Type> B(num_lv,num_lv);
     // matrix <Type> v(num_lv,1);
-    vector<Type> a(num_lv);
-    vector<Type> b(num_lv);
-    a.fill(-5);
-    b.fill(5);
     matrix <Type> ans(n,p);
+    // int length = 2 + num_lv*3 + num_lv*num_lv; //1 for num_lv, 1 for C, q for lambda, lamvda2, u, and q*q for A
     for (int i=0; i<n; i++) {
       //matrix <Type> Q = atomic::matinv(A.col(i).matrix());
       for (int j=0; j<p;j++){
-        func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
-        ans(i,j) = romberg::integrate(f, a, b, n_int, num_lv);
+        // vector<Type> inputIntegrand(length);
+        // inputIntegrand(0) = num_lv;
+        // inputIntegrand(1) = C(0,0);
+        // for (int q=0; q<num_lv;q++){
+        //   inputIntegrand(2+q) = newlam.col(j)(q);
+        //   inputIntegrand(2+num_lv+q) = newlam2.col(j)(q);
+        //   inputIntegrand(2+num_lv*2+q) = u.row(i)(q);
+        //   for (int q2=0; q2<num_lv;q2++){
+        //     matrix <Type> F =A.col(i).matrix();
+        //     inputIntegrand(2+num_lv*3+num_lv*q+q2) = F(q,q2);
+        //   }
+        //   
+        // }
+        // matrix <Type> newlamtemp(1,num_lv);
+        // matrix <Type> newlamtemp2(1,num_lv);
+        // matrix <Type> utemp(1,num_lv);
+        // for (int q=0; q<num_lv;q++){
+        //   newlamtemp(0,q) =  newlam(q,j);
+        //   newlamtemp2(0,q) =  newlam2(q,j);
+        //   utemp(0,q) = u(i,q);
+        // }
+        
+        // func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
+        //ans(i,j) = eval(C(i,j), newlamtemp, newlamtemp2, utemp, A.col(i).matrix());
         //  B = (D.col(j).matrix()+Q);
         //  v = (newlam.col(j)+Q*u.row(i).transpose());
         //  Type detB = pow(B.determinant(),-0.5);
@@ -380,19 +486,35 @@ Type objective_function<Type>::operator() ()
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
   }else if(family==4){      
-    vector<Type> a(num_lv);
-    vector<Type> b(num_lv);
-    a.fill(-5);
-    b.fill(5);
     matrix <Type> ans(n,p);
     for (int i=0; i<n; i++) {
+      //operations for integration
+      //invert Covariance matrix
+      matrix <Type> Q =  atomic::matinv(A.col(i).matrix());
+      //Get lower cholesky.
+      matrix <Type> L = Q.llt().matrixL();
+      //invert it
+      matrix <Type> Linv = atomic::matinv(L);
+      
       for (int j=0; j<p;j++){
-        func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
-        ans(i,j) = romberg::integrate(f, a, b, n_int, num_lv);//should still catch Infs here..
+        // func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
+        // ans(i,j) = romberg::integrate(f, a, b, n_int, num_lv);//should still catch Infs here..
         // nll -= -lgamma(iphi(j)) + iphi(j)*log(iphi0(j)*y(i,j)) - iphi(j)*eta(i,j) - iphi(j)*y(i,j)* eta2.mean();
+        matrix <Type> newlamtemp(1,num_lv);
+        matrix <Type> newlamtemp2(1,num_lv);
+        matrix <Type> utemp(1,num_lv);
+        for (int q=0; q<num_lv;q++){
+          newlamtemp(0,q) =  newlam(q,j);
+          newlamtemp2(0,q) =  newlam2(q,j);
+          utemp(0,q) = u(i,q);
+        }
+        
+        // func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
+        ans(i,j) = eval(C(i,j), newlamtemp, newlamtemp2, utemp, A.col(i).matrix(), Linv);//necessary conversion I got from the adaptive_integration example. Otherwise, doesn't compile
+        
         nll -=  ( -eta(i,j) - ans(i,j)*y(i,j) )/iphi(j) + log(y(i,j)/iphi(j))/iphi(j) - log(y(i,j)) -lgamma(1/iphi(j));
       }
-      nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+      // nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
       REPORT(ans);
       // Type test = density::MVNORM(A.col(0).matrix())(u.row(0));
       // density::MVNORM_t<Type>nltest(A.col(0).matrix());
@@ -403,16 +525,28 @@ Type objective_function<Type>::operator() ()
     //report eta2, maybe write the MCI in a function.
   }else if(family==5){
     //here do poisson with numerical integration of exp(eta). Can compare as we have the closed form. Just add a Poisson2 family for now for testing.
-    vector<Type> a(num_lv);
-    vector<Type> b(num_lv);
-    a.fill(-5);
-    b.fill(5);
     matrix <Type> ans(n,p);
     for (int i=0; i<n; i++) {
+      //matrix <Type> Q =  atomic::matinv(A.col(i).matrix());
+      //Get lower cholesky.
+      // matrix <Type> L = Q.llt().matrixL();
+      //invert it
+      // matrix <Type> Linv = atomic::matinv(L);
       for (int j=0; j<p;j++){
-        func2<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
-        ans(i,j) = romberg::integrate(f, a, b, n_int, num_lv);//should still catch Infs here..
+        // func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
+        // ans(i,j) = romberg::integrate(f, a, b, n_int, num_lv);//should still catch Infs here..
         // nll -= -lgamma(iphi(j)) + iphi(j)*log(iphi0(j)*y(i,j)) - iphi(j)*eta(i,j) - iphi(j)*y(i,j)* eta2.mean();
+        matrix <Type> newlamtemp(1,num_lv);
+        matrix <Type> newlamtemp2(1,num_lv);
+        matrix <Type> utemp(1,num_lv);
+        for (int q=0; q<num_lv;q++){
+          newlamtemp(0,q) =  newlam(q,j);
+          newlamtemp2(0,q) =  newlam2(q,j);
+          utemp(0,q) = u(i,q);
+        }
+        
+        // func<Type> f = {newlam.col(j), newlam2.col(j), A.col(i).matrix(),u.row(i),C(i,j),num_lv};
+        ans(i,j) = eval2(C(i,j), newlamtemp, newlamtemp2, utemp, A.col(i).matrix());//, Linv);//necessary conversion I got from the adaptive_integration example. Otherwise, doesn't compile
         nll -=  eta(i,j)*y(i,j) - ans(i,j) -lfactorial(y(i,j));
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
@@ -423,7 +557,7 @@ Type objective_function<Type>::operator() ()
       // REPORT(test);//these were exactly the same..
       // REPORT(test2);
     }
-  
+    
   }
   
   //shrinks LVs, linear ridge
@@ -484,3 +618,7 @@ Type objective_function<Type>::operator() ()
   }
   return nll;
 }
+
+//for (int q=0; q<num_lv;q++){//
+//  integrand<Type> f = {newlam(q,j), newlam2(q,j)};
+//ans(i,j) += log(gauss_kronrod::integrate(f, Type(-5),Type(5)));
