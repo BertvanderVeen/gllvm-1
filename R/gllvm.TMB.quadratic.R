@@ -424,7 +424,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       log_sigma1 <- param1[nam=="log_sigma"]
       #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
       #this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
-      Au1<-c(pmax(param1[nam=="Au"],rep(log(1e-4), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n)) #c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
+      Au1<-c(pmax(param1[nam=="Au"],rep(log(1e-4), num.lv*n)), rep(1e-4,num.lv*(num.lv-1)/2*n)) #c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
       
       lg_Ar1 <- param1[nam=="lg_Ar"]
       
