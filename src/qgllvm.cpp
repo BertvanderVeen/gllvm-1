@@ -307,7 +307,12 @@ Type objective_function<Type>::operator() ()
   D.fill(0.0);
   for (int j=0; j<p; j++){
     for (int q=0; q<num_lv; q++){
-      D(q,q,j) = 2*newlam2(q,j);
+      if(familyn==2|familyn==3){
+        D(q,q,j) = -newlam2(q,j);
+      }else{
+        D(q,q,j) = 2*newlam2(q,j);
+      }
+          
     }
   }
   
