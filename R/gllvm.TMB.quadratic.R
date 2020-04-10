@@ -424,7 +424,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       log_sigma1 <- param1[nam=="log_sigma"]
       #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
       #this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
-      Au1<-c(pmax(param1[nam=="Au"],rep(log(1e-4), num.lv*n)), rep(0,num.lv*(num.lv-1)/2*n)) #c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
+      Au1<-c(pmax(param1[nam=="Au"],rep(log(1e-4), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n)) #c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
       
       lg_Ar1 <- param1[nam=="lg_Ar"]
       
@@ -440,13 +440,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       if(row.eff == "random"){
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4, z=z), silent=TRUE,
+          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3,u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
           inner.control=list(mgcmax = 1e+200,maxit = maxit),
           DLL = "qgllvm")
       } else {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4, z=z), silent=TRUE,
+          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
           inner.control=list(mgcmax = 1e+200,maxit = maxit),
           DLL = "qgllvm")#GLLVM#
@@ -505,13 +505,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(equal.tolerances==F)lambda2<-matrix(lambda3,ncol=p,nrow=num.lv)
       if(row.eff == "random"){
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4, z=z), silent=TRUE,
+          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3,u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
           inner.control=list(mgcmax = 1e+200,maxit = maxit),
           DLL = "qgllvm")
       } else {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4, z=z), silent=TRUE,
+          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
           inner.control=list(mgcmax = 1e+200,maxit = maxit),
           DLL = "qgllvm")#GLLVM#
