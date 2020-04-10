@@ -261,8 +261,8 @@ Type objective_function<Type>::operator() ()
         k++;  
       }}
   }
-  /*Calculates the commonly used (1/2) theta'_j A_i theta_j
-   A is a num.lv x nmu.lv x n array, theta is p x num.lv matrix*/
+  
+   //A is a num.lv x nmu.lv x n array, theta is p x num.lv matrix
   for (int i=0; i<n; i++) {
     nll -= 0.5*(log(A.col(i).matrix().determinant()) - A.col(i).matrix().trace());// log(det(A_i))-sum(trace(A_i))*0.5 sum.diag(A)
   }
@@ -300,35 +300,24 @@ Type objective_function<Type>::operator() ()
       }
     }
   }
-  
-  matrix <Type> eta = C + u*newlam - (u.array()*u.array()).matrix()*newlam2; //intercept(s), linear effect and negative only quadratic term
-  
   array<Type> D(num_lv,num_lv,p);
   D.fill(0.0);
   for (int j=0; j<p; j++){
     for (int q=0; q<num_lv; q++){
-      if(family>1){
-         D(q,q,j) = -newlam2(q,j);
-      }else{
         D(q,q,j) = 2*newlam2(q,j);
-      }
-          
     }
   }
-  
-  //trace of quadratic effect
-  for (int i=0; i<n; i++) {
-    for (int j=0; j<p;j++){
-      if(family>1{
-        eta(i,j) -= 0.5*((D.col(j).matrix()*A.col(i).matrix()).trace());
-      }else{
-      eta(i,j) += ((D.col(j).matrix()*A.col(i).matrix()).trace());}
-      
+  matrix <Type> eta = C + u*newlam;
+  for (int j=0; j<p; j++){
+    for (int i=0; i<n; i++){
+      eta(i,j) += -0.5*((u.row(i)*D.col(j).matrix()*u.row(i).transpose()).value() + (D.col(j).matrix()*A.col(i).matrix()).trace()); //intercept(s), linear effect and negative only quadratic term
     }
   }
-  if(family==0){
+
+    if(family==0){
     //likelihood
     matrix <Type> e_eta(n,p);
+      e_eta.fill(0.0);
     matrix <Type> B(num_lv,num_lv);
     matrix <Type> v(num_lv,1);
     for (int i=0; i<n; i++) {
@@ -338,7 +327,7 @@ Type objective_function<Type>::operator() ()
         v = (newlam.col(j)+Q*u.row(i).transpose());
         Type detB = pow(B.determinant(),-0.5);
         Type detA = pow(A.col(i).matrix().determinant(),-0.5);
-        e_eta(i,j) = exp(C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
+        e_eta(i,j) += exp(C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
         nll -= y(i,j)*eta(i,j) - e_eta(i,j) - lfactorial(y(i,j));
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
@@ -406,8 +395,8 @@ Type objective_function<Type>::operator() ()
     for (int i=0; i<n; i++) {
       for (int j=0; j<p;j++){
         mu(i,j) = pnorm(Type(eta(i,j)),Type(0),Type(1));
-        nll -= dbinom(y(i,j),Type(1),mu(i,j),true);
-        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        nll -= dbinom(y(i,j),Type(1),mu(i,j),true);//line below differs from pdf as D is positive only.
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - 0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
@@ -454,7 +443,10 @@ Type objective_function<Type>::operator() ()
             }
           }
         }
-        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        
+        //line below is different as D is positive only and *2
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - 0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        //nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
@@ -488,8 +480,9 @@ Type objective_function<Type>::operator() ()
               nll -= log(pnorm(zetanew(l-1)-eta(i,j), Type(0), Type(1))-pnorm(zetanew(l-2)-eta(i,j), Type(0), Type(1)));
             }
           }
-        }
-        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        }//line below is different as D is positive only and *2
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - 0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+      //  nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
