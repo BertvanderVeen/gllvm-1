@@ -307,10 +307,8 @@ Type objective_function<Type>::operator() ()
   D.fill(0.0);
   for (int j=0; j<p; j++){
     for (int q=0; q<num_lv; q++){
-      if(family==2){
+      if(family>1){
          D(q,q,j) = -newlam2(q,j);
-      }else if(family==3){
-        D(q,q,j) = -newlam2(q,j);
       }else{
         D(q,q,j) = 2*newlam2(q,j);
       }
@@ -321,7 +319,11 @@ Type objective_function<Type>::operator() ()
   //trace of quadratic effect
   for (int i=0; i<n; i++) {
     for (int j=0; j<p;j++){
-      eta(i,j) -= 0.5*((D.col(j).matrix()*A.col(i).matrix()).trace());
+      if(family>1{
+        eta(i,j) -= 0.5*((D.col(j).matrix()*A.col(i).matrix()).trace());
+      }else{
+      eta(i,j) += ((D.col(j).matrix()*A.col(i).matrix()).trace());}
+      
     }
   }
   if(family==0){
