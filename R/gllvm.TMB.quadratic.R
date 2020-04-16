@@ -504,15 +504,15 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         #starting values for unequal tolerances, weighted averaging at the moment
         #lambda2<-matrix(lambda3,ncol=p,nrow=num.lv)#this didnt work for the NB
         #based on weighted average species SD, see canoco
-        lambda2<-matrix(0,nrow=num.lv,ncol=p)
-        for(j in 1:p){
-          for(q in 1:num.lv){
-            lambda2[q,j]<--.5/(sum((u[,q]-(sum(y[,j]*u[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
-          }
-        }
-        if(any(is.infinite(lambda2))){
-          lambda2[is.infinite(lambda2)]<--0.5
-        }
+        lambda2<-matrix(1e-3,nrow=num.lv,ncol=p)
+        # for(j in 1:p){
+        #   for(q in 1:num.lv){
+        #     lambda2[q,j]<--.5/(sum((u[,q]-(sum(y[,j]*u[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+        #   }
+        # }
+        # if(any(is.infinite(lambda2))){
+        #   lambda2[is.infinite(lambda2)]<--0.5
+        # }
         
       }
       
