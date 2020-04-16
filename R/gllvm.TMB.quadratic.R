@@ -500,7 +500,23 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       lambda3 <- abs(param1[nam=="lambda3"])
       #lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
       
-      if(equal.tolerances==F)lambda2<-matrix(lambda3,ncol=p,nrow=num.lv)
+      if(equal.tolerances==F){
+        #starting values for unequal tolerances, weighted averaging at the moment
+        #lambda2<-matrix(lambda3,ncol=p,nrow=num.lv)#this didnt work for the NB
+        #based on weighted average species SD, see canoco
+        lambda2<-matrix(0,nrow=num.lv,ncol=p)
+        for(j in 1:p){
+          for(q in 1:num.lv){
+            lambda2[q,j]<--.5/(sum((u[,q]-(sum(y[,j]*u[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
+          }
+        }
+        if(any(is.infinite(lambda2))){
+          lambda2[is.infinite(lambda2)]<--0.5
+        }
+        
+      }
+      
+      
       if(row.eff == "random"){
         objr <- TMB::MakeADFun(
           data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
