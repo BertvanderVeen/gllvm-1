@@ -209,7 +209,7 @@
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 0, trace = FALSE, trace2 = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 2000, 
     start.fit = NULL, starting.val = "lingllvm", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
-    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE, opt=1, start.struc="species", gamma1=0, gamma2=0, theta4 = NULL, n_int = 7) {
+    ridge.quadratic = FALSE, start.method="FA",par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE, opt=1, start.struc="species", gamma1=0, gamma2=0, theta4 = NULL) {
     #build in gradient check
     randomX <- NULL
     term <- NULL
@@ -392,7 +392,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.quadratic(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                                         row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                         n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
-                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, maxit.lingllvm = maxit.lingllvm, starting.val.lingllvm = starting.val.lingllvm, equal.tolerances = equal.tolerances, parallel = parallel, start.struc = start.struc, gamma1 = gamma1, gamma2 = gamma2, theta4 = theta4, n_int = n_int)
+                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, start.method=start.method, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, maxit.lingllvm = maxit.lingllvm, starting.val.lingllvm = starting.val.lingllvm, equal.tolerances = equal.tolerances, parallel = parallel, start.struc = start.struc, gamma1 = gamma1, gamma2 = gamma2, theta4 = theta4)
         }
 
     out$X.design <- fitg$X.design

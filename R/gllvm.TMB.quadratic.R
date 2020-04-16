@@ -2,20 +2,20 @@
 ## GLLVM, with estimation done via Variational approximation using TMB-package
 ## Original author: Jenni Niku, Bert van der Veen
 ##########################################################################################
- #y<-simdat(mean,1,1)
- ##X = NULL; formula = NULL; num.lv = 2; family = "gamma";
- ##Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = TRUE;
- ##seed = NULL;maxit = 10000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
- ##n.init=1;start.params=NULL;
- ##optimizer="optim";starting.val="res";diag.iter=1;
- ##Lambda.start=c(0.1,0.5); jitter.var=0; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; equal.tolerances=F; start.struc="species"; gamma1=0;gamma2=0; theta4=0
+ # y<-simdat(mean,1,1)
+ # X = NULL; formula = NULL; num.lv = 2; family = "gamma";
+ # Lambda.struc="unstructured"; row.eff = FALSE; reltol = 1e-10; trace = FALSE; trace2 = TRUE;
+ # seed = NULL;maxit = 10000; start.lvs = NULL; offset=NULL; sd.errors = TRUE;
+ # n.init=1;start.params=NULL;
+ # optimizer="optim";starting.val="res";diag.iter=1;
+ # Lambda.start=c(0.1,0.5); jitter.var=0; start.method="FA"; par.scale=1; fn.scale=1; zeta.struc = "common"; starting.val.lingllvm = "res"; equal.tolerances=F; start.struc="species"; gamma1=0;gamma2=0; theta4=0
 
 gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson",
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
                                 seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                 n.init=1,start.params=NULL,
                                 optimizer="optim",starting.val="lingllvm",diag.iter=1,
-                                Lambda.start=c(0.1,0.5), jitter.var=0, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE,start.struc="species", gamma1=0,gamma2=0,theta4 = NULL, n_int = 7) {
+                                Lambda.start=c(0.1,0.5), jitter.var=0, start.method="FA", par.scale=1, fn.scale=1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE,start.struc="species", gamma1=0,gamma2=0,theta4 = NULL) {
   
   n <- dim(y)[1]
   p <- dim(y)[2]
@@ -151,9 +151,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   
   if(length(gamma1)==1){
     gamma1<-rep(gamma1,num.lv)
-  }else if(length(gamma1)==num.lv){
-    #do nothing
-  }else{
+  }else if(length(gamma1)!=num.lv){
     stop("Invalid gamma1 supplied")
   }
   
@@ -364,17 +362,17 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(row.eff==FALSE){xr <- matrix(0,1,p)} else {xr <- matrix(1,1,p)}
     if(!is.null(X)){Xd <- cbind(1,X)} else {Xd <- matrix(1,n)}
     extra <- 0
-    if(family == "poisson"&n_int==0) { familyn <- 0}else{familyn=5}
+    if(family == "poisson") { familyn <- 0}
     if(family == "negative.binomial") { familyn <- 1}
     if(family == "binomial") { familyn <- 2}
-    if(family == "ordinal") { familyn <- 3}
-    #if(family == "gaussian") {family <- }
+    if(family == "ordinal") { familyn <- 7}
+    if(family == "gaussian") {familyn <- 3}
     if(family == "gamma") { familyn <- 4}
     
     
     if(row.eff=="random"){
       objr <- TMB::MakeADFun(
-        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
+        data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
         parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), lambda3=rep(1,num.lv),u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
         inner.control=list(mgcmax = 1e+200,maxit = maxit),
         DLL = "qgllvm")
@@ -440,13 +438,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       if(row.eff == "random"){
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
+          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3,u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
           inner.control=list(mgcmax = 1e+200,maxit = maxit),
           DLL = "qgllvm")
       } else {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
+          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
           inner.control=list(mgcmax = 1e+200,maxit = maxit),
           DLL = "qgllvm")#GLLVM#
@@ -505,13 +503,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(equal.tolerances==F)lambda2<-matrix(lambda3,ncol=p,nrow=num.lv)
       if(row.eff == "random"){
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
+          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3,u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
           inner.control=list(mgcmax = 1e+200,maxit = maxit),
           DLL = "qgllvm")
       } else {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,n_int = n_int,family=familyn,extra=extra,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
+          data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
           parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
           inner.control=list(mgcmax = 1e+200,maxit = maxit),
           DLL = "qgllvm")#GLLVM#
