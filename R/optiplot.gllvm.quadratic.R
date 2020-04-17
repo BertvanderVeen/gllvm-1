@@ -229,7 +229,7 @@
             }
             
           }
-          lvs <- object$lvs
+          lvs <- object$lvs[,which.lvs]
           
           
           if(scale=="species"){
