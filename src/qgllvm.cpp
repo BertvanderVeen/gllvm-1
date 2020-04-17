@@ -27,8 +27,8 @@ Type objective_function<Type>::operator() ()
   PARAMETER_MATRIX(u);
   PARAMETER_VECTOR(lg_phi);
   PARAMETER(log_sigma);// log(SD for row effect)
-  DATA_VECTOR(gamma);
-  DATA_MATRIX(gamma2);
+  DATA_INTEGER(gamma);
+  DATA_INTEGER(gamma2);
   DATA_VECTOR(theta4);
   DATA_INTEGER(num_lv);
   DATA_INTEGER(family);
@@ -318,25 +318,19 @@ Type objective_function<Type>::operator() ()
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
   }
-  
+  if(gamma>0){
   //shrinks LVs, linear ridge
-  if(nTol==1){
+
     for(int q=0; q<(num_lv-1); q++){
-      nll += (newlam.row(q).array()*newlam.row(q).array()+newlam2.row(q).array()*newlam2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma(q);
-      nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma(q+1);
-    }
-    
-  }else{
-    for(int q=0; q<(num_lv-1); q++){
-      nll += (newlam.row(q).array()*newlam.row(q).array()+lambda2.row(q).array()*lambda2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum()*gamma(q);
-      nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+lambda2.row(q+1).array()*lambda2.row(q+1).array()).sum()*gamma(q+1);
+      nll += (newlam.row(q).array()*newlam.row(q).array()+newlam2.row(q).array()*newlam2.row(q).array() + newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma;
+      nll += (newlam.row(q+1).array()*newlam.row(q+1).array()+newlam2.row(q+1).array()*newlam2.row(q+1).array()).sum()*gamma;
     }
   }
-  
+
+  if(gamma2>0){
   //shrinks LVs, quadratic ridge
-  for(int j=0; j<lambda2.cols(); j++){
     for(int q=0; q<num_lv; q++){
-      nll += lambda2(q,j)*lambda2(q,j)*gamma2(q,j);//should be lamda2...
+      nll += (lambda2.row(q).array()*lambda2.row(q).array()).sum()*gamma2;//should be lamda2...
       //  nll += pow(newlam2(q,j)*newlam2(q,j) + newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q,j); //should not be hierarchical
       //nll += pow(newlam2(q+1,j)*newlam2(q+1,j),0.5)*gamma2(q+1,j);
     }

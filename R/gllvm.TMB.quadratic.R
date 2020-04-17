@@ -148,26 +148,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   }
   if(n.init[1]>1)seed <- sample(1:10000, n.init)
   
-  
-  if(length(gamma1)==1){
-    gamma1<-rep(gamma1,num.lv)
-  }else if(length(gamma1)!=num.lv){
-    stop("Invalid gamma1 supplied")
-  }
-  
-  if(is.matrix(gamma2)){
-    if(!all(dim(matrix)!=c(num.lv,p))){
-      stop("Gamma2 of wrong dimension. Should be nrow=num.lv, ncol=p")
-    }
-  }else if(!is.matrix(gamma2)){
-    if(length(gamma2)==num.lv|length(gamma2)==1){
-      gamma2<-matrix(gamma2,nrow=num.lv,ncol=p)
-    }else if(length(gamma2)==p){
-      gamma2<-matrix(gamma2,nrow=num.lv,ncol=p,byrow=T)
-    }else{
-      stop("Invalid gamma2 supplied")
-    }
-  }
   #helper function for parallel optimization
   makeMod<-function(i){
     sigma <- 1

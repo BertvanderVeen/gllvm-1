@@ -8,7 +8,7 @@ Maintainer: Bert van der Veen <bert.vanderveen@nibio.no>
 Description: Original code from Jenni Niku et al.
 License: GPL-2
 Imports: MASS, Matrix, mvtnorm, statmod, fishMod, mgcv
-Depends: TMB, mvabund, foreach, gllvm
+Depends: TMB, mvabund, foreach, gllvm, mgcv
 Encoding: UTF-8
 LazyData: true
 LinkingTo: TMB, RcppEigen
