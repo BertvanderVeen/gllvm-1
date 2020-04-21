@@ -135,8 +135,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(is.null(maxit.lingllvm)){
       maxit.lingllvm <- maxit
     }  
+    if(trace2)cat("Running linear gllvm..")
     fit <- gllvm(y, formula = formula, X = X, num.lv = num.lv, family = family, row.eff = row.eff, n.init = n.init2, maxit = maxit.lingllvm, reltol=reltol, optimizer = optimizer, diag.iter = diag.iter2, jitter.var = jitter.var2, starting.val = starting.val.lingllvm, Lambda.start = Lambda.start, Lambda.struc = Lambda.struc, method="VA", sd.errors = FALSE, offset = offset, zeta.struc=zeta.struc, seed=seed)
     start.params <- fit
+    if(trace2)cat("Done! \n")
   }
   if(n.init[1]>1)seed <- sample(1:10000, n.init)
   
@@ -380,7 +382,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
         
       }
-      lambda2 <- matrix(optr$par,ncol=num.lv)
+      lambda2 <- matrix(optr$par,byrow=T,ncol=num.lv,nrow=p)
     }
     
     
@@ -566,8 +568,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
             
           }
-          t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
-        
+          lambda2 <- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
       }
       
       
