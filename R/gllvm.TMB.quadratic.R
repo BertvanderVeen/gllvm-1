@@ -568,7 +568,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
             
           }
-          lambda2 <- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
+          lambda2 <- t(matrix(optr$par[names(optr$par)=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
       }
       
       
