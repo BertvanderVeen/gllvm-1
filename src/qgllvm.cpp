@@ -128,11 +128,20 @@ Type objective_function<Type>::operator() ()
   
   
   matrix <Type> newlam2(num_lv,p);
-    for (int j=0; j<lambda2.cols(); j++){
+  if(lambda.cols()==1){
+    for (int j=0; j<p; j++){
+      for (int q=0; q<num_lv; q++){
+        newlam2(q,j) = fabs(lambda3(q)) + theta4(q);
+      }
+    } 
+  }else{
+    for (int j=0; j<p; j++){
       for (int q=0; q<num_lv; q++){
         newlam2(q,j) = fabs(lambda2(q,j)) + fabs(lambda3(q)) + theta4(q);
       }
     } 
+  }
+
 
   array<Type> D(num_lv,num_lv,p);
   D.fill(0.0);
@@ -200,9 +209,10 @@ Type objective_function<Type>::operator() ()
          nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
        }
        }else{
+         
          for (int i=0; i<n; i++) {
            for (int j=0; j<p;j++){
-             nll -= dnbinom(y(i,j),1-(exp(eta(i,j))/(1/iphi(j)+exp(eta(i,j)))), 1/iphi(j), true);
+             nll -= dnbinom_robust(y(i,j),eta(i,j), 2*eta(i,j)+log(iphi(j)), true);//manually calculated variance
            }
          }
          

@@ -6,7 +6,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                                 Lambda.struc="unstructured", row.eff = FALSE, reltol = 1e-10, trace = FALSE, trace2 = FALSE,
                                 seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                 n.init=1,start.params=NULL,
-                                optimizer="optim",starting.val="lingllvm",diag.iter=1,
+                                optimizer="optim",starting.val="res",diag.iter=1,
                                 Lambda.start=c(0.1,0.5), jitter.var=0, par.scale=1, fn.scale=1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE,start.struc="species", gamma1=0,gamma2=0,theta4 = NULL) {
   
   n <- dim(y)[1]
@@ -158,7 +158,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       lambdas <- as.matrix(fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)])
       lambdas[upper.tri(lambdas)] <- 0
-      
+      fit$params<-cbind(fit$params,matrix(0.01,ncol=num.lv, nrow=p))
       row.params <- NULL
       
       if (row.eff != FALSE) {
@@ -318,14 +318,14 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     } 
     if(start.struc!="common"){
       if(starting.val=="lingllvm")lambda2 <- matrix(-0.01,ncol=num.lv, nrow=p)
-      if(!is.null(start.params)){if(class(start.params)=="gllvm")lambda2 <- matrix(-0.01,ncol=num.lv, nrow=p)}
+      if(!is.null(start.params)){if(class(start.params)=="gllvm")lambda2 <- matrix(0.01,ncol=num.lv, nrow=p)}
       if(equal.tolerances==T)start.struc=="common"
     }
     
     if(start.struc=="common"){
-      lambda2 <- matrix(-0.01,ncol=num.lv, nrow=1)
+      lambda2 <- matrix(0.01,ncol=num.lv, nrow=1)
     }else{
-      lambda2 <- matrix(-0.01,ncol=num.lv, nrow=p)
+      lambda2 <- matrix(0.01,ncol=num.lv, nrow=p)
     }
     
     u <- u+mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);#mostly makes sense when using lingllvm
@@ -438,7 +438,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       log_sigma1 <- param1[nam=="log_sigma"]
       #previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
       #this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
-      Au1<-c(pmax(param1[nam=="Au"],rep(log(1e-4), num.lv*n)), rep(0,num.lv*(num.lv-1)/2*n)) #c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
+      Au1<-c(pmax(param1[nam=="Au"],rep(log(1e-4), num.lv*n)), rep(1e-4,num.lv*(num.lv-1)/2*n)) #c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
       #this is causing issues I think...
       lg_Ar1 <- param1[nam=="lg_Ar"]
       
@@ -449,7 +449,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       }else{
         lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=1))
       }
-      lambda3 <- abs(param1[nam=="lambda3"])
+      
+      lambda3 <- param1[nam=="lambda3"]
       #lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
       
       if(row.eff == "random"){
@@ -512,8 +513,17 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       lg_Ar1 <- param1[nam=="lg_Ar"]
       
       zeta <- param1[nam=="zeta"]
-      lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
-      lambda3 <- abs(param1[nam=="lambda3"])
+      if(gamma2=0){
+        lambda2<- t(matrix(param1[nam=="lambda3"],byrow=T,ncol=num.lv,nrow=p))  
+      }else{
+        lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
+      }
+      
+      if(gamma2==0){
+        lambda3 <- rep(0,num.lv)
+      }else{
+        lambda3 <- abs(param1[nam=="lambda3"]) 
+      }
       #lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
       
       if(starting.val=="zero"){
@@ -531,7 +541,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         # }
         
       }else{
-          mp <- list(r0 = factor(rep(NA, length(r1))), b = factor(rep(NA, length(b1))), B = factor(rep(NA, 1)),lambda = factor(rep(NA, length(lambda1))), lambda3=factor(rep(NA, num.lv)), u = factor(rep(NA, length(u1))),lg_phi=factor(rep(NA, length(lg_phi1))),log_sigma=factor(rep(NA, length(log_sigma1))),Au=factor(rep(NA, length(Au1))),lg_Ar=factor(rep(NA, length(lg_Ar1))),zeta=factor(rep(NA, length(zeta))))
+          mp <- list(r0 = factor(rep(NA, length(r1))), b = factor(rep(NA, length(b1))), B = factor(rep(NA, 1)), lambda = factor(rep(NA,length(lambda1))), lambda3 = factor(rep(NA,num.lv)), u = factor(rep(NA, length(u1))),lg_phi=factor(rep(NA, length(lg_phi1))),log_sigma=factor(rep(NA, length(log_sigma1))),Au=factor(rep(NA, length(Au1))),lg_Ar=factor(rep(NA, length(lg_Ar1))),zeta=factor(rep(NA, length(zeta))))
           if(row.eff == "random"){
             objr <- TMB::MakeADFun(
               data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4,max=1), silent=TRUE,
@@ -568,7 +578,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
             
           }
-          lambda2 <- t(matrix(optr$par[names(optr$par)=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
+          lambda2 <- t(matrix(optr$par[names(optr$par)=="lambda2"],byrow=T,ncol=num.lv,nrow=p))#doesnt always work for NB
       }
       
       
