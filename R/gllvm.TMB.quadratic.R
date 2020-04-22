@@ -513,7 +513,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       lg_Ar1 <- param1[nam=="lg_Ar"]
       
       zeta <- param1[nam=="zeta"]
-      if(gamma2=0){
+      if(gamma2==0){
         lambda2<- t(matrix(param1[nam=="lambda3"],byrow=T,ncol=num.lv,nrow=p))  
       }else{
         lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
@@ -541,7 +541,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         # }
         
       }else{
-          mp <- list(r0 = factor(rep(NA, length(r1))), b = factor(rep(NA, length(b1))), B = factor(rep(NA, 1)), lambda = factor(rep(NA,length(lambda1))), lambda3 = factor(rep(NA,num.lv)), u = factor(rep(NA, length(u1))),lg_phi=factor(rep(NA, length(lg_phi1))),log_sigma=factor(rep(NA, length(log_sigma1))),Au=factor(rep(NA, length(Au1))),lg_Ar=factor(rep(NA, length(lg_Ar1))),zeta=factor(rep(NA, length(zeta))))
+          mp <- list(r0 = factor(rep(NA, length(r1))), b = factor(rep(NA, length(b1))), B = factor(rep(NA, 1)), lambda = factor(rep(NA,length(lambda1))), u = factor(rep(NA, length(u1))),lg_phi=factor(rep(NA, length(lg_phi1))),log_sigma=factor(rep(NA, length(log_sigma1))),Au=factor(rep(NA, length(Au1))),lg_Ar=factor(rep(NA, length(lg_Ar1))),zeta=factor(rep(NA, length(zeta))))
           if(row.eff == "random"){
             objr <- TMB::MakeADFun(
               data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,extra=extra,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4,max=1), silent=TRUE,

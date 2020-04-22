@@ -128,7 +128,7 @@ Type objective_function<Type>::operator() ()
   
   
   matrix <Type> newlam2(num_lv,p);
-  if(lambda.cols()==1){
+  if(lambda2.cols()==1){
     for (int j=0; j<p; j++){
       for (int q=0; q<num_lv; q++){
         newlam2(q,j) = fabs(lambda3(q)) + theta4(q);
@@ -212,7 +212,7 @@ Type objective_function<Type>::operator() ()
          
          for (int i=0; i<n; i++) {
            for (int j=0; j<p;j++){
-             nll -= dnbinom_robust(y(i,j),eta(i,j), 2*eta(i,j)+log(iphi(j)), true);//manually calculated variance
+             nll -= dnbinom_robust(y(i,j),eta(i,j), 2*eta(i,j)+log(iphi(j)), true);//assumes variance is u+phi^2 while it actually is u^2+phiu^2
            }
          }
          
