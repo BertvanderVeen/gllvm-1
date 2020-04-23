@@ -34,7 +34,7 @@ Type objective_function<Type>::operator() ()
   DATA_VECTOR(theta4);
   DATA_INTEGER(num_lv);
   DATA_INTEGER(family);
-  DATA_INTEGER(max);
+  //DATA_INTEGER(max);
   
   PARAMETER_VECTOR(Au);
   PARAMETER_VECTOR(lg_Ar);
@@ -103,12 +103,12 @@ Type objective_function<Type>::operator() ()
         k++;  
       }}
   }
-  if(max==0){
+  //if(max==0){
   //A is a num.lv x num.lv x n array, theta is p x num.lv matrix
   for (int i=0; i<n; i++) {
     nll -= 0.5*(log(A.col(i).matrix().determinant()) - A.col(i).matrix().trace());// log(det(A_i))-sum(trace(A_i))*0.5 sum.diag(A)
   }
-  }
+  //}
   
   
   if(model<1){
@@ -155,16 +155,16 @@ Type objective_function<Type>::operator() ()
   for (int j=0; j<p; j++){
     for (int i=0; i<n; i++){
       eta(i,j) += -0.5*((u.row(i)*D.col(j).matrix()*u.row(i).transpose()).value());
-      if(max==0){
+  //    if(max==0){
         eta(i,j) += -0.5*((D.col(j).matrix()*A.col(i).matrix()).trace());
-      }    
+    //  }    
     
     }
   }
   
   if(family==0){
     //likelihood
-    if(max==0){
+   // if(max==0){
     matrix <Type> e_eta(n,p);
     e_eta.fill(0.0);
     matrix <Type> B(num_lv,num_lv);
@@ -182,15 +182,15 @@ Type objective_function<Type>::operator() ()
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
-    }else{
-      for (int i=0; i<n; i++) {
-        for (int j=0; j<p;j++){
-       nll -= dpois(y(i,j),exp(eta(i,j)),true);
-        }
-      }
-    }
+    //}else{
+    //   for (int i=0; i<n; i++) {
+    //     for (int j=0; j<p;j++){
+    //    nll -= dpois(y(i,j),exp(eta(i,j)),true);
+    //     }
+    //   }
+    // }
      }else if(family==1){
-       if(max==0){
+      //if(max==0){
        matrix <Type> e_eta(n,p);
        e_eta.fill(0.0);
        matrix <Type> B(num_lv,num_lv);
@@ -200,7 +200,7 @@ Type objective_function<Type>::operator() ()
          for (int j=0; j<p;j++){
            B = (-D.col(j).matrix()+Q);
            v = (-newlam.col(j)+Q*u.row(i).transpose());
-           Type detB = pow(B.determinant(),-0.5);
+           Type detB = 1/B.llt().matrixL().determinant();//can't get square root of a negative determinant, so determinant of square root matrix instead. Does add a lot of operations..
            Type detA = pow(A.col(i).matrix().determinant(),-0.5);
            e_eta(i,j) += exp((u.row(i)*newlam.col(j)).value()-(u.row(i)*D.col(j).matrix()*u.row(i).transpose()).value()-(D.col(j).matrix()*A.col(i).matrix()).trace()+0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
            
@@ -208,18 +208,18 @@ Type objective_function<Type>::operator() ()
          }
          nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
        }
-       }else{
-         
-         for (int i=0; i<n; i++) {
-           for (int j=0; j<p;j++){
-             nll -= dnbinom_robust(y(i,j),eta(i,j), 2*eta(i,j)+log(iphi(j)), true);//assumes variance is u+phi^2 while it actually is u^2+phiu^2
-           }
-         }
-         
-       }
+       // }else{
+       //   
+       //   for (int i=0; i<n; i++) {
+       //     for (int j=0; j<p;j++){
+       //       nll -= dnbinom_robust(y(i,j),eta(i,j), 2*eta(i,j)+log(iphi(j)), true);//assumes variance is u+phi^2 while it actually is u^2+phiu^2
+       //     }
+       //   }
+       //   
+       // }
   } else if(family==2){
     matrix <Type> mu(n,p);
-    if(max==0){
+    //if(max==0){
     for (int i=0; i<n; i++) {
       for (int j=0; j<p;j++){
         mu(i,j) = pnorm(Type(eta(i,j)),Type(0),Type(1));
@@ -228,14 +228,14 @@ Type objective_function<Type>::operator() ()
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
-    }else{
-      for (int i=0; i<n; i++) {
-        for (int j=0; j<p;j++){
-          mu(i,j) = pnorm(Type(eta(i,j)),Type(0),Type(1));
-          nll -= dbinom(y(i,j),Type(1),mu(i,j),true);
-        }
-      }
-    }
+    // }else{
+    //   for (int i=0; i<n; i++) {
+    //     for (int j=0; j<p;j++){
+    //       mu(i,j) = pnorm(Type(eta(i,j)),Type(0),Type(1));
+    //       nll -= dbinom(y(i,j),Type(1),mu(i,j),true);
+    //     }
+    //   }
+    // }
   } else if(family==7 && zetastruc==1){
     
     int ymax =  CppAD::Integer(y.maxCoeff());
@@ -280,10 +280,14 @@ Type objective_function<Type>::operator() ()
         }
         
         //line below is different as D is positive only and *2
-       if(max==0) nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - 0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+       //if(max==0){ 
+       nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - 0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+      //}
         //nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
-      if(max==0) nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+      //if(max==0) {
+        nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+    //}
     }
     
   } else if(family==7 && zetastruc==0){
@@ -316,14 +320,18 @@ Type objective_function<Type>::operator() ()
             }
           }
         }//line below is different as D is positive only and *2
-        if(max==0) nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - 0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        //if(max==0){
+          nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - 0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+      //}
         //  nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
-      if(max==0) nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+      //if(max==0){
+      nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
+      //}
     }
   }else if(family==3){
     matrix <Type> eta2(n,p);
-    if(max==0){
+    //if(max==0){
     for (int i=0; i<n; i++) {
       for (int j=0; j<p;j++){
         eta2(i,j) = (newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() + 0.5*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
@@ -332,15 +340,15 @@ Type objective_function<Type>::operator() ()
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
-    }else{
-      for (int i=0; i<n; i++) {
-      for (int j=0; j<p;j++){
-      nll -= dnorm(y(i,j), eta(i,j), iphi(j), true);
-      }
-    }
-    }
+    // }else{
+    //   for (int i=0; i<n; i++) {
+    //   for (int j=0; j<p;j++){
+    //   nll -= dnorm(y(i,j), eta(i,j), iphi(j), true);
+    //   }
+    // }
+    // }
   }else if(family==4){
-    if(max==0){
+   // if(max==0){
     matrix <Type> e_eta(n,p);
     e_eta.fill(0.0);
     matrix <Type> B(num_lv,num_lv);
@@ -350,7 +358,7 @@ Type objective_function<Type>::operator() ()
       for (int j=0; j<p;j++){
         B = (-D.col(j).matrix()+Q);
         v = (-newlam.col(j)+Q*u.row(i).transpose());
-        Type detB = pow(B.determinant(),-0.5);
+        Type detB = 1/B.llt().matrixL().determinant();//can't get square root of a negative determinant, so determinant of square root matrix instead. Does add a lot of operations..
         Type detA = pow(A.col(i).matrix().determinant(),-0.5);
         e_eta(i,j) += exp(-C(i,j) + 0.5*((v.transpose()*atomic::matinv(B)*v).value()-(u.row(i)*Q*u.row(i).transpose()).value()))*detB*detA;
         
@@ -359,14 +367,14 @@ Type objective_function<Type>::operator() ()
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
   }
-  }else{
-    for (int i=0; i<n; i++) {
-      for (int j=0; j<p;j++){
-        nll -= dgamma(y(i,j), 1/iphi(j), iphi(j)*exp(eta(i,j)), true);
-      }
-    }
-      
-  }
+  // }else{
+  //   for (int i=0; i<n; i++) {
+  //     for (int j=0; j<p;j++){
+  //       nll -= dgamma(y(i,j), 1/iphi(j), iphi(j)*exp(eta(i,j)), true);
+  //     }
+  //   }
+  //     
+  // }
 
   //shrinks LVs, linear ridge
     for(int q=0; q<(num_lv-1); q++){
@@ -377,8 +385,9 @@ Type objective_function<Type>::operator() ()
     for(int q=0; q<num_lv; q++){
       nll += (lambda2.row(q).array()*lambda2.row(q).array()).sum()*gamma2;
     }
-   if(max==0) nll -= -0.5*(u.array()*u.array()).sum() - n*log(sigma)*random(0);// -0.5*t(u_i)*u_i
-
+   //if(max==0) {
+     nll -= -0.5*(u.array()*u.array()).sum() - n*log(sigma)*random(0);// -0.5*t(u_i)*u_i
+//}
   return nll;
 }
 
