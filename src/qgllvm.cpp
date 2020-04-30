@@ -224,7 +224,7 @@ Type objective_function<Type>::operator() ()
       for (int j=0; j<p;j++){
         mu(i,j) = pnorm(Type(eta(i,j)),Type(0),Type(1));
         nll -= dbinom(y(i,j),Type(1),mu(i,j),true);
-        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() +0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() +0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() -0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() -0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
@@ -281,7 +281,7 @@ Type objective_function<Type>::operator() ()
         
         //line below is different as D is positive only and *2
        //if(max==0){ 
-       nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() +0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() +0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+       nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() -0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() -0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       //}
         //nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
@@ -321,7 +321,7 @@ Type objective_function<Type>::operator() ()
           }
         }//line below is different as D is positive only and *2
         //if(max==0){
-          nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - 0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() -0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() -0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       //}
         //  nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
@@ -334,7 +334,7 @@ Type objective_function<Type>::operator() ()
     //if(max==0){
     for (int i=0; i<n; i++) {
       for (int j=0; j<p;j++){
-        eta2(i,j) = (newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - 0.5*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        eta2(i,j) = (newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() + 0.5*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
         //nll -= -0.5*log(iphi(j)*iphi(j)) - 1/(2*iphi(j)*iphi(j))*(pow(y(i,j)-eta(i,j),2) + eta2(i,j));
         nll -= -0.5*log(iphi(j)*iphi(j)) - 1/(2*iphi(j)*iphi(j))*(y(i,j)*y(i,j) -2*y(i,j)*eta(i,j) + eta(i,j)*eta(i,j) + eta2(i,j));
       }
