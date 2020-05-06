@@ -147,18 +147,14 @@ Type objective_function<Type>::operator() ()
   D.fill(0.0);
   for (int j=0; j<p; j++){
     for (int q=0; q<num_lv; q++){
-      D(q,q,j) = 2*newlam2(q,j);
+      D(q,q,j) = newlam2(q,j);
     }
   }
   matrix <Type> eta = C + u*newlam;
   //add exspectation quadratic term
   for (int j=0; j<p; j++){
     for (int i=0; i<n; i++){
-      eta(i,j) += -0.5*((u.row(i)*D.col(j).matrix()*u.row(i).transpose()).value());
-  //    if(max==0){
-        eta(i,j) += -0.5*((D.col(j).matrix()*A.col(i).matrix()).trace());
-    //  }    
-    
+      eta(i,j) -= (u.row(i)*D.col(j).matrix()*u.row(i).transpose()).value() + (D.col(j).matrix()*A.col(i).matrix()).trace();
     }
   }
   
@@ -172,7 +168,7 @@ Type objective_function<Type>::operator() ()
     for (int i=0; i<n; i++) {
       matrix <Type> Q = atomic::matinv(A.col(i).matrix());
       for (int j=0; j<p;j++){
-        B = (D.col(j).matrix()+Q);
+        B = (2*D.col(j).matrix()+Q);
         v = (newlam.col(j)+Q*u.row(i).transpose());
         Type detB = pow(B.determinant(),-0.5);
         Type detA = pow(A.col(i).matrix().determinant(),-0.5);
@@ -198,7 +194,7 @@ Type objective_function<Type>::operator() ()
        for (int i=0; i<n; i++) {
          matrix <Type> Q = atomic::matinv(A.col(i).matrix());
          for (int j=0; j<p;j++){
-           B = (-D.col(j).matrix()+Q);
+           B = (-2*D.col(j).matrix()+Q);
            v = (-newlam.col(j)+Q*u.row(i).transpose());
            Type detB = 1/B.llt().matrixL().determinant();//can't get square root of a negative determinant, so determinant of square root matrix instead. Does add a lot of operations..
            Type detA = pow(A.col(i).matrix().determinant(),-0.5);
@@ -224,7 +220,7 @@ Type objective_function<Type>::operator() ()
       for (int j=0; j<p;j++){
         mu(i,j) = pnorm(Type(eta(i,j)),Type(0),Type(1));
         nll -= dbinom(y(i,j),Type(1),mu(i,j),true);
-        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() -0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() -0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() -2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
       nll -= 0.5*(log(Ar(i)) - Ar(i)/pow(sigma,2) - pow(r0(i)/sigma,2))*random(0);
     }
@@ -281,7 +277,7 @@ Type objective_function<Type>::operator() ()
         
         //line below is different as D is positive only and *2
        //if(max==0){ 
-       nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() -0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() -0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+       nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() -2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       //}
         //nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
@@ -321,7 +317,7 @@ Type objective_function<Type>::operator() ()
           }
         }//line below is different as D is positive only and *2
         //if(max==0){
-        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() -0.25*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() -0.5*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() -2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() + 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       //}
         //  nll -= -0.5*(newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() - (D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
       }
@@ -334,7 +330,7 @@ Type objective_function<Type>::operator() ()
     //if(max==0){
     for (int i=0; i<n; i++) {
       for (int j=0; j<p;j++){
-        eta2(i,j) = (newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() + 0.5*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() + (u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 2*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
+        eta2(i,j) = (newlam.col(j)*newlam.col(j).transpose()*A.col(i).matrix()).trace() + 2*(D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*A.col(i).matrix()).trace() + 4*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*D.col(j).matrix()*u.row(i).transpose()).value() - 4*(u.row(i)*D.col(j).matrix()*A.col(i).matrix()*newlam.col(j)).value();
         //nll -= -0.5*log(iphi(j)*iphi(j)) - 1/(2*iphi(j)*iphi(j))*(pow(y(i,j)-eta(i,j),2) + eta2(i,j));
         nll -= -0.5*log(iphi(j)*iphi(j)) - 1/(2*iphi(j)*iphi(j))*(y(i,j)*y(i,j) -2*y(i,j)*eta(i,j) + eta(i,j)*eta(i,j) + eta2(i,j));
       }
@@ -356,7 +352,7 @@ Type objective_function<Type>::operator() ()
     for (int i=0; i<n; i++) {
       matrix <Type> Q = atomic::matinv(A.col(i).matrix());
       for (int j=0; j<p;j++){
-        B = (-D.col(j).matrix()+Q);
+        B = (-2*D.col(j).matrix()+Q);
         v = (-newlam.col(j)+Q*u.row(i).transpose());
         Type detB = 1/B.llt().matrixL().determinant();//can't get square root of a negative determinant, so determinant of square root matrix instead. Does add a lot of operations..
         Type detA = pow(A.col(i).matrix().determinant(),-0.5);
