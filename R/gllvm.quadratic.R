@@ -31,7 +31,7 @@
 #' @param zeta.struc Structure for cut-offs in the ordinal model. Either "common", for the same cut-offs for all species, or "species" for species-specific cut-offs. For the latter, classes are arbitrary per species, each category per species needs to have at least one observations. Defaults to "species".
 #' @param starting.val.lingllvm Procedure to generate starting values for linear GLLVM if \code{starting.val="lingllvm"}. See also \link{gllvm}.
 #' @param parallel whether to turn of support for parallel computing. Note that either \link{openmp} must be used if \code{n.init=1}. Or a parallel back-end supported by \link{foreach}.
-#' @param equal.tolerances whether to fit quadratic model with equal tolerances (one quadratic coefficient per latent variable) or species-specific tolerances.
+#' @param common.tolerances whether to fit quadratic model with equal tolerances (one quadratic coefficient per latent variable) or species-specific tolerances.
 #'
 #' @details
 #' Fits the species packing model by generalized linear latent variable models with quadratic latent variables.
@@ -208,7 +208,7 @@
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 0, trace = FALSE, trace2 = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 2000, 
     start.fit = NULL, starting.val = "res", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
-    ridge.quadratic = FALSE, par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE, start.struc="common", gamma1=0, gamma2=0, theta4 = NULL) {
+    ridge.quadratic = FALSE, par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel=FALSE, start.struc="common", gamma1=0, gamma2=0, theta4 = NULL) {
     #build in gradient check
     randomX <- NULL
     term <- NULL
@@ -391,7 +391,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.quadratic(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                                         row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                         n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
-                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, maxit.lingllvm = maxit.lingllvm, starting.val.lingllvm = starting.val.lingllvm, equal.tolerances = equal.tolerances, parallel = parallel, start.struc = start.struc, gamma1 = gamma1, gamma2 = gamma2, theta4 = theta4)
+                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, maxit.lingllvm = maxit.lingllvm, starting.val.lingllvm = starting.val.lingllvm, common.tolerances = common.tolerances, parallel = parallel, start.struc = start.struc, gamma1 = gamma1, gamma2 = gamma2, theta4 = theta4)
         }
 
     out$X.design <- fitg$X.design
@@ -399,7 +399,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
     out$logL <- fitg$logL
     
     out$start.struc <- fitg$start.struc
-    out$equal.tolerances <- fitg$equal.tolerances
+    out$common.tolerances <- fitg$common.tolerances
       
     out$method <- "VA"
     if (num.lv > 0) 
@@ -440,7 +440,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
         cat("Random row effects ended up almost zero. Might be a false convergence or local maxima. You can try a simpler model, less latent variables or change the optimizer.")
     }
     if(grad.check==T&any(out$TMBfn$gr(out$TMBfn$par)>0.001)){
-      cat( paste("Large gradient value(s) detected ", "(max was ",round(max(out$TMBfn$gr(out$TMBfn$env$last.par.best)),3), "). Model might not have converged. \n",sep=""))
+      cat( paste("Large gradient value(s) detected ", "(max was ",round(max(abs(out$TMBfn$gr(out$TMBfn$env$last.par.best))),3), "). Model might not have converged. \n",sep=""))
     }
   
     out$convergence <- fitg$convergence

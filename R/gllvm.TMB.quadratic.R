@@ -7,7 +7,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                                 seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                 n.init=1,start.params=NULL,
                                 optimizer="optim",starting.val="res",diag.iter=1,
-                                Lambda.start=c(0.1,0.5), jitter.var=0, par.scale=1, fn.scale=1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", equal.tolerances = FALSE, parallel=FALSE,start.struc="species", gamma1=0,gamma2=0,theta4 = NULL) {
+                                Lambda.start=c(0.1,0.5), jitter.var=0, par.scale=1, fn.scale=1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel=FALSE,start.struc="species", gamma1=0,gamma2=0,theta4 = NULL) {
   
   n <- dim(y)[1]
   p <- dim(y)[2]
@@ -171,10 +171,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       lvs <- matrix(fit$index, ncol = num.lv)
       # if(!is.null(X)){
       #   #lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
-      #   if(equal.tolerances==F)lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
+      #   if(common.tolerances==F)lambda2 <- fit$params[,(ncol(fit$params)-num.lv+1):ncol(fit$params)]
       # }else if(is.null(X)){
       #   #lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
-      #   if(equal.tolerances==F)lambda2 <- fit$params[,-c(1:(num.lv+1))]  
+      #   if(common.tolerances==F)lambda2 <- fit$params[,-c(1:(num.lv+1))]  
       # }
       
       #subtract a fraction from the 0 quadratic scores, otherwise the optimization can't get away from the 0s where necessary.
@@ -319,7 +319,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(start.struc!="common"){
       if(starting.val=="lingllvm")lambda2 <- matrix(-0.01,ncol=num.lv, nrow=p)
       if(!is.null(start.params)){if(class(start.params)=="gllvm")lambda2 <- matrix(0.01,ncol=num.lv, nrow=p)}
-      if(equal.tolerances==T)start.struc=="common"
+      if(common.tolerances==T)start.struc=="common"
     }
     
     if(start.struc=="common"){
@@ -424,7 +424,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
     }
     if(inherits(optr,"try-error")) warning(optr[1]);
-    #if(!inherits(optr,"try-error")&equal.tolerances!=TRUE){
+    #if(!inherits(optr,"try-error")&common.tolerances!=TRUE){
     if(diag.iter>0 && Lambda.struc=="unstructured" && num.lv>1 && !inherits(optr,"try-error")){
       objr1 <- objr
       optr1 <- optr
@@ -444,7 +444,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       zeta <- param1[nam=="zeta"]
       
-      if(equal.tolerances==F&start.struc!="common"){
+      if(common.tolerances==F&start.struc!="common"){
         lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
       }else{
         lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=1))
@@ -495,7 +495,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       }
     }
     if(inherits(optr,"try-error")) warning(optr[1]);
-    if(equal.tolerances==F&start.struc=="common"){
+    if(common.tolerances==F&start.struc=="common"){
       objr1 <- objr
       optr1 <- optr
       param1 <- optr$par
@@ -617,9 +617,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         timeo <- system.time(optr <- try(optim(objr$par, objr$fn, objr$gr,method = "BFGS",control = list(reltol=reltol,maxit=maxit,parscale=parscale,fnscale=fnscale, trace=trace2),hessian = FALSE),silent = !trace2))
       }
       if(optimizer=="optim"){
-        if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; equal.tolerances=T}
+        if(inherits(optr, "try-error") || is.nan(optr$value) || is.na(optr$value)|| is.infinite(optr$value)){optr=optr1; objr=objr1; common.tolerances=T}
       }else{
-        if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; equal.tolerances=T}
+        if(inherits(optr, "try-error") || is.nan(optr$objective) || is.na(optr$objective)|| is.infinite(optr$objective)){optr=optr1; objr=objr1; common.tolerances=T}
       }
     }
     return(list(objr=objr,optr=optr,fit=fit,timeo=timeo))
@@ -734,7 +734,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   
   bi <- names(param)=="b"
   li <- names(param)=="lambda"
-  if(equal.tolerances==F)l2i <- names(param)=="lambda2"
+  if(common.tolerances==F)l2i <- names(param)=="lambda2"
   l3i <- names(param)=="lambda3"
   ui <- names(param)=="u"
   if(row.eff!=FALSE) {
@@ -750,7 +750,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   if(p>1) {
     theta[lower.tri(theta,diag=TRUE)] <- param[li];
     theta3<-abs(param[l3i])+theta4
-    if(equal.tolerances==F){
+    if(common.tolerances==F){
       theta2<--(abs(matrix(param[l2i],nrow=p,ncol=num.lv,byrow=T))+matrix(theta3,ncol=num.lv,nrow=p,byrow=T))
     }else{
       theta2<--matrix(theta3,ncol=num.lv,nrow=p,byrow=T)
@@ -845,7 +845,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       incl[names(objr$par)=="lg_Ar"] <- FALSE;
       incl[names(objr$par)=="Au"] <- FALSE;
-      if(equal.tolerances==T){
+      if(common.tolerances==T){
         incl[names(objr$par)=="lambda2"] <- FALSE;
       }
       if(row.eff=="random") {
@@ -881,13 +881,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       rownames(se.lambdas) <- colnames(out$y)
       out$sd$theta <- se.lambdas; se <- se[-(1:(p * num.lv - sum(0:(num.lv-1))))];
       # diag(out$sd$theta) <- diag(out$sd$theta)*diag(out$params$theta) !!!
-      if(equal.tolerances==F)se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv,byrow=T);
-      if(equal.tolerances==F)colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
-      if(equal.tolerances==F)rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
+      if(common.tolerances==F)se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv,byrow=T);
+      if(common.tolerances==F)colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
+      if(common.tolerances==F)rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
       se.lambdas3 <-  matrix(se[1:num.lv],p,num.lv,byrow=T);
       se.lambdas2 <- se.lambdas2 + se.lambdas3;
       colnames(se.lambdas3) <- paste("LV", 1:num.lv, "^2",sep="");se <- se[-(1:(num.lv))]
-      if(equal.tolerances==F){
+      if(common.tolerances==F){
         out$sd$optima <- out$sd$theta/(2*(se.lambdas2));
         out$sd$theta <- cbind(out$sd$theta,se.lambdas2);  
       }else{
@@ -950,7 +950,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   out$logL <- -out$logL
   out$LL <- -LL #for now to return all LL from n.init
   out$start.struc <- start.struc
-  out$equal.tolerances <- equal.tolerances
+  out$common.tolerances <- common.tolerances
   out$ridge <- list(gamma1,gamma2)
   
   #if(num.lv > 0) out$logL = out$logL + n*0.5*num.lv
