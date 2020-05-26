@@ -221,7 +221,7 @@
               stop("Optima are too far removed from the latent varaibles to visualize")
             }else{
               message("There are species that lack optima on one (or multiple) of the chosen latent variables, which will thus not be visualized.", 
-                                        sep = " "))
+                                        sep = " ")
               optima <- optima[!excl, , drop = F]
               if(opt.region!=F)optSD <- optSD[!excl, , drop = F] 
               
