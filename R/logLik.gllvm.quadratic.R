@@ -37,9 +37,8 @@ logLik.gllvm.quadratic <- function(object, ...)
     object$params$Br <- NULL
     object$params$sigmaB <- object$params$sigmaB[lower.tri(object$params$sigmaB, diag = TRUE)]
   }
-  
+  if(object$common.tolerances==TRUE)object$params$theta<-object$params$theta[,1:object$num.lv]
   attributes(logL)$df <- length(unlist(object$params)[!is.na(unlist(object$params))]) - object$num.lv * (object$num.lv - 1) / 2
-  if(object$common.tolerances==TRUE)attributes(logL)$df <- attributes(logL)$df - nrow(object$params$theta)*object$num.lv + object$num.lv
   attributes(logL)$nobs <- dim(object$y)[1]
   class(logL) <- "logLik"
   return(logL)
