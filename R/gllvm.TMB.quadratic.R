@@ -779,7 +779,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     colnames(out$lvs) <- paste("LV", 1:num.lv, sep="")
     colnames(out$params$theta) <- c(paste("LV", 1:num.lv, sep=""),paste("LV", 1:num.lv, "^2", sep=""))
     rownames(out$params$theta) <- colnames(out$y)}
-  if(common.tolerances==F)out$params$theta2 <- -theta3
+  if(common.tolerances==F&gamma2!=0)out$params$theta2 <- -theta3
   names(beta0) <- colnames(out$y); out$params$beta0 <- beta0;
   if(!is.null(X)){betas <- matrix(betas,ncol=ncol(X)); out$params$Xcoef <- betas;
   rownames(out$params$Xcoef) <- colnames(out$y); colnames(out$params$Xcoef) <- colnames(X); }
@@ -849,6 +849,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(familyn!=7) incl[names(objr$par)=="zeta"] <- FALSE
       
       if(common.tolerances==TRUE){
+        incl[names(objr$par)=="lambda3"] <- FALSE;
+      }else if(gamma2==0){
         incl[names(objr$par)=="lambda3"] <- FALSE;
       }
       if(row.eff=="random") {
