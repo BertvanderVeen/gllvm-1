@@ -40,7 +40,7 @@ logLik.gllvm.quadratic <- function(object, ...)
   
   if(object$common.tolerances==TRUE){
     object$params$theta <- object$params$theta[,1:object$num.lv]
-    attributes(logL)$df <- length(unlist(object$params)[!is.na(unlist(object$params))]) - object$num.lv * (object$num.lv - 1) / 2 + num.lv
+    attributes(logL)$df <- length(unlist(object$params)[!is.na(unlist(object$params))]) - object$num.lv * (object$num.lv - 1) / 2 + object$num.lv
   }else{
     attributes(logL)$df <- length(unlist(object$params)[!is.na(unlist(object$params))]) - object$num.lv * (object$num.lv - 1) / 2
   }
