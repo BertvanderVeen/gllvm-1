@@ -3,7 +3,6 @@
 \name{ordiplot.gllvm.quadratic}
 \alias{ordiplot.gllvm.quadratic}
 \alias{ordiplot}
-\alias{ordiplot.gllvm}
 \title{Plot latent variables from gllvm model}
 \usage{
 \method{ordiplot}{gllvm.quadratic}(
@@ -13,7 +12,7 @@
   alpha = 0.5,
   main = NULL,
   which.lvs = c(1, 2),
-  predict.region = FALSE,
+  site.region = FALSE,
   level = 0.95,
   jitter = FALSE,
   jitter.amount = 0.2,
@@ -39,7 +38,7 @@
 
 \item{which.lvs}{indices of two latent variables to be plotted if number of the latent variables is more than 2. A vector with length of two. Defaults to \code{c(1,2)}.}
 
-\item{predict.region}{logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.}
+\item{site.region}{logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.}
 
 \item{level}{level for prediction regions.}
 
@@ -77,7 +76,7 @@ If \code{alpha = 0.5}, the latent variables and their coefficients are on the sa
 For details for constructing a biplot, see Gabriel (1971).
 }
 \note{
-- If error is occurred when using \code{ordiplot()}, try full name of the function \code{ordiplot.gllvm()} as functions named 'ordiplot' might be found in other packages as well.
+- If error is occurred when using \code{ordiplot()}, try full name of the function \code{ordiplot.gllvm.quadratic()} as functions named 'ordiplot' might be found in other packages as well.
 }
 \examples{
 #'## Load a dataset from the mvabund package

@@ -193,11 +193,7 @@
 #'@useDynLib qgllvm, .registration = TRUE
 #'@import foreach
 #'@importFrom gllvm gllvm
-#'@importFrom vegan scores
-#'@importFrom vegan tolerance
-#'@importFrom vegan cca
 #'@importFrom TMB MakeADFun
-#'@importFrom mvabund manyglm
 #'@importFrom graphics abline axis par plot segments text points boxplot panel.smooth lines polygon
 #'@importFrom grDevices rainbow
 #'@importFrom stats AIC binomial dbinom dnorm factanal glm model.extract model.frame model.matrix model.response nlminb optim optimHess pbinom pnbinom pnorm ppois qnorm reshape residuals rnorm runif terms BIC qqline qqnorm sd pchisq formula ppoints quantile qchisq

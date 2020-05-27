@@ -32,7 +32,7 @@
 #' For details for constructing a biplot, see Gabriel (1971).
 #' 
 #' @note 
-#' - If error is occurred when using \code{ordiplot()}, try full name of the function \code{ordiplot.gllvm()} as functions named 'ordiplot' might be found in other packages as well.
+#' - If error is occurred when using \code{ordiplot()}, try full name of the function \code{ordiplot.gllvm.quadratic()} as functions named 'ordiplot' might be found in other packages as well.
 #' 
 #' @references 
 #' Gabriel, K. R. (1971). The biplot graphic display of matrices with application to principal component analysis. Biometrika, 58, 453-467.
@@ -49,9 +49,9 @@
 #'# Biplot with 10 species
 #'ordiplot(fit, biplot = TRUE, ind.spp = 10)
 #'
-#'@aliases ordiplot ordiplot.gllvm
+#'@aliases ordiplot ordiplot.gllvm.quadratic
 #'@export
-#'@export ordiplot.gllvm
+#'@export ordiplot.gllvm.quadratic
 ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = c(1, 2), site.region = FALSE, level =0.95,
                            jitter = FALSE, jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, lwd.ellips = 0.5, col.ellips = 4, lty.ellips = 1,...) {
   if (any(class(object) != "gllvm.quadratic"))

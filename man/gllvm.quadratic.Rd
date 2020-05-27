@@ -22,28 +22,27 @@ gllvm.quadratic(
   n.init = 1,
   reltol = 1e-08,
   seed = NULL,
-  maxit = 1000,
+  maxit = 2000,
   start.fit = NULL,
-  starting.val = "lingllvm",
+  starting.val = "res",
   optimizer = "optim",
   Lambda.start = c(0.1, 0.5),
   jitter.var = 0,
   ridge = FALSE,
   ridge.quadratic = FALSE,
-  start.method = "FA",
   par.scale = 1,
   fn.scale = 1,
   grad.check = FALSE,
   zeta.struc = "species",
   maxit.lingllvm = NULL,
   starting.val.lingllvm = "res",
-  equal.tolerances = FALSE,
+  common.tolerances = FALSE,
   parallel = FALSE,
-  opt = 1,
-  start.struc = "species",
+  start.struc = "common",
   gamma1 = 0,
   gamma2 = 0,
-  theta4 = NULL
+  theta4 = NULL,
+  Lambda2.start = 0.01
 )
 }
 \arguments{
@@ -93,8 +92,6 @@ gllvm.quadratic(
 
 \item{jitter.var}{jitter variance for starting values of latent variables. Defaults to 0, meaning no jittering.}
 
-\item{start.method}{ordination method to retrieve starting values. The default is Factor analysis (FA), with alternative Correspondence Analysis (CA).}
-
 \item{par.scale}{(see \code{'\link{optim}'} for details) Here, either "coef" to scale all parameters to equal magnitudes, or a single value to scale all parameters with, e.g. 0.0001)}
 
 \item{fn.scale}{(see \code{'\link{optim}'} for details)}
@@ -105,9 +102,11 @@ gllvm.quadratic(
 
 \item{starting.val.lingllvm}{Procedure to generate starting values for linear GLLVM if \code{starting.val="lingllvm"}. See also \link{gllvm}.}
 
-\item{equal.tolerances}{whether to fit quadratic model with equal tolerances (one quadratic coefficient per latent variable) or species-specific tolerances.}
+\item{common.tolerances}{whether to fit quadratic model with equal tolerances (one quadratic coefficient per latent variable) or species-specific tolerances.}
 
 \item{parallel}{whether to turn of support for parallel computing. Note that either \link{openmp} must be used if \code{n.init=1}. Or a parallel back-end supported by \link{foreach}.}
+
+\item{Lambda2.start}{starting values for the quadratic coefficients (should be a scalar). Defaults to 0.01.}
 }
 \value{
 An object of class 'gllvm' includes the following components:

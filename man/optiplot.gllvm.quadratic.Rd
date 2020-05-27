@@ -13,14 +13,17 @@
   which.lvs = NULL,
   s.colors = 1,
   cex.spp = 0.7,
-  opt.ranges = FALSE,
+  opt.region = FALSE,
   type = "response",
   intercept = TRUE,
   legend = FALSE,
   scale = FALSE,
-  predict.region = FALSE,
+  site.region = FALSE,
   level = 0.95,
   alpha.col = 0.4,
+  lty.ellips = c("solid", "dashed"),
+  col.ellips = "gray",
+  lwd.ellips = 1,
   ...
 )
 }
@@ -39,7 +42,7 @@
 
 \item{cex.spp}{size of species labels in biplot}
 
-\item{opt.ranges}{Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges}
+\item{opt.region}{Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges}
 
 \item{type}{Can be used to predict on the response or link scale. Default is response (except for ordinal, for which the only option is "link").}
 
@@ -49,11 +52,17 @@
 
 \item{scale}{For 2D plots, either "FALSE",species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.}
 
-\item{predict.region}{logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.}
+\item{site.region}{logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.}
 
-\item{level}{level for prediction regions of sites and optima.}
+\item{level}{level for prediction regions. Can be a vector of size two. Defaults to 0.95.}
 
-\item{alpha.col}{used to control the transparency of confidence interval ribbons in 1D plot}
+\item{alpha.col}{used to control the transparency of confidence interval ribbons in 1D plot, and prediction regions in 2D plot.}
+
+\item{lty.ellips}{line type for prediction ellipses. Can be a vector of size two. See graphical parameter lty.}
+
+\item{col.ellips}{colors for site prediction ellipses.}
+
+\item{lwd.ellips}{line width for prediction ellipses. Can be a vector of size two. See graphical parameter lwd.}
 
 \item{...}{additional graphical arguments.}
 }
