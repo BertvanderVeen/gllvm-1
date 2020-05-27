@@ -131,7 +131,7 @@ Type objective_function<Type>::operator() ()
   if(lambda2.cols()==1){
     for (int j=0; j<p; j++){
       for (int q=0; q<num_lv; q++){
-        newlam2(q,j) = fabs(lambda3(q)) + theta4(q);
+        newlam2(q,j) = fabs(lambda2(q)) + theta4(q);
       }
     } 
   }else{
