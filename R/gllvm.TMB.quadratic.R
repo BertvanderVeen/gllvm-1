@@ -522,7 +522,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
        # if(gamma2==0&starting.val!="zero"){
        #   lambda3 <- rep(0,num.lv)
        # }else{
-        lambda3 <- rep(Lambda2.start,num.lv)
+        if(gamma2!=0){
+          lambda3 <- rep(Lambda2.start,num.lv)
+        }else{
+          lambda3 <- rep(0,num.lv)
+        }
       #}
       #lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
       
@@ -735,8 +739,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   
   bi <- names(param)=="b"
   li <- names(param)=="lambda"
-  if(common.tolerances==F)l2i <- names(param)=="lambda2"
-  l3i <- names(param)=="lambda3"
+  l2i <- names(param)=="lambda2"
+  if(common.tolerances==F&gamma2>0)l3i <- names(param)=="lambda3"
   ui <- names(param)=="u"
   if(row.eff!=FALSE) {
     ri <- names(param)=="r0"
@@ -750,11 +754,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   theta <- matrix(0,p,num.lv)
   if(p>1) {
     theta[lower.tri(theta,diag=TRUE)] <- param[li];
-    theta3<-abs(param[l3i])+theta4
-    if(common.tolerances==F){
+    if(common.tolerances==F&gamma2>0)theta3<-abs(param[l3i])+theta4
+    if(common.tolerances==F&gamma2>0){
       theta2<--(abs(matrix(param[l2i],nrow=p,ncol=num.lv,byrow=T))+matrix(theta3,ncol=num.lv,nrow=p,byrow=T))
     }else{
-      theta2<--matrix(theta2,ncol=num.lv,nrow=p,byrow=T)
+      theta2<--matrix(abs(param[l2i])+theta4,ncol=num.lv,nrow=p,byrow=T)
     }
     
     theta<-cbind(theta,theta2)
@@ -884,21 +888,29 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       rownames(se.lambdas) <- colnames(out$y)
       out$sd$theta <- se.lambdas; se <- se[-(1:(p * num.lv - sum(0:(num.lv-1))))];
       # diag(out$sd$theta) <- diag(out$sd$theta)*diag(out$params$theta) !!!
-      if(common.tolerances==F)se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv,byrow=T);
-      if(common.tolerances==F)colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
-      if(common.tolerances==F)rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
+      if(common.tolerances==F){
+        se.lambdas2 <-  matrix(se[1:(p * num.lv)],p,num.lv,byrow=T);
+      }
+      if(common.tolerances==F&gamma2>0){
       se.lambdas3 <-  matrix(se[1:num.lv],p,num.lv,byrow=T);
       se.lambdas2 <- se.lambdas2 + se.lambdas3;
       colnames(se.lambdas3) <- paste("LV", 1:num.lv, "^2",sep="");se <- se[-(1:(num.lv))]
-      if(common.tolerances==F){
-        out$sd$optima <- out$sd$theta/(2*(se.lambdas2));
-        out$sd$theta <- cbind(out$sd$theta,se.lambdas2);  
-      }else{
-        out$sd$optima <- -out$sd$theta/(2*(se.lambdas2));
-        out$sd$theta <- cbind(out$sd$theta);
-      }
       out$sd$theta2 <- se.lambdas3[1,]
-      
+      }
+      if(common.tolerances==T){
+        se.lambdas2<-matrix(se[1:num.lv],p,num.lv,byrow=T);
+      }
+      colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
+      rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
+      out$sd$theta <- cbind(out$sd$theta,se.lambdas2)
+      # if(common.tolerances==F){
+      #   out$sd$optima <- out$sd$theta/(2*(se.lambdas2));
+      #   out$sd$theta <- cbind(out$sd$theta,se.lambdas2);  
+      # }else{
+      #   out$sd$optima <- -out$sd$theta/(2*(se.lambdas2));
+      #   out$sd$theta <- out$sd$theta;
+      # }
+
       out$sd$beta0 <- sebetaM[,1]; names(out$sd$beta0) <- colnames(out$y);
       if(!is.null(X)){
         out$sd$Xcoef <- matrix(sebetaM[,-1],nrow = nrow(sebetaM));
