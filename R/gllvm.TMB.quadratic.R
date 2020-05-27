@@ -850,7 +850,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       incl[names(objr$par)=="lg_Ar"] <- FALSE;
       incl[names(objr$par)=="Au"] <- FALSE;
       incl[names(objr$par)=="r0"] <- FALSE; 
-      if(familyn!=7) incl[names(objr$par)=="zeta"] <- FALSE
+      if(family!="ordinal") incl[names(objr$par)=="zeta"] <- FALSE
       
       if(common.tolerances==TRUE){
         incl[names(objr$par)=="lambda3"] <- FALSE;
@@ -867,9 +867,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       incld[names(objr$par)=="u"] <- TRUE;
       incld[names(objr$par)=="Au"] <- TRUE;
       
-      if(familyn==0 || familyn==2 || familyn==7) incl[names(objr$par)=="lg_phi"] <- FALSE
+      if(family=="gaussian" || family=="binomial" || family=="ordinal") incl[names(objr$par)=="lg_phi"] <- FALSE
     
-      if(familyn==7) incl[names(objr$par)=="zeta"] <- TRUE
+      if(family=="ordinal") incl[names(objr$par)=="zeta"] <- TRUE
       
       A.mat <- -sdr[incl, incl] # a x a
       D.mat <- -sdr[incld, incld] # d x d
@@ -967,7 +967,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   out$start.struc <- start.struc
   out$common.tolerances <- common.tolerances
   out$ridge <- list(gamma1,gamma2)
-  
   #if(num.lv > 0) out$logL = out$logL + n*0.5*num.lv
   if(row.eff == "random") out$logL = out$logL + n*0.5
   #if(!is.null(randomX)) out$logL = out$logL + p*0.5*ncol(xb)
