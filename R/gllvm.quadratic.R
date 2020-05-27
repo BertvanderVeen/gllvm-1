@@ -20,6 +20,7 @@
 #' @param trace logical, if \code{TRUE} in each iteration step of n.init information on current step will be printed. Defaults to FALSE. 
 #' @param trace2 local, if \code{TRUE} prints the optimizer trace.
 #' @param Lambda.start starting values for variances in VA distributions for latent variables in variational approximation method. Defaults to 0.1.
+#' @param Lambda2.start starting values for the quadratic coefficients (should be a scalar). Defaults to 0.01.
 #' @param reltol  convergence criteria for log-likelihood, defaults to 1e-6.
 #' @param maxit maximum number of iterations within \code{optim} function, defaults to 1000.
 #' @param seed a single seed value, defaults to \code{NULL}.
@@ -208,7 +209,7 @@
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL, 
     sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 0, trace = FALSE, trace2 = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 2000, 
     start.fit = NULL, starting.val = "res", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, ridge = FALSE, 
-    ridge.quadratic = FALSE, par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel=FALSE, start.struc="common", gamma1=0, gamma2=0, theta4 = NULL) {
+    ridge.quadratic = FALSE, par.scale=1, fn.scale=1, grad.check = FALSE, zeta.struc="species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel=FALSE, start.struc="common", gamma1=0, gamma2=0, theta4 = NULL, Lambda2.start = 0.01) {
     #build in gradient check
     randomX <- NULL
     term <- NULL
@@ -391,7 +392,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
             fitg <- gllvm.TMB.quadratic(y, X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc, 
                                         row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors, 
                                         n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val, 
-                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, maxit.lingllvm = maxit.lingllvm, starting.val.lingllvm = starting.val.lingllvm, common.tolerances = common.tolerances, parallel = parallel, start.struc = start.struc, gamma1 = gamma1, gamma2 = gamma2, theta4 = theta4)
+                                        diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, par.scale=par.scale, fn.scale=fn.scale, zeta.struc = zeta.struc, maxit.lingllvm = maxit.lingllvm, starting.val.lingllvm = starting.val.lingllvm, common.tolerances = common.tolerances, parallel = parallel, start.struc = start.struc, gamma1 = gamma1, gamma2 = gamma2, theta4 = theta4, Lambda2.start = Lambda2.start)
         }
 
     out$X.design <- fitg$X.design
