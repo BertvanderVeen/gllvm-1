@@ -251,7 +251,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     }
     if(is.null(start.params)|family!="ordinal"){
       if(family=="ordinal"){
-        K = max(y00)-min(y00)
+        K <- max(y00)-min(y00)
         if(zeta.struc=="species"){
           zeta <- c(t(fit$zeta[,-1]))
           zeta <- zeta[!is.na(zeta)]
@@ -713,6 +713,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     phis <- exp(param[names(param)=="lg_phi"])
   }
   if(family == "ordinal"){
+    K <- max(y00)-min(y00)
     zetas <- param[names(param)=="zeta"]
     if(zeta.struc=="species"){
       zetanew <- matrix(NA,nrow=p,ncol=K)
