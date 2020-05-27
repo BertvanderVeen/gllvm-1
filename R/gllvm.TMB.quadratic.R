@@ -7,7 +7,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                                 seed = NULL,maxit = 2000, start.lvs = NULL, offset=NULL, sd.errors = TRUE,
                                 n.init=1,start.params=NULL,
                                 optimizer="optim",starting.val="res",diag.iter=1,
-                                Lambda.start=c(0.1,0.5), jitter.var=0, par.scale=1, fn.scale=1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel=FALSE,start.struc="species", gamma1=0,gamma2=0,theta4 = NULL) {
+                                Lambda.start=c(0.1,0.5), jitter.var=0, par.scale=1, fn.scale=1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel=FALSE,start.struc="species", gamma1=0,gamma2=0,theta4 = NULL,Lambda2.start=0.01) {
   
   n <- dim(y)[1]
   p <- dim(y)[2]
@@ -158,7 +158,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       lambdas <- as.matrix(fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)])
       lambdas[upper.tri(lambdas)] <- 0
-      fit$params<-cbind(fit$params,matrix(0.01,ncol=num.lv, nrow=p))
+      fit$params<-cbind(fit$params,matrix(Lambda2.start,ncol=num.lv, nrow=p))
       row.params <- NULL
       
       if (row.eff != FALSE) {
@@ -267,7 +267,6 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if (is.null(offset))
       offset <- matrix(0, nrow = n, ncol = p)
     
-    current.loglik <- -1e6; iter <- 1; err <- 10;
     if(!is.null(row.params)){ r0 <- row.params} else {r0 <- rep(0,n)}
     a <- c(beta0)
     b <- NULL; if(!is.null(X)) b <- matrix(betas, ncol(X), p,byrow = TRUE)
@@ -317,15 +316,17 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       }
     } 
     if(start.struc!="common"){
-      if(starting.val=="lingllvm")lambda2 <- matrix(-0.01,ncol=num.lv, nrow=p)
-      if(!is.null(start.params)){if(class(start.params)=="gllvm")lambda2 <- matrix(0.01,ncol=num.lv, nrow=p)}
-      if(common.tolerances==T)start.struc=="common"
+      if(starting.val=="lingllvm")lambda2 <- matrix(-Lambda2.start,ncol=num.lv, nrow=p)
+      if(!is.null(start.params)){if(class(start.params)=="gllvm")lambda2 <- matrix(Lambda2.start,ncol=num.lv, nrow=p)}
+      if(common.tolerances==TRUE)start.struc<-"common"
     }
     
     if(start.struc=="common"){
-      lambda2 <- matrix(0.01,ncol=num.lv, nrow=1)
+      lambda3 <- 0
+      lambda2 <- matrix(Lambda2.start,ncol=num.lv, nrow=1)
     }else{
-      lambda2 <- matrix(0.01,ncol=num.lv, nrow=p)
+      lambda2 <- matrix(Lambda2.start,ncol=num.lv, nrow=p)
+      lambda3 <- rep(0,num.lv)
     }
     
     u <- u+mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);#mostly makes sense when using lingllvm
@@ -348,14 +349,14 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         if(row.eff=="random"){
           objr <- TMB::MakeADFun(
             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
-            map = mp, parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), lambda3=rep(0,num.lv),u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
+            map = mp, parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), lambda3=lambda3,u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
             inner.control=list(mgcmax = 1e+200,maxit = maxit),
             DLL = "qgllvm")
           
         } else {
           objr <- TMB::MakeADFun(
             data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
-            map = mp, parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), lambda3=rep(0,num.lv), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta),
+            map = mp, parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), lambda3=lambda3, u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta),
             inner.control=list(mgcmax = 1e+200,maxit = maxit),
             DLL = "qgllvm")##GLLVM
         }
@@ -389,14 +390,14 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(row.eff=="random"){
       objr <- TMB::MakeADFun(
         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
-        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), lambda3=rep(0.5,num.lv),u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
+        parameters = list(r0 = matrix(r0), b = rbind(a,b), B = matrix(0),lambda = lambda, lambda2 = t(lambda2), lambda3=lambda3,u = u,lg_phi=log(phi),log_sigma=log(sigma),Au=Au,lg_Ar=log(Ar),zeta=zeta),
         inner.control=list(mgcmax = 1e+200,maxit = maxit),
         DLL = "qgllvm")
       
     } else {
       objr <- TMB::MakeADFun(
         data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
-        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), lambda3=rep(0.5,num.lv), u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta),
+        parameters = list(r0=matrix(r0), b = rbind(a,b),B=matrix(0),lambda = lambda, lambda2=t(lambda2), lambda3=lambda3, u = u,lg_phi=log(phi),log_sigma=0,Au=Au,lg_Ar=log(Ar),zeta=zeta),
         inner.control=list(mgcmax = 1e+200,maxit = maxit),
         DLL = "qgllvm")##GLLVM
     }
@@ -513,23 +514,23 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       lg_Ar1 <- param1[nam=="lg_Ar"]
       
       zeta <- param1[nam=="zeta"]
-      if(gamma2==0){
-        lambda2<- t(matrix(param1[nam=="lambda3"],byrow=T,ncol=num.lv,nrow=p))  
-      }else{
-        lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
-      }
-       if(gamma2==0&starting.val!="zero"){
-         lambda3 <- rep(0,num.lv)
-       }else{
-        lambda3 <- abs(param1[nam=="lambda3"])
-      }
+      # if(gamma2==0){
+        lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))  
+      # }else{
+      #   lambda2<- t(matrix(param1[nam=="lambda2"],byrow=T,ncol=num.lv,nrow=p))
+      # }
+       # if(gamma2==0&starting.val!="zero"){
+       #   lambda3 <- rep(0,num.lv)
+       # }else{
+        lambda3 <- rep(Lambda2.start,num.lv)
+      #}
       #lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
       
       if(starting.val=="zero"){
         #starting values for unequal tolerances, weighted averaging at the moment
         #lambda2<-matrix(lambda3,ncol=p,nrow=num.lv)#this didnt work for the NB
         #based on weighted average species SD, see canoco
-        lambda2<-matrix(1e-3,nrow=num.lv,ncol=p)
+        # lambda2<-matrix(1e-3,nrow=num.lv,ncol=p)
         # for(j in 1:p){
         #   for(q in 1:num.lv){
         #     lambda2[q,j]<--.5/(sum((u[,q]-(sum(y[,j]*u[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
@@ -544,13 +545,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           if(row.eff == "random"){
             objr <- TMB::MakeADFun(
               data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,model=0,random=1, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
-              map = mp, parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = ifelse(rep(gamma2,num.lv)>0,lambda3,rep(0,num.lv)),u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
+              map = mp, parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3,u = u1,lg_phi=lg_phi1,log_sigma=log_sigma1,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
               inner.control=list(mgcmax = 1e+200,maxit = maxit),
               DLL = "qgllvm")
           } else {
             objr <- TMB::MakeADFun(
               data = list(y = y, x = Xd,xr=xr,offset=offset, num_lv = num.lv,family=familyn,model=0,random=0, zetastruc = ifelse(zeta.struc=="species",1,0), gamma=gamma1,gamma2=gamma2, theta4=theta4), silent=TRUE,
-              map = mp, parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = ifelse(rep(gamma2,num.lv)>0,lambda3,rep(0,num.lv)), u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
+              map = mp, parameters = list(r0=r1, b = b1,B=matrix(0),lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1,lg_phi=lg_phi1,log_sigma=0,Au=Au1,lg_Ar=lg_Ar1,zeta=zeta), #log(phi)
               inner.control=list(mgcmax = 1e+200,maxit = maxit),
               DLL = "qgllvm")#GLLVM#
           }
@@ -753,7 +754,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if(common.tolerances==F){
       theta2<--(abs(matrix(param[l2i],nrow=p,ncol=num.lv,byrow=T))+matrix(theta3,ncol=num.lv,nrow=p,byrow=T))
     }else{
-      theta2<--matrix(theta3,ncol=num.lv,nrow=p,byrow=T)
+      theta2<--matrix(theta2,ncol=num.lv,nrow=p,byrow=T)
     }
     
     theta<-cbind(theta,theta2)
@@ -778,7 +779,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     colnames(out$lvs) <- paste("LV", 1:num.lv, sep="")
     colnames(out$params$theta) <- c(paste("LV", 1:num.lv, sep=""),paste("LV", 1:num.lv, "^2", sep=""))
     rownames(out$params$theta) <- colnames(out$y)}
-  out$params$theta2 <- -theta3
+  if(common.tolerances==F)out$params$theta2 <- -theta3
   names(beta0) <- colnames(out$y); out$params$beta0 <- beta0;
   if(!is.null(X)){betas <- matrix(betas,ncol=ncol(X)); out$params$Xcoef <- betas;
   rownames(out$params$Xcoef) <- colnames(out$y); colnames(out$params$Xcoef) <- colnames(X); }
@@ -840,29 +841,29 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       # } #later for parallel computation of SE
       sdr <- optimHess(pars, objr$fn, objr$gr, control = list(reltol=reltol,maxit=maxit))#maxit=maxit
       #if(getDoParWorkers()>1&n.init>1&parallel==T)openmp(n.cores.old)#reset back to old configuration
-      m <- dim(sdr)[1]; incl <- rep(TRUE,m); incld <- rep(FALSE,m); inclr <- rep(FALSE,m)
+      m <- dim(sdr)[1]; incl <- rep(TRUE,m); incld <- rep(FALSE,m)
       incl[names(objr$par)=="B"] <- FALSE
-      
       incl[names(objr$par)=="lg_Ar"] <- FALSE;
       incl[names(objr$par)=="Au"] <- FALSE;
-      if(common.tolerances==T){
-        incl[names(objr$par)=="lambda2"] <- FALSE;
+      incl[names(objr$par)=="r0"] <- FALSE; 
+      if(familyn!=7) incl[names(objr$par)=="zeta"] <- FALSE
+      
+      if(common.tolerances==TRUE){
+        incl[names(objr$par)=="lambda3"] <- FALSE;
       }
       if(row.eff=="random") {
-        inclr[names(objr$par)=="r0"] <- TRUE;
-        incl[names(objr$par)=="lg_Ar"] <- FALSE; incld[names(objr$par)=="lg_Ar"] <- TRUE
-        incl[names(objr$par)=="r0"] <- FALSE; incld[names(objr$par)=="r0"] <- TRUE
+        incld[names(objr$par)=="lg_Ar"] <- TRUE
+        incld[names(objr$par)=="r0"] <- TRUE
       }
-      if(row.eff=="fixed") {incl[1] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
-      if(row.eff==FALSE) {incl[names(objr$par)=="r0"] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
+      if(row.eff=="fixed" || row.eff==FALSE) {incl[names(objr$par)=="log_sigma"] <- FALSE}
       
-      inclr[names(objr$par)=="u"] <- TRUE;
       incl[names(objr$par)=="u"] <- FALSE;
       incld[names(objr$par)=="u"] <- TRUE;
       incld[names(objr$par)=="Au"] <- TRUE;
       
-      if(family %in% c("negative.binomial","gaussian","gamma")) incl[names(objr$par)=="lg_phi"] <- FALSE
-      if(family=="ordinal") incl[names(objr$par)=="zeta"] <- FALSE
+      if(familyn==0 || familyn==2 || familyn==7) incl[names(objr$par)=="lg_phi"] <- FALSE
+    
+      if(familyn==7) incl[names(objr$par)=="zeta"] <- TRUE
       
       A.mat <- -sdr[incl, incl] # a x a
       D.mat <- -sdr[incld, incld] # d x d
