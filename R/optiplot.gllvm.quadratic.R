@@ -194,7 +194,7 @@
                 text(x = max(object$lvs), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(1,-0.5))    
             }
           }
-          text(x = object$lvs[, which.lvs], y = range(mu)[1], labels = 1:nrow(object$y), col = "grey")
+          text(x = object$lvs[, which.lvs], y = -1, labels = 1:nrow(object$y), col = "grey")
         } else if (length(which.lvs) > 1 & object$num.lv > 1) {
           resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
           largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
