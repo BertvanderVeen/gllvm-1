@@ -347,7 +347,7 @@
           }
           
           if(s.labels==TRUE){
-            text(lvs, labels = row.names(object$y),col="gray")
+            text(lvs, labels = row.names(object$y),col=s.colors)
           }
           text(optima, labels = row.names(optima), col = cols, cex=cex.spp)
           if(opt.region!=F){
