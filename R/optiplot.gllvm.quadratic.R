@@ -109,19 +109,31 @@
           }
           if(opt.region=="statistical"){
             if(intercept==F){
-              idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
-                     which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"),
-                     which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda3"))  
+              if(object$ridge[[2]]>0&object$common.tolerances==F)  {
+                idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
+                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"),
+                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda3"))
+              }else{
+                idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
+                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"))
+              }
             }else{
-              idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="b"),
-                    which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
-                     which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"),
-                     which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda3"))
+              if(object$ridge[[2]]>0&object$common.tolerances==F){
+                idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="b"),
+                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
+                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"),
+                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda3"))
+              }else{
+                idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="b"),
+                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
+                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"))
+              }
             }
             
             V <- -object$Hess$cov.mat.mod
             colnames(V) <- colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])
             row.names(V) <- row.names(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])
+            #remove everything before the intercept
             #V<-solve(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl][idx,idx])
             #stilll need to reduce V to dim(mu) here      
             if(intercept==F){
@@ -146,6 +158,9 @@
               }
             }
           }
+          colnames(V)[colnames(V)==""]<-"lambda"
+          row.names(V)[row.names(V)==""]<-"lambda"
+          
           for (j in 1:ncol(mu)) {
             if(intercept==F){
               if(type=="link"){func <-function(x,u,u2)x*u+x^2*u2}else{func <-function(x,u,u2)linkinv(x*u+x^2*u2)}
@@ -156,17 +171,61 @@
             }
             if(opt.region=="statistical"){
               if(intercept==F){
-                X<-cbind(curvePlot$x,curvePlot$x^2,curvePlot$x^2)
+                if(object$ridge[[2]]>0&object$common.tolerances==F){
+                  X<-cbind(curvePlot$x,curvePlot$x^2,curvePlot$x^2)
+                }else{
+                  X<-cbind(curvePlot$x,curvePlot$x^2)
+                }
               }else{
-                X<-cbind(1,curvePlot$x,curvePlot$x^2,curvePlot$x^2)
+                if(object$ridge[[2]]>0&object$common.tolerances==F){
+                  X<-cbind(1,curvePlot$x,curvePlot$x^2,curvePlot$x^2)
+                }else{
+                  X<-cbind(1,curvePlot$x,curvePlot$x^2)
+                }
+                
               }
               if(intercept==F){
-                V.theta <- V[c(seq(1,p*object$num.lv*2,by=p)+j,(1+ncol(V)-object$num.lv):ncol(V)),c(seq(1,p*object$num.lv*2,by=p)+j,(1+ncol(V)-object$num.lv):ncol(V))]
-                V.theta2 <- V[seq(1,ncol(V.theta),object$num.lv)+which.lvs-1,seq(1,ncol(V.theta),object$num.lv)+which.lvs-1]
+                if(object$ridge[[2]]>0){
+                  idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"|colnames(V)=="lambda3"
+                  V.theta <- V[idx,idx]
+                  if(object$common.tolerances==T){
+                    idx <- c((p:(p*object$num.lv))[((which.lvs-1)*p)+j],((p+p*object$num.lv):(p*object$num.lv+p+object$num.lv*object$num.lv))[((which.lvs-1)*object$num.lv)+j])   
+                  }else{
+                    idx <- c((p:(p*object$num.lv))[((which.lvs-1)*p)+j],((p+p*object$num.lv):(p*object$num.lv+p+p*object$num.lv))[((which.lvs-1)*p)+j],((ncol(V)-object$num.lv+1):ncol(V))[which.lvs])
+                  }
+                }else{
+                  idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"
+                  V.theta <- V[idx,idx]
+                  if(object$common.tolerances==T){
+                    idx <- c((p:(p*object$num.lv))[((which.lvs-1)*p)+j],((p+p*object$num.lv):(p*object$num.lv+p+object$num.lv*object$num.lv))[((which.lvs-1)*object$num.lv)+j])   
+                  }else{
+                    idx <- c((p:(p*object$num.lv))[((which.lvs-1)*p)+j],((p+p*object$num.lv):(p*object$num.lv+p+p*object$num.lv))[((which.lvs-1)*p)+j])
+                  }
+                }
+                V.theta2 <- V.theta[idx,idx]
               }else{
-                #this needs to account for the right species still..
-                V.theta <- V[c(seq(1,p+p*object$num.lv*2,by=p)+j,(1+ncol(V)-object$num.lv):ncol(V)),c(seq(1,p+p*object$num.lv*2,by=p)+j,(1+ncol(V)-object$num.lv):ncol(V))]
-                V.theta2 <- V.theta[c(1,seq(2,ncol(V.theta),object$num.lv)+(which.lvs-1)),c(1,seq(2,ncol(V.theta),object$num.lv)+(which.lvs-1))]
+                if(object$ridge[[2]]>0){
+                  idx <- colnames(V)=="b"|colnames(V)=="lambda"|colnames(V)=="lambda2"
+                  V.theta <- V[idx,idx]
+                  if(object$common.tolerances==T){
+                    idx <- c(j,((p+1):(p+p*object$num.lv))[((which.lvs-1)*p)+j],((p+1+p*object$num.lv):ncol(V.theta))[which.lvs])
+                  }else{
+                    idx <- c(j,((p+1):(p+p*object$num.lv))[((which.lvs-1)*p)+j],((p+1+p*object$num.lv):(p*object$num.lv+p+p*object$num.lv))[((which.lvs-1)*p)+j],((ncol(V)-object$num.lv+1):ncol(V))[which.lvs])
+                  }
+                  #this needs to account for the right species still..
+                  V.theta2 <- V.theta[idx,idx]
+                }else{
+                  idx <- colnames(V)=="b"|colnames(V)=="lambda"|colnames(V)=="lambda2"
+                  V.theta <- V[idx,idx]
+                  if(object$common.tolerances==T){
+                    idx <- c(j,((p+1):(p+p*object$num.lv))[((which.lvs-1)*p)+j],((p+1+p*object$num.lv):ncol(V.theta))[which.lvs])
+                  }else{
+                    idx <- c(j,((p+1):(p+p*object$num.lv))[((which.lvs-1)*p)+j],((p+1+p*object$num.lv):(p*object$num.lv+p+p*object$num.lv))[((which.lvs-1)*p)+j])
+                  }
+                  #this needs to account for the right species still..
+                  V.theta2 <- V.theta[idx,idx]
+                }
+ 
               }
               
               #need to do this per species and X needs to be the x evaluated at the grid
