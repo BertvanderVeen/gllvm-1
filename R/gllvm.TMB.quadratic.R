@@ -904,7 +904,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
       rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
       out$sd$theta <- cbind(out$sd$theta,se.lambdas2)
-      out$sd$optima <- -out$sd$theta/(2*(se.lambdas2));
+      out$sd$optima <- se.lambdas/(2*se.lambdas2);
       out$sd$theta <- out$sd$theta;
 
       out$sd$beta0 <- sebetaM[,1]; names(out$sd$beta0) <- colnames(out$y);
