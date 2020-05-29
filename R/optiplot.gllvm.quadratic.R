@@ -320,6 +320,8 @@
             optima<-optima[apply(cbind(lower,upper),1,function(x)all(x>-100&x<100)),]
             cols<-cols[apply(cbind(lower,upper),1,function(x)all(x>-100&x<100))]
             optSD<-optSD[apply(cbind(lower,upper),1,function(x)all(x>-100&x<100)),]
+            lower <- optima - 1.96 * optSD#need to adapt this, not the right size at the moment
+            upper <- optima + 1.96 * optSD
             xlim<-range(c(rbind(upper,lower)[,which.lvs[1]],lvs[which.lvs[[1]]]))
             ylim<-range(c(rbind(upper,lower)[,which.lvs[2]],lvs[which.lvs[[2]]]))
             plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
