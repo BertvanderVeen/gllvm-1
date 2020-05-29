@@ -7,6 +7,7 @@
       #' @param main  main title.
       #' @param which.lvs indices of two latent variables to be plotted if number of the latent variables is more than 2. A vector with length of two. Defaults to \code{c(1,2)}.
       #' @param s.colors colors for sites
+      #' @param s.labels logical, if \code{TRUE} plots labels for sites in 1D
       #' @param cex.spp size of species labels in biplot
       #' @param scale For 2D plots, either "FALSE",species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
       #' @param opt.region Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges
@@ -43,7 +44,7 @@
       #'@export
       #'@export optiplot.gllvm.quadratic
       optiplot.gllvm.quadratic <- function(object,  ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, 
-                                           s.colors = 1, cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", lwd.ellips = 1,...) {
+                                           s.colors = 1, cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", lwd.ellips = 1, s.labels = TRUE, ...) {
         if(class(object)!="gllvm.quadratic")
           stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.")
         
@@ -345,8 +346,9 @@
             row.names(object$y)<-1:nrow(object$y)
           }
           
-          
-          text(lvs, labels = row.names(object$y),col="gray")
+          if(s.labels==TRUE){
+            text(lvs, labels = row.names(object$y),col="gray")
+          }
           text(optima, labels = row.names(optima), col = cols, cex=cex.spp)
           if(opt.region!=F){
             for (j in 1:nrow(optima)) {
