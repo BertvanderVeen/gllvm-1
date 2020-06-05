@@ -158,10 +158,10 @@
                 }
               }
             }
+            colnames(V)[colnames(V)==""]<-"lambda"
+            row.names(V)[row.names(V)==""]<-"lambda"
           }
-          colnames(V)[colnames(V)==""]<-"lambda"
-          row.names(V)[row.names(V)==""]<-"lambda"
-          
+
           for (j in 1:ncol(mu)) {
             if(intercept==F){
               if(type=="link"){func <-function(x,u,u2)x*u+x^2*u2}else{func <-function(x,u,u2)linkinv(x*u+x^2*u2)}
