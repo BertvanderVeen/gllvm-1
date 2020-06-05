@@ -66,7 +66,7 @@
         }
         if(length(which.lvs)>object$num.lv)stop("More latent variables select than included in the model.")
         if (is.null(rownames(object$params$theta))) 
-          rownames(object$params$theta) = names(mod$params$beta0)
+          rownames(object$params$theta) = names(object$params$beta0)
         if (is.null(rownames(object$params$theta)))
           rownames(object$params$theta) = paste("v", 1:p)
           
