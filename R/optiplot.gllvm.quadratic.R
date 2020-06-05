@@ -66,8 +66,10 @@
         }
         if(length(which.lvs)>object$num.lv)stop("More latent variables select than included in the model.")
         if (is.null(rownames(object$params$theta))) 
-          rownames(object$params$theta) = paste("V", 1:p)
-        
+          rownames(object$params$theta) = names(mod$params$beta0)
+        if (is.null(rownames(object$params$theta)))
+          rownames(object$params$theta) = paste("v", 1:p)
+          
         if (length(which.lvs) == 1) {
           resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
           largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
