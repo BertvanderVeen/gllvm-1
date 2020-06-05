@@ -29,7 +29,8 @@ summary.gllvm.quadratic <- function(object, ...) {
     colnames(opt) <- paste("LV", 1:object$num.lv, sep="")
     if(is.null(row.names(opt)))row.names(opt)<-names(object$params$beta0)
     tol <- 1/sqrt(-2 * object$params$theta[, -c(1:object$num.lv), drop = F])
-    max <- exp(matrix(object$params$beta0,ncol=object$num.lv,nrow=p,byrow=T) + opt * object$params$theta[,1:object$num.lv,drop=F] + opt^2 * object$params$theta[,-c(1:object$num.lv),drop=F])
+    exp(test2$params$beta0+summary(test2)$Optima*test2$params$theta[,1:3]+summary(test2)$Optima^2*test2$params$theta[,-c(1:3)])
+    max <- exp(object$params$beta0+ opt * object$params$theta[,1:object$num.lv,drop=F] + opt^2 * object$params$theta[,-c(1:object$num.lv),drop=F])
     
     row.names(max) <- row.names(tol) <- row.names(opt)
     colnames(max) <- colnames(tol) <- colnames(opt)
