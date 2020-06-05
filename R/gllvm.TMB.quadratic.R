@@ -193,7 +193,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         beta0 <- start.params$params$beta0 ## column intercepts
         betas <- NULL
         if (!is.null(X))
-          if(!(dim(X) == dim(start.params$X))) stop( "Model which is set as starting parameters isn't the suitable for the one you are trying to fit. Check that predictors X are the same in both models.")
+          if(!(all(dim(X) == dim(start.params$X)))) stop( "Model which is set as starting parameters isn't the suitable for the one you are trying to fit. Check that predictors X are the same in both models.")
         betas <- c(start.params$params$Xcoef) ## covariates coefficients
         lambdas <- NULL
         lambda2 <- NULL
