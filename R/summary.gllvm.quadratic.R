@@ -26,8 +26,11 @@ summary.gllvm.quadratic <- function(object, ...) {
     
     M <- cbind(object$params$beta0, object$params$theta)
     opt <- -object$params$theta[, 1:object$num.lv, drop = F]/(2 * object$params$theta[, -c(1:object$num.lv), drop = F])
+    colnames(opt) <- paste("LV", 1:object$num.lv, sep="")
     tol <- 1/sqrt(-2 * object$params$theta[, -c(1:object$num.lv), drop = F])
-    colnames(tol) <- paste("theta.LV", 1:num.lv, sep = "")
+    colnames(tol) <- colnames(opt)
+    max <- matrix(mod$params$beta0,ncol=object$num.lv,byrow=T) + opt * mod$params$theta[,1:object$num.lv,drop=F] - opt^2 * mod$params$theta[,-c(1:object$num.lv),drop=F]
+    
     
     sumry <- list()
     sumry$"log-likelihood" <- object$logL
@@ -45,6 +48,7 @@ summary.gllvm.quadratic <- function(object, ...) {
     sumry$Coefficients <- M
     sumry$Optima <- opt
     sumry$Tolerances <- tol; row.names(tol) <- row.names(opt)
+    sumry$Maxima <- max; row.names(max) <- row.names(opt)
     
     if (!is.null(object$TR)) {
         if (!is.null(object$X)) {
