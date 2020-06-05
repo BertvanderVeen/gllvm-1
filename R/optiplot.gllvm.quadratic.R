@@ -71,6 +71,10 @@
           rownames(object$params$theta) = paste("v", 1:p)
           
         if (length(which.lvs) == 1) {
+          if(!is.null(object$X)){
+            intercept <- FALSE
+            warning("Setting intercept to FALSE due to included covariates.")
+          }
           resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
           largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
           cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])[largest.lnorms]
