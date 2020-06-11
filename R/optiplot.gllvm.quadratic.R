@@ -7,7 +7,7 @@
       #' @param main  main title.
       #' @param which.lvs indices of two latent variables to be plotted if number of the latent variables is more than 2. A vector with length of two. Defaults to \code{c(1,2)}.
       #' @param s.colors colors for sites
-      #' @param s.labels logical, if \code{TRUE} plots labels for sites in 1D
+      #' @param s.labels logical, if \code{TRUE} plots labels for sites.
       #' @param cex.spp size of species labels in biplot
       #' @param scale For 2D plots, either "FALSE",species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
       #' @param opt.region Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges
@@ -50,11 +50,14 @@
         
         n <- NROW(object$y)
         p <- NCOL(object$y)
-        if (!is.null(ind.spp)) {
-          ind.spp <- min(c(p, ind.spp))
-        } else {
-          ind.spp <- p
+        if(!is.null(ind.spp)){
+        if(length(ind.spp)==1){
+          ind.spp <- 1:ind.spp
         }
+        } else {
+          ind.spp <- 1:p
+        }
+
         if (object$num.lv == 0) 
           stop("No latent variables to plot.")
         if (is.null(which.lvs)) {
@@ -76,7 +79,7 @@
             warning("Setting intercept to FALSE due to included covariates.")
           }
           resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
-          largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
+          largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[ind.spp]
           cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])[largest.lnorms]
           if (object$num.lv == 1) {
             quadr.coef <- object$params$theta[largest.lnorms, -1,drop=F]
@@ -260,10 +263,13 @@
                 text(x = max(object$lvs), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(1,-0.5))    
             }
           }
-          text(x = object$lvs[, which.lvs], y = -1, labels = 1:nrow(object$y), col = "grey")
+          if(s.labels==TRUE){
+            text(x = object$lvs[, which.lvs], y = -1, labels = 1:nrow(object$y), col = "grey")  
+          }
+          
         } else if (length(which.lvs) > 1 & object$num.lv > 1) {
           resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
-          largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[1:ind.spp]
+          largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[ind.spp]
           optima <- -object$params$theta[, 1:object$num.lv, drop = F][largest.lnorms, which.lvs, drop = F]/(2 * object$params$theta[largest.lnorms, -c(1:object$num.lv), 
                                                                                                                                     drop = F][, which.lvs, drop = F])
           cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])[largest.lnorms]
