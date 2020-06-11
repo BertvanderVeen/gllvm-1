@@ -26,6 +26,7 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
     which.lvs <- c(1:NCOL(object$lvs))
 
     cnames <- paste("LV",which.lvs)
+    optima <- as.matrix(summary(object)$Optima[, which.lvs])
     labely <- rownames(optima)
     m <- length(labely)
     Xc <- optima
@@ -36,7 +37,6 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       par(mfrow = mfrow, mar = mar)
     if (is.null(mfrow)) 
       par(mar = mar)
-    optima <- as.matrix(summary(object)$Optima[, which.lvs])
     for (i in which.lvs) {
       Xc <- optima[, i]
       sdoptima <- object$sd$optima[, i]
