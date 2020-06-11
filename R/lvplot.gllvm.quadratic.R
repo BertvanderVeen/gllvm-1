@@ -26,8 +26,8 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
     labely <- rownames(optima)
     m <- length(labely)
     Xc <- optima
-    if (is.null(mfrow) && k > 1) 
-      mfrow <- c(1, k)
+    if (is.null(mfrow) && length(which.lvs) > 1) 
+      mfrow <- c(1, length(which.lvs))
     
     if (!is.null(mfrow)) 
       par(mfrow = mfrow, mar = mar)
@@ -57,7 +57,10 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
         plot(x = Xc, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = c(min(lower), max(upper)), pch = "o", 
              cex.lab = 1.3, ...)
       }
-      segments(x0 = lower, y0 = At.y, x1 = upper, y1 = At.y, col = col.seq)
+      for(j in 1:ncol(object$y)){
+      if(Xc[j]>(-10)&Xc[j]<10)
+      segments(x0 = nlower, y0 = At.y, x1 = upper, y1 = At.y, col = col.seq)
+      }
       
       #tolerances
       tolerances <- 1/sqrt(-2*object$params$theta[,-c(1:object$num.lv)][,i])
