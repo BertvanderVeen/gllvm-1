@@ -10,11 +10,14 @@
 #' @param xlim.list list of vectors with length of two to define the intervals for an x axis in each covariate plot. Defaults to NULL when the interval is defined by the range of point estimates and confidence intervals
 #' @param ... additional graphical arguments.
 #'
+#'@details
+#'Optima of which the SE is larger than the optima are greyed out. Tolerances of which the CI of the quadratic coefficient crosses zero are greyed out. Statistical uncertainties of optima that are larger than  15 or smaller than -15 are not plotted by default.
+#'
 #' @author Bert van der Veen
 #'@aliases lvplot lvplot.gllvm.quadratic
 #'@export
 lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4, 6, 2, 1), 
-                                     xlim.list = rep(list(c(-10,10)),length(which.lvs)), ...) {
+                                     xlim.list = rep(list(c(-15,15)),length(which.lvs)), ...) {
   
   if (any(class(object) != "gllvm.quadratic")) 
     stop("Class of the object isn't 'gllvm'.")
@@ -60,7 +63,7 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
              cex.lab = 1.3, ...)
       }
       for(j in 1:ncol(object$y)){
-      if(Xc[j]>(-10)&Xc[j]<10)
+      if(Xc[j]>(-15)&Xc[j]<15)
       segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
       }
       
