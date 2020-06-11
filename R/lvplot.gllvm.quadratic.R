@@ -59,7 +59,7 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       
       #tolerances
       theta2 <- object$params$theta[,-c(1:object$num.lv)][,i]
-      sdtolerances <- 1/sqrt(2*object$sd$theta[, -c(1:object$num.lv)][,i])
+      sdtolerances <- object$sd$tolerances[, i]
       lower <- tolerances - 1.96 * sdtolerances
       upper <- tolerances + 1.96 * sdtolerances
       tolerances <- sort(tolerances)
