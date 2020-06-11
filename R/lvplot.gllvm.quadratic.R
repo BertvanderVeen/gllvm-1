@@ -21,7 +21,7 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
 
     if (is.null(which.lvs)) 
     which.lvs <- c(1:NCOL(object$lvs))
-    optima <- as.matrix(summary(object)$Optima[, which.lvs])
+
     cnames <- paste("LV",which.lvs)
     labely <- rownames(optima)
     m <- length(labely)
@@ -33,18 +33,20 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       par(mfrow = mfrow, mar = mar)
     if (is.null(mfrow)) 
       par(mar = mar)
+    optima <- as.matrix(summary(object)$Optima[, which.lvs])
     for (i in which.lvs) {
       Xc <- optima[, i]
       sdoptima <- object$sd$optima[, i]
       lower <- Xc - 1.96 * sdoptima
       upper <- Xc + 1.96 * sdoptima
       Xc <- sort(Xc)
+      sdoptima <- sdoptima[names(Xc)]
       lower <- lower[names(Xc)]
       upper <- upper[names(Xc)]
       
       col.seq <- rep("black", m)
-      #grey out optima whose CI is 2*optima, we're too uncertain about them
-      col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
+      #grey out species with SD larger than optima
+      col.seq[!sdoptima<abs(Xc)] <- "grey"
       
       #don't want to greyout optima. 
       # col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
@@ -59,7 +61,7 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       }
       for(j in 1:ncol(object$y)){
       if(Xc[j]>(-10)&Xc[j]<10)
-      segments(x0 = nlower, y0 = At.y, x1 = upper, y1 = At.y, col = col.seq)
+      segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
       }
       
       #tolerances
@@ -67,15 +69,21 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       sdtolerances <- object$sd$tolerances[, i]
       lower <- tolerances - 1.96 * sdtolerances
       upper <- tolerances + 1.96 * sdtolerances
-      tolerances <- sort(tolerances)
+      tolerances <- tolerances[names(Xc)]
       lower <- lower[names(tolerances)]
       upper <- upper[names(tolerances)]
       
       col.seq <- rep("black", m)
       #grey out tolerances as if they cross 0 it's unclear if we have a quadartic response.
-      col.seq[lower < 0 & upper > 0] <- "grey"
+      
+      CIquad <- confint(object)[-c(1:object$num.lv)*ncol(object$y),][1:(object$num.lv*ncol(object$y)),][(1+(i-1)*p):(i*p),]
+      #grey out species that are not sure to have a quadratic response
+      col.seq[CIquad[,1]<0& CIquad[,2]>0] <- "grey"
       points(x=tolerances, y = At.y - 0.2, pch="t", col = col.seq)
-      segments(x0 = lower, y0 = At.y - 0.2, x1 = upper, y1 = At.y -0.2, col = col.seq)
+      for(j in 1:ncol(object$y)){
+        if(tolerances[j]>(-10)&tolerances[j]<10)
+          segments(x0 = lower[j], y0 = At.y[j]-0.2, x1 = upper[j], y1 = At.y[j]-0.2, col = col.seq[j])
+      }
       
             abline(v = 0, lty = "dashed")
       if (y.label) 
