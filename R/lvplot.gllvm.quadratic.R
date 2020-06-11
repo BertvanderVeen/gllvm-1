@@ -28,7 +28,7 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
     cnames <- paste("LV",which.lvs)
     optima <- as.matrix(summary(object)$Optima[, which.lvs])
     labely <- rownames(optima)
-    m <- length(labely)
+    p <- ncol(object$y)
     Xc <- optima
     if (is.null(mfrow) && length(which.lvs) > 1) 
       mfrow <- c(1, length(which.lvs))
@@ -47,14 +47,14 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       lower <- lower[names(Xc)]
       upper <- upper[names(Xc)]
       
-      col.seq <- rep("black", m)
+      col.seq <- rep("black", p)
       #grey out species with SD larger than optima
       col.seq[!sdoptima<abs(Xc)] <- "grey"
       
       #don't want to greyout optima. 
       # col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
       
-      At.y <- seq(1, m)
+      At.y <- seq(1, p)
       if (!is.null(xlim.list[[i]])) {
         plot(x = Xc, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = "o", cex.lab = 1.3, 
              ...)
@@ -76,7 +76,7 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       lower <- lower[names(tolerances)]
       upper <- upper[names(tolerances)]
       
-      col.seq <- rep("black", m)
+      col.seq <- rep("black", p)
       #grey out tolerances as if they cross 0 it's unclear if we have a quadratic response.
       
       CIquad <- confint(object)[-c(1:(object$num.lv*ncol(object$y))),][1:(object$num.lv*ncol(object$y)),][(1+(i-1)*p):(i*p),]
