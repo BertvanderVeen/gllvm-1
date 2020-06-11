@@ -907,10 +907,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       
       #Calculate SE optimate
-      out$sd$optima <- matrix(NA,nrow=p, ncol=object$num.lv)
-      out$sd$tolerances <- matrix(NA,nrow=p, ncol=object$num.lv)
+      out$sd$optima <- matrix(NA,nrow=p, ncol=num.lv)
+      out$sd$tolerances <- matrix(NA,nrow=p, ncol=num.lv)
       
-      if(object$ridge[[2]]>0&object$common.tolerances==F)  {
+      if(gamma2>0&common.tolerances==F)  {
         idx<-c(which(colnames(sdr[incl,incl])=="lambda"),
                which(colnames(sdr[incl,incl])=="lambda2"),
                which(colnames(sdr[incl,incl])=="lambda3"))
@@ -923,8 +923,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       colnames(V) <- colnames(sdr[incl,incl])
       row.names(V) <- row.names(sdr[incl,incl])
       
-      for(q in 1:object$num.lv){
-        for(j in 1:ncol(object$y)){
+      for(q in 1:num.lv){
+        for(j in 1:ncol(y)){
           if(q>1&j<q){
             #add zeros where necessary
             V<-cbind(cbind(V[,1:c(p*q+j-1)],0),V[,(p*q+j):ncol(V)])
@@ -959,15 +959,15 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         
         for(i in 1:num.lv){
           du <- c(-0.5*out$params$theta[j,num.lv+i,drop=F],2*(out$params$theta[j,i,drop=F]/(2*out$params$theta[j,num.lv+i,drop=F])^2))  
-          out$sd$optima[j,i] <-  t(du)%*%V.theta2[c(i,num.lv+i),c(i,num.lv+i)]%*%du
+          out$sd$optima[j,i] <-  sqrt(t(du)%*%V.theta2[c(i,num.lv+i),c(i,num.lv+i)]%*%du)
           #sd tolerances also
           dt <- 1/(2*out$params$theta[,-c(1:num.lv)][j,i]*(sqrt(-2*out$params$theta[,-c(1:num.lv)][j,i])))
-          out$sd$tolerances[j,i] <- V.theta2[-c(1:num.lv),-c(1:num.lv)][i,i]*dt^2
+          out$sd$tolerances[j,i] <- sqrt(V.theta2[-c(1:num.lv),-c(1:num.lv)][i,i]*dt^2)
         }
         
         
       }
-      
+      row.names(out$sd$optima) <- row.names(out$sd$tolerances) <- colnames(y)
       
       
       out$sd$theta <- out$sd$theta;
@@ -1017,6 +1017,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(row.eff=="random") { out$sd$sigma <- se*out$params$sigma; names(out$sd$sigma) <- "sigma" }
       
     }}, silent=T)
+
   if(inherits(tr, "try-error")) { cat("Standard errors for parameters could not be calculated, due to singular fit.\n") }
   
   if(is.null(formula1)){ out$formula <- formula} else {out$formula <- formula1}

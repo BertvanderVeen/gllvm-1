@@ -43,6 +43,8 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       upper <- upper[names(Xc)]
       
       col.seq <- rep("black", m)
+      #grey out optima whose CI is 2*optima, we're too uncertain about them
+      col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
       
       #don't want to greyout optima. 
       # col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
@@ -58,7 +60,7 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       segments(x0 = lower, y0 = At.y, x1 = upper, y1 = At.y, col = col.seq)
       
       #tolerances
-      theta2 <- object$params$theta[,-c(1:object$num.lv)][,i]
+      tolerances <- 1/sqrt(-2*object$params$theta[,-c(1:object$num.lv)][,i])
       sdtolerances <- object$sd$tolerances[, i]
       lower <- tolerances - 1.96 * sdtolerances
       upper <- tolerances + 1.96 * sdtolerances
