@@ -943,7 +943,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           if(common.tolerances==T){
             idx <- c((c(1:num.lv)-1)*p+j,p*num.lv+1:num.lv)
           }else{
-            idx <- c((c(1:num.lv)-1)*p+j,1+num.lv*p+(j-1*2)+j:(j+1),p*num.lv*4+1:num.lv)
+            idx <- c((c(1:num.lv)-1)*p+j,1+num.lv*p+(j-1*2)+j:(j+num.lv-1),p*num.lv*4+1:num.lv)
           }
         }else{
           idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"
@@ -951,7 +951,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           if(common.tolerances==T){
             idx <- c((c(1:num.lv)-1)*p+j,p*num.lv+1:num.lv)
           }else{
-            idx <- c((c(1:num.lv)-1)*p+j,1+num.lv*p+(j-1*2)+j:(j+1))#The last is because the order from the tolerances is different from the lambdas1, its per species not per lv.
+            idx <- c((c(1:num.lv)-1)*p+j,1+num.lv*p+(j-1*2)+j:(j+num.lv-1))#The last is because the order from the tolerances is different from the lambdas1, its per species not per lv.
           }
         }
         
@@ -1017,7 +1017,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(row.eff=="random") { out$sd$sigma <- se*out$params$sigma; names(out$sd$sigma) <- "sigma" }
       
     }}, silent=T)
-
+print(tr)
   if(inherits(tr, "try-error")) { cat("Standard errors for parameters could not be calculated, due to singular fit.\n") }
   
   if(is.null(formula1)){ out$formula <- formula} else {out$formula <- formula1}
