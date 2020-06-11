@@ -77,9 +77,11 @@ lvplot.gllvm.quadratic <- function(object, y.label = TRUE, which.lvs = NULL, cex
       upper <- upper[names(tolerances)]
       
       col.seq <- rep("black", m)
-      #grey out tolerances as if they cross 0 it's unclear if we have a quadartic response.
+      #grey out tolerances as if they cross 0 it's unclear if we have a quadratic response.
       
-      CIquad <- confint(object)[-c(1:object$num.lv)*ncol(object$y),][1:(object$num.lv*ncol(object$y)),][(1+(i-1)*p):(i*p),]
+      CIquad <- confint(object)[-c(1:(object$num.lv*ncol(object$y))),][1:(object$num.lv*ncol(object$y)),][(1+(i-1)*p):(i*p),]
+      names(CIquad) <- colnames(object$y)
+      CIquad[names(tolerances)]
       #grey out species that are not sure to have a quadratic response
       col.seq[CIquad[,1]<0& CIquad[,2]>0] <- "grey"
       points(x=tolerances, y = At.y - 0.2, pch="t", col = col.seq)
