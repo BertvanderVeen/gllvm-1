@@ -904,7 +904,72 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       colnames(se.lambdas2) <- paste("LV", 1:num.lv, "^2",sep="");
       rownames(se.lambdas2) <- colnames(out$y);se <- se[-(1:(p * num.lv))]
       out$sd$theta <- cbind(out$sd$theta,se.lambdas2)
-      out$sd$optima <- se.lambdas/(2*se.lambdas2);
+      
+      
+      #Calculate SE optimate
+      out$sd$optima <- matrix(NA,nrow=p, ncol=object$num.lv)
+      out$sd$tolerances <- matrix(NA,nrow=p, ncol=object$num.lv)
+      
+      if(object$ridge[[2]]>0&object$common.tolerances==F)  {
+        idx<-c(which(colnames(sdr[incl,incl])=="lambda"),
+               which(colnames(sdr[incl,incl])=="lambda2"),
+               which(colnames(sdr[incl,incl])=="lambda3"))
+      }else{
+        idx<-c(which(colnames(sdr[incl,incl])=="lambda"),
+               which(colnames(sdr[incl,incl])=="lambda2"))
+      }
+      
+      V <- -cov.mat.mod
+      colnames(V) <- colnames(sdr[incl,incl])
+      row.names(V) <- row.names(sdr[incl,incl])
+      
+      for(q in 1:object$num.lv){
+        for(j in 1:ncol(object$y)){
+          if(q>1&j<q){
+            #add zeros where necessary
+            V<-cbind(cbind(V[,1:c(p*q+j-1)],0),V[,(p*q+j):ncol(V)])
+            V<-rbind(rbind(V[1:c(p*q+j-1),],0),V[(p*q+j):nrow(V),])
+          }
+        }
+      }
+      
+      colnames(V)[colnames(V)==""]<-"lambda"
+      row.names(V)[row.names(V)==""]<-"lambda"
+      
+      for(j in 1:p){
+        if(gamma2>0){
+          idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"|colnames(V)=="lambda3"
+          V.theta <- V[idx,idx]
+          if(common.tolerances==T){
+            idx <- c((c(1:num.lv)-1)*p+j,p*num.lv+1:num.lv)
+          }else{
+            idx <- c((c(1:num.lv)-1)*p+j,p*num.lv+(c(1:num.lv)-1)*p+j,p*num.lv*4+1:num.lv)
+          }
+        }else{
+          idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"
+          V.theta <- V[idx,idx]
+          if(common.tolerances==T){
+            idx <- c((c(1:num.lv)-1)*p+j,p*num.lv+1:num.lv)
+          }else{
+            idx <- c((c(1:num.lv)-1)*p+j,p*num.lv+(c(1:num.lv)-1)*p+j)
+          }
+        }
+        
+        V.theta2 <- V.theta[idx,idx]
+        
+        for(i in 1:num.lv){
+          du <- c(-0.5*out$params$theta[j,num.lv+i,drop=F],2*(out$params$theta[j,i,drop=F]/(2*out$params$theta[j,num.lv+i,drop=F])^2))  
+          out$sd$optima[j,i] <-  t(du)%*%V.theta2[c(i,num.lv+i),c(i,num.lv+i)]%*%du
+          #sd tolerances also
+          dt <- 1/(2*out$params$theta[,-c(1:num.lv)][j,i]*(sqrt(-2*out$params$theta[,-c(1:num.lv)][j,i])))
+          out$sd$tolerances[j,i] <- V.theta2[-c(1:num.lv),-c(1:num.lv)][i,i]*dt^2
+        }
+        
+        
+      }
+      
+      
+      
       out$sd$theta <- out$sd$theta;
 
       out$sd$beta0 <- sebetaM[,1]; names(out$sd$beta0) <- colnames(out$y);
