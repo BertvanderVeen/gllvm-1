@@ -2,7 +2,7 @@
       #' @description Plots latent variables and their corresponding species optima.
       #'
       #' @param object   an object of class 'gllvm'.
-      #' @param ind.spp  the number of response variables (usually, species) to include on the biplot (sorted by varianve explained). The default is all.
+      #' @param ind.spp  the number of response variables (usually, species) to include on the biplot (sorted by varianve explained). The default is all. Can supply a vector, in which case those species will be picked from the order of variation explained on the latent variable (e.g. the species that explain fourth and sixth most variation).
       #' @param alpha    a numeric scalar between 0 and 1 that is used to control the relative scaling of the latent variables and their coefficients, when constructing a biplot.
       #' @param main  main title.
       #' @param which.lvs indices of two latent variables to be plotted if number of the latent variables is more than 2. A vector with length of two. Defaults to \code{c(1,2)}.
@@ -10,7 +10,7 @@
       #' @param s.labels logical, if \code{TRUE} plots labels for sites.
       #' @param cex.spp size of species labels in biplot
       #' @param scale For 2D plots, either "FALSE",species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
-      #' @param opt.region Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges
+      #' @param opt.region Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges.
       #' @param type Can be used to predict on the response or link scale. Default is response (except for ordinal, for which the only option is "link").
       #' @param intercept Can be used to include species-intercepts in the plot. Default is TRUE
       #' @param legend when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot
@@ -199,17 +199,17 @@
                   idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"|colnames(V)=="lambda3"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <- c((p:(p*object$num.lv))[((which.lvs-1)*p)+j],((p+p*object$num.lv):(p*object$num.lv+p+object$num.lv*object$num.lv))[((which.lvs-1)*object$num.lv)+j])   
+                    idx <- c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(p*num.lv+1:num.lv)[which.lvs])
                   }else{
-                    idx <- c((p:(p*object$num.lv))[((which.lvs-1)*p)+j],((p+p*object$num.lv):(p*object$num.lv+p+p*object$num.lv))[((which.lvs-1)*p)+j],((ncol(V)-object$num.lv+1):ncol(V))[which.lvs])
+                    idx <- c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(1+num.lv*p+(j-1*2)+j:(j+num.lv-1))[which.lvs],c(p*num.lv*4+1:num.lv)[which.lvs])
                   }
                 }else{
                   idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <- c((p:(p*object$num.lv))[((which.lvs-1)*p)+j],((p+p*object$num.lv):(p*object$num.lv+p+object$num.lv*object$num.lv))[((which.lvs-1)*object$num.lv)+j])   
+                    idx <-  c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(p*num.lv+1:num.lv)[which.lvs]) 
                   }else{
-                    idx <- c((p:(p*object$num.lv))[((which.lvs-1)*p)+j],((p+p*object$num.lv):(p*object$num.lv+p+p*object$num.lv))[((which.lvs-1)*p)+j])
+                    idx <- c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(1+num.lv*p+(j-1*2)+j:(j+num.lv-1))[which.lvs],c(p*num.lv*4+1:num.lv)[which.lvs])
                   }
                 }
                 V.theta2 <- V.theta[idx,idx]
@@ -218,37 +218,31 @@
                   idx <- colnames(V)=="b"|colnames(V)=="lambda"|colnames(V)=="lambda2"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <- c(j,((p+1):(p+p*object$num.lv))[((which.lvs-1)*p)+j],((p+1+p*object$num.lv):ncol(V.theta))[which.lvs])
+                    idx <-c(j,p+c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(p*num.lv+1:num.lv)[which.lvs]))
                   }else{
-                    idx <- c(j,((p+1):(p+p*object$num.lv))[((which.lvs-1)*p)+j],((p+1+p*object$num.lv):(p*object$num.lv+p+p*object$num.lv))[((which.lvs-1)*p)+j],((ncol(V)-object$num.lv+1):ncol(V))[which.lvs])
+                    idx <- c(j,p+c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(1+num.lv*p+(j-1*2)+j:(j+num.lv-1))[which.lvs],c(p*num.lv*2+1:num.lv)[which.lvs]))
                   }
-                  #this needs to account for the right species still..
+                  
                   V.theta2 <- V.theta[idx,idx]
                 }else{
                   idx <- colnames(V)=="b"|colnames(V)=="lambda"|colnames(V)=="lambda2"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <- c(j,((p+1):(p+p*object$num.lv))[((which.lvs-1)*p)+j],((p+1+p*object$num.lv):ncol(V.theta))[which.lvs])
+                    idx <- c(j,p+c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(p*num.lv+1:num.lv)[which.lvs]) )
                   }else{
-                    idx <- c(j,((p+1):(p+p*object$num.lv))[((which.lvs-1)*p)+j],((p+1+p*object$num.lv):(p*object$num.lv+p+p*object$num.lv))[((which.lvs-1)*p)+j])
+                    idx <- c(j,p+c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(1+num.lv*p+(j-1*2)+j:(j+num.lv-1))[which.lvs]))
                   }
-                  #this needs to account for the right species still..
+                  
                   V.theta2 <- V.theta[idx,idx]
                 }
  
               }
               
               #need to do this per species and X needs to be the x evaluated at the grid
-              se<- sqrt(rowSums(X*(X%*%V.theta2)))
-              n <- nrow(object$y)
-              if(intercept==T){
-                curveLowCI <- curvePlot$y + se * qt(0.025, n - 3)
-                curveUpCI <- curvePlot$y - se * qt(0.025, n - 3)  
-              }else{
-                curveLowCI <- curvePlot$y + se * qt(0.025, n - 2)
-                curveUpCI <- curvePlot$y - se * qt(0.025, n - 2)
-              }
-              
+              se<- sqrt(abs(rowSums(X*(X%*%V.theta2))))
+
+              curveLowCI <- curvePlot$y + se * qnorm(level)
+              curveUpCI <- curvePlot$y + se * qnorm(1-level)
               
               cols2 <- scales::alpha(cols[j], ifelse(length(alpha.col)>2,alpha.col[2],alpha.col[1]))
               polygon(c(curvePlot$x,rev(curvePlot$x)),c(curveLowCI,rev(curveUpCI)),border=NA,col=cols2)
@@ -322,8 +316,8 @@
           }
           
           if(opt.region%in%c("statistical","environmental")){
-            lower <- optima - 1.96 * optSD#need to adapt this, not the right size at the moment
-            upper <- optima + 1.96 * optSD
+            lower <- optima + gnorm(level) * optSD#need to adapt this, not the right size at the moment
+            upper <- optima + qnorm(1-level) * optSD
             if(any(!apply(cbind(lower,upper),1,function(x)all(x>-100&x<100)))){
               flag<-T
             }else{
@@ -332,8 +326,8 @@
             optima<-optima[apply(cbind(lower,upper),1,function(x)all(x>-100&x<100)),]
             cols<-cols[apply(cbind(lower,upper),1,function(x)all(x>-100&x<100))]
             optSD<-optSD[apply(cbind(lower,upper),1,function(x)all(x>-100&x<100)),]
-            lower <- optima - 1.96 * optSD#need to adapt this, not the right size at the moment
-            upper <- optima + 1.96 * optSD
+            lower <- optima + gnorm(level) * optSD#need to adapt this, not the right size at the moment
+            upper <- optima + qnorm(1-level) * optSD
             xlim<-range(c(rbind(upper,lower)[,which.lvs[1]],lvs[which.lvs[[1]]]))
             ylim<-range(c(rbind(upper,lower)[,which.lvs[2]],lvs[which.lvs[[2]]]))
             plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 

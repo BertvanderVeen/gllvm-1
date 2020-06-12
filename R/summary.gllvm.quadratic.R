@@ -6,6 +6,9 @@
 #'
 #' @author Jenni Niku <jenni.m.e.niku@@jyu.fi>
 #'
+#' @details
+#' Also gives species optimum, tolerances and maxima per latent variable. Maxima are on the link scale.
+#'
 #' @examples
 #'## Load a dataset from the mvabund package
 #' data(antTraits)
@@ -29,8 +32,8 @@ summary.gllvm.quadratic <- function(object, ...) {
     colnames(opt) <- paste("LV", 1:object$num.lv, sep="")
     if(is.null(row.names(opt)))row.names(opt)<-names(object$params$beta0)
     tol <- 1/sqrt(-2 * object$params$theta[, -c(1:object$num.lv), drop = F])
-    exp(object$params$beta0+opt*object$params$theta[,1:object$num.lv]+opt^2*object$params$theta[,-c(1:object$num.lv)])
-    max <- exp(object$params$beta0+ opt * object$params$theta[,1:object$num.lv,drop=F] + opt^2 * object$params$theta[,-c(1:object$num.lv),drop=F])
+    
+    max <- object$params$beta0+ opt * object$params$theta[,1:object$num.lv,drop=F] + opt^2 * object$params$theta[,-c(1:object$num.lv),drop=F]
     
     row.names(max) <- row.names(tol) <- row.names(opt)
     colnames(max) <- colnames(tol) <- colnames(opt)

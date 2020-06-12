@@ -943,7 +943,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           if(common.tolerances==T){
             idx <- c((c(1:num.lv)-1)*p+j,p*num.lv+1:num.lv)
           }else{
-            idx <- c((c(1:num.lv)-1)*p+j,1+num.lv*p+(j-1*2)+j:(j+num.lv-1),p*num.lv*4+1:num.lv)
+            idx <- c((c(1:num.lv)-1)*p+j,1+num.lv*p+(j-1*2)+j:(j+num.lv-1),p*num.lv*2+1:num.lv)
           }
         }else{
           idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"
@@ -961,7 +961,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           du <- c(-0.5*out$params$theta[j,num.lv+i,drop=F],2*(out$params$theta[j,i,drop=F]/(2*out$params$theta[j,num.lv+i,drop=F])^2))  
           out$sd$optima[j,i] <-  sqrt(abs(t(du)%*%V.theta2[c(i,num.lv+i),c(i,num.lv+i)]%*%du))
           #sd tolerances also
-          dt <- 1/(2*out$params$theta[,-c(1:num.lv)][j,i]*(sqrt(-2*out$params$theta[,-c(1:num.lv)][j,i])))
+          dt <- 1/(2*out$params$theta[,-c(1:num.lv)][j,i]*(sqrt(-2*out$params$theta[,-c(1:num.lv)][j,i])))#need to be calculated with covariance of gamma3 if gamma2>0..that also requires subtracting theta3 from theta2
           out$sd$tolerances[j,i] <- sqrt(abs(V.theta2[-c(1:num.lv),-c(1:num.lv)][i,i]*dt^2))
         }
         
@@ -1017,7 +1017,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(row.eff=="random") { out$sd$sigma <- se*out$params$sigma; names(out$sd$sigma) <- "sigma" }
       
     }}, silent=T)
-print(tr)
+  
   if(inherits(tr, "try-error")) { cat("Standard errors for parameters could not be calculated, due to singular fit.\n") }
   
   if(is.null(formula1)){ out$formula <- formula} else {out$formula <- formula1}
