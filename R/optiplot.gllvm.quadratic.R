@@ -348,9 +348,10 @@
               plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
                    ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
               
-            }else if (opt.region=="distribution"){
+            }
+            if (opt.region=="distribution"){
               xlim<-range(c(rbind(upper,lower)[,1],lvs[,1]))
-              ylim<-range(c(rbind(upper,lower)[,1],lvs[,1]))  
+              ylim<-range(c(rbind(upper,lower)[,2],lvs[,2]))  
               plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
                    ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
             }
