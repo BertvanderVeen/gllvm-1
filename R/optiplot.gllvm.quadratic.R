@@ -47,7 +47,12 @@
                                            s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", ylim=NULL, xlim=NULL, lwd.ellips = 1, ...) {
         if(class(object)!="gllvm.quadratic")
           stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.")
-        
+        if(is.null(object$sd)){
+          warning("No standard errors present in model, setting `opt.region = FALSE`")
+        }
+        if(!opt.region%in%c("distribution","confidence",FALSE)){
+          stop("Wrong input for `opt.region`")
+        }
         n <- NROW(object$y)
         p <- NCOL(object$y)
         if(!is.null(ind.spp)){
@@ -262,7 +267,7 @@
               if(type=="response")maximum <- linkinv(summary(object)$Maxima[largest.lnorms,which.lvs][j])
               if(type=="link")maximum <- summary(object)$Maxima[largest.lnorms,which.lvs][j]
               if(opt[j]<max(object$lvs[,which.lvs])&opt[j]>min(object$lvs[,which.lvs])){
-                text(x = opt[j], y = maximum+0.1, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0.5,-0.5))
+                text(x = opt[j], y = maximum+0.1, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0.5,-0.5))#should adjust "adj" rather than adding 0.1 to the maximum.
                 segments(x0=opt[j],x1 = opt[j],y0 = 0, y1=maximum,lty="dashed",col=cols[j])
               }else if(opt[j]<min(object$lvs[,which.lvs])){
                 text(x = min(object$lvs[,which.lvs]), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=4)    
@@ -295,7 +300,7 @@
           if(opt.region=="confidence")optSD <- object$sd$optima[,which.lvs] #should also include covariances of the parameters..i need to do this properly still
           #need to sort optSD by largestlnorms
           #and take ind.spp
-          if(opt.region!=F){
+          if(opt.region=="confidence"){
             optSD <- optSD[largest.lnorms,]
           }
           if (length(which(excl))!=0) {
@@ -392,7 +397,7 @@
             row.names(object$y)<-1:nrow(object$y)
           }
           
-          if(s.labels==TRUE){
+          if(s.labels!=FALSE){
             text(lvs, labels = row.names(object$y),col=s.colors)
           }
           text(optima, labels = row.names(optima), col = cols, cex=cex.spp)
