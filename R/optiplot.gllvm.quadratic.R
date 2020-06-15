@@ -21,6 +21,8 @@
       #' @param col.ellips colors for site prediction ellipses.
       #' @param level level for prediction regions. Can be a vector of size two. Defaults to 0.95.
       #' @param alpha.col used to control the transparency of confidence interval ribbons in 1D plot, and prediction regions in 2D plot.
+      #' @param xlim
+      #' @param ylim
       #' @param ... additional graphical arguments.
       #'
       #' @details
@@ -42,7 +44,7 @@
       #'@export
       #'@export optiplot.gllvm.quadratic
       optiplot.gllvm.quadratic <- function(object,  ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, 
-                                           s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", lwd.ellips = 1, ...) {
+                                           s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", ylim=NULL, xlim=NULL, lwd.ellips = 1, ...) {
         if(class(object)!="gllvm.quadratic")
           stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.")
         
@@ -92,15 +94,24 @@
           #have to rebuiltin the backtransformation of the linear predictor now I included curve
           mu<-predict(object, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
           
+          if(is.null(ylim)){
+            ylim <- range(mu)
+          }
           if(legend==F){
             #pdf(NULL)
             #plot(NA, xlim = c(range(object$lvs)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
             #maxstr<-max(strwidth(colnames(mu)))*1.25  
             #invisible(dev.off())
             #previpously range below was range(object$lvs)+maxstr, might still want to add this again
-            plot(NA, xlim = c(c(min(object$lvs[,which.lvs])-.05,max(object$lvs[,which.lvs])+.05)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
+            if(is.null(xlim)){
+              xlim <- c(c(min(object$lvs[,which.lvs])-.05,max(object$lvs[,which.lvs])+.05))
+            }
+            plot(NA, xlim = xlim, ylim = ylim, ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
           }else{
-            plot(NA, xlim = c(range(object$lvs[,which.lvs])), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
+            if(is.null(xlim)){
+              xlim<-c(range(object$lvs[,which.lvs]))
+            }
+            plot(NA, xlim = xlim, ylim = ylim, ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
           }
           
           if(legend==T){
@@ -332,26 +343,30 @@
             lower <- optima + qnorm(level) * optSD#need to adapt this, not the right size at the moment
             upper <- optima + qnorm(1-level) * optSD
             if(opt.region=="confidence"){
-              #zoom in on optima that have decently sized SD. If the SD are too large, we're not really interested.
-              xlim<-range(c(rbind(upper[apply(abs(optima)<optSD,1,all),],lower[apply(abs(optima)<optSD,1,all),])[,1],lvs[,1]))
-              ylim<-range(c(rbind(upper[apply(abs(optima)<optSD,1,all),],lower[apply(abs(optima)<optSD,1,all),])[,2],lvs[,2]))
-              if(any(xlim<(-20)|xlim>20)){
-                xlim <- ifelse(xlim<(-20),-10,xlim)
-                xlim <- ifelse(xlim>20,10,xlim)
+              if(is.null(ylim)){
+                ylim<-range(c(rbind(upper[apply(abs(optima)<optSD,1,all),],lower[apply(abs(optima)<optSD,1,all),])[,2],lvs[,2]))
+                if(any(ylim<(-20)|ylim>20)){
+                  ylim <- ifelse(ylim<(-20),-10,ylim)
+                  ylim <- ifelse(ylim>20,10,ylim)
+                }  
               }
-              if(any(ylim<(-20)|ylim>20)){
-                ylim <- ifelse(ylim<(-20),-10,ylim)
-                ylim <- ifelse(ylim>20,10,ylim)
+              if(is.null(xlim)){
+                #zoom in on optima that have decently sized SD. If the SD are too large, we're not really interested.
+                xlim<-range(c(rbind(upper[apply(abs(optima)<optSD,1,all),],lower[apply(abs(optima)<optSD,1,all),])[,1],lvs[,1]))
+                
+                if(any(xlim<(-20)|xlim>20)){
+                  xlim <- ifelse(xlim<(-20),-10,xlim)
+                  xlim <- ifelse(xlim>20,10,xlim)
+                } 
               }
-              
-              
+
               plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
                    ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
               
             }
             if (opt.region=="distribution"){
-              xlim<-range(c(rbind(upper,lower)[,1],lvs[,1]))
-              ylim<-range(c(rbind(upper,lower)[,2],lvs[,2]))  
+              if(is.null(xlim))xlim<-range(c(rbind(upper,lower)[,1],lvs[,1]))
+              if(is.null(ylim))ylim<-range(c(rbind(upper,lower)[,2],lvs[,2]))  
               plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
                    ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
             }
