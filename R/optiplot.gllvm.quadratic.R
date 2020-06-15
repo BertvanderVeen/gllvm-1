@@ -261,13 +261,13 @@
               opt <- summary(object)$Optima[largest.lnorms,which.lvs]
               if(type=="response")maximum <- linkinv(summary(object)$Maxima[largest.lnorms,which.lvs][j])
               if(type=="link")maximum <- summary(object)$Maxima[largest.lnorms,which.lvs][j]
-              if(opt[j]<max(object$lvs)&opt[j]>min(object$lvs)){
+              if(opt[j]<max(object$lvs[,which.lvs])&opt[j]>min(object$lvs[,which.lvs])){
                 text(x = opt[j], y = maximum+0.1, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0.5,-0.5))
                 segments(x0=opt[j],x1 = opt[j],y0 = 0, y1=maximum,lty="dashed",col=cols[j])
-              }else if(opt[j]<min(object$lvs)){
-                text(x = min(object$lvs)+0.1, y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=4)    
-              }else if(opt[j]>max(object$lvs))
-                text(x = max(object$lvs), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=2)    
+              }else if(opt[j]<min(object$lvs[,which.lvs])){
+                text(x = min(object$lvs[,which.lvs]), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=4)    
+              }else if(opt[j]>max(object$lvs[,which.lvs]))
+                text(x = max(object$lvs[,which.lvs]), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=2)    
             }
           }
  
