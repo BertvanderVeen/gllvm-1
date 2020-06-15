@@ -7,10 +7,10 @@
       #' @param main  main title.
       #' @param which.lvs indices of two latent variables to be plotted if number of the latent variables is more than 2. A vector with length of two. Defaults to \code{c(1,2)}.
       #' @param s.colors colors for sites
-      #' @param s.labels logical, if \code{TRUE} plots labels for sites.
+      #' @param s.labels Can be FALSE, for no labels, "row.names" or "rug".
       #' @param cex.spp size of species labels in biplot
       #' @param scale For 2D plots, either "FALSE",species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
-      #' @param opt.region Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges.
+      #' @param opt.region Only for 2D plots, efaults to FALSE. If "confidence", plots confidence intervals for species optima as ellipses. If "distribution" plots predicted species distributions.
       #' @param type Can be used to predict on the response or link scale. Default is response (except for ordinal, for which the only option is "link").
       #' @param intercept Can be used to include species-intercepts in the plot. Default is TRUE
       #' @param legend when \code{TRUE} adds legend in the topleft corner of the plot, instead of species names in the plot
@@ -24,9 +24,7 @@
       #' @param ... additional graphical arguments.
       #'
       #' @details
-      #' Function constructs a plot of species optima.
-      #'
-      #'Plots species optima in one or two dimensions, potentially with predicted environmental ranges.
+      #' Function constructs a plot of species optima. in 1D a dashed line indicates the optimum of species. In 2D species distributions can be added as ellipses.
       #'
       #' @author Bert van der Veen
       #'
@@ -44,7 +42,7 @@
       #'@export
       #'@export optiplot.gllvm.quadratic
       optiplot.gllvm.quadratic <- function(object,  ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, 
-                                           s.colors = 1, cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", lwd.ellips = 1, s.labels = TRUE, ...) {
+                                           s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", lwd.ellips = 1, ...) {
         if(class(object)!="gllvm.quadratic")
           stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.")
         
@@ -100,9 +98,9 @@
             #maxstr<-max(strwidth(colnames(mu)))*1.25  
             #invisible(dev.off())
             #previpously range below was range(object$lvs)+maxstr, might still want to add this again
-            plot(NA, xlim = c(c(min(object$lvs)-.1,max(object$lvs)+.1)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
+            plot(NA, xlim = c(c(min(object$lvs[,which.lvs])-.05,max(object$lvs[,which.lvs])+.05)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
           }else{
-            plot(NA, xlim = c(range(object$lvs)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
+            plot(NA, xlim = c(range(object$lvs[,which.lvs])), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
           }
           
           if(legend==T){
@@ -111,13 +109,13 @@
           if(type=="response"){
             if(object$family=="binomial"){
               linkinv<-pnorm
-            }else if(object$family%in%c("poisson", "negative.binomial")){
+            }else if(object$family%in%c("poisson", "negative.binomial","gamma")){
               linkinv <- exp
             }else{
               stop("Ordinal model plot not yet implemented on response scale")
             }
           }
-          if(opt.region=="statistical"){
+          if(opt.region=="confidence"){
             if(intercept==F){
               if(object$ridge[[2]]>0&object$common.tolerances==F)  {
                 idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
@@ -170,16 +168,17 @@
             colnames(V)[colnames(V)==""]<-"lambda"
             row.names(V)[row.names(V)==""]<-"lambda"
           }
-
+          
+  
           for (j in 1:ncol(mu)) {
             if(intercept==F){
               if(type=="link"){func <-function(x,u,u2)x*u+x^2*u2}else{func <-function(x,u,u2)linkinv(x*u+x^2*u2)}
-              curvePlot<-curve(func(x,u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],add=T)  
+              curvePlot<-curve(func(x,u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],from = min(object$lvs[,which.lvs]),to = max(object$lvs[,which.lvs]),add=T)  
             }else{
               if(type=="link"){func <-function(x,beta,u,u2)beta+x*u+x^2*u2}else{func <-function(x,beta,u,u2)linkinv(beta+x*u+x^2*u2)}
-              curvePlot<-curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],add=T)  
+              curvePlot<-curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],from = min(object$lvs[,which.lvs]),to = max(object$lvs[,which.lvs]), add=T)
             }
-            if(opt.region=="statistical"){
+            if(opt.region=="confidence"){
               if(intercept==F){
                 if(object$ridge[[2]]>0&object$common.tolerances==F){
                   X<-cbind(curvePlot$x,curvePlot$x^2,curvePlot$x^2)
@@ -199,17 +198,17 @@
                   idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"|colnames(V)=="lambda3"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <- c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(p*num.lv+1:num.lv)[which.lvs])
+                    idx <- c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(p*object$num.lv+1:object$num.lv)[which.lvs])
                   }else{
-                    idx <- c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(1+num.lv*p+(j-1*2)+j:(j+num.lv-1))[which.lvs],c(p*num.lv*4+1:num.lv)[which.lvs])
+                    idx <- c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(1+object$num.lv*p+(j-1*2)+j:(j+object$num.lv-1))[which.lvs],c(p*object$num.lv*4+1:object$num.lv)[which.lvs])
                   }
                 }else{
                   idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <-  c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(p*num.lv+1:num.lv)[which.lvs]) 
+                    idx <-  c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(p*object$num.lv+1:object$num.lv)[which.lvs]) 
                   }else{
-                    idx <- c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(1+num.lv*p+(j-1*2)+j:(j+num.lv-1))[which.lvs],c(p*num.lv*4+1:num.lv)[which.lvs])
+                    idx <- c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(1+object$num.lv*p+(j-1*2)+j:(j+object$num.lv-1))[which.lvs],c(p*object$num.lv*4+1:object$num.lv)[which.lvs])
                   }
                 }
                 V.theta2 <- V.theta[idx,idx]
@@ -218,9 +217,9 @@
                   idx <- colnames(V)=="b"|colnames(V)=="lambda"|colnames(V)=="lambda2"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <-c(j,p+c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(p*num.lv+1:num.lv)[which.lvs]))
+                    idx <-c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(p*object$num.lv+1:object$num.lv)[which.lvs]))
                   }else{
-                    idx <- c(j,p+c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(1+num.lv*p+(j-1*2)+j:(j+num.lv-1))[which.lvs],c(p*num.lv*2+1:num.lv)[which.lvs]))
+                    idx <- c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(1+object$num.lv*p+(j-1*2)+j:(j+object$num.lv-1))[which.lvs],c(p*object$num.lv*2+1:object$num.lv)[which.lvs]))
                   }
                   
                   V.theta2 <- V.theta[idx,idx]
@@ -228,9 +227,9 @@
                   idx <- colnames(V)=="b"|colnames(V)=="lambda"|colnames(V)=="lambda2"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <- c(j,p+c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(p*num.lv+1:num.lv)[which.lvs]) )
+                    idx <- c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(p*object$num.lv+1:object$num.lv)[which.lvs]) )
                   }else{
-                    idx <- c(j,p+c(c((c(1:num.lv)-1)*p+j)[which.lvs],c(1+num.lv*p+(j-1*2)+j:(j+num.lv-1))[which.lvs]))
+                    idx <- c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(1+object$num.lv*p+(j-1*2)+j:(j+object$num.lv-1))[which.lvs]))
                   }
                   
                   V.theta2 <- V.theta[idx,idx]
@@ -249,16 +248,22 @@
             }
             if(legend==F){
               opt <- summary(object)$Optima[largest.lnorms,which.lvs]
+              if(type=="response")maximum <- linkinv(summary(object)$Maxima[largest.lnorms,which.lvs][j])
+              if(type=="link")maximum <- summary(object)$Maxima[largest.lnorms,which.lvs][j]
               if(opt[j]<max(object$lvs)&opt[j]>min(object$lvs)){
-                text(x = opt[j], y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0.5,-0.5))    
+                text(x = opt[j], y = maximum+0.1, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0.5,-0.5))
+                segments(x0=opt[j],x1 = opt[j],y0 = 0, y1=maximum,lty="dashed",col=cols[j])
               }else if(opt[j]<min(object$lvs)){
-                text(x = min(object$lvs), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0,-0.5))    
+                text(x = min(object$lvs)+0.1, y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=4)    
               }else if(opt[j]>max(object$lvs))
-                text(x = max(object$lvs), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(1,-0.5))    
+                text(x = max(object$lvs), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=2)    
             }
           }
-          if(s.labels==TRUE){
-            text(x = object$lvs[, which.lvs], y = -1, labels = 1:nrow(object$y), col = "grey")  
+ 
+          if(s.labels=="numeric"){
+            text(x = object$lvs[, which.lvs], y = -1, labels = 1:nrow(object$y), col = s.colors)  
+          }else if(s.labels=="rug"){
+            rug(object$lvs[,which.lvs],col = s.colors)
           }
           
         } else if (length(which.lvs) > 1 & object$num.lv > 1) {
@@ -275,8 +280,8 @@
           # quadr.coef[which(round(quadr.coef, 2) == 0)] <- 0
           excl <- sapply(1:nrow(optima), function(j) any(optima[j, ] > 10 | optima[j, ] < -10))
           
-          if(opt.region=="environmental")optSD <- 1/sqrt(-2 * quadr.coef)
-          if(opt.region=="statistical")optSD <- object$sd$optima[,which.lvs] #should also include covariances of the parameters..i need to do this properly still
+          if(opt.region=="distribution")optSD <- 1/sqrt(-2 * quadr.coef)
+          if(opt.region=="confidence")optSD <- object$sd$optima[,which.lvs] #should also include covariances of the parameters..i need to do this properly still
           #need to sort optSD by largestlnorms
           #and take ind.spp
           if(opt.region!=F){
@@ -313,10 +318,8 @@
           if(opt.region==F){
             plot(rbind(optima, lvs), xlab = paste("LV", which.lvs[1]), 
                  ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
-          }
-          
-          if(opt.region%in%c("statistical","environmental")){
-            lower <- optima + gnorm(level) * optSD#need to adapt this, not the right size at the moment
+          }else if(opt.region%in%c("confidence","distribution")){
+            lower <- optima + qnorm(level) * optSD#need to adapt this, not the right size at the moment
             upper <- optima + qnorm(1-level) * optSD
             if(any(!apply(cbind(lower,upper),1,function(x)all(x>-100&x<100)))){
               flag<-T
@@ -326,12 +329,31 @@
             optima<-optima[apply(cbind(lower,upper),1,function(x)all(x>-100&x<100)),]
             cols<-cols[apply(cbind(lower,upper),1,function(x)all(x>-100&x<100))]
             optSD<-optSD[apply(cbind(lower,upper),1,function(x)all(x>-100&x<100)),]
-            lower <- optima + gnorm(level) * optSD#need to adapt this, not the right size at the moment
+            lower <- optima + qnorm(level) * optSD#need to adapt this, not the right size at the moment
             upper <- optima + qnorm(1-level) * optSD
-            xlim<-range(c(rbind(upper,lower)[,which.lvs[1]],lvs[which.lvs[[1]]]))
-            ylim<-range(c(rbind(upper,lower)[,which.lvs[2]],lvs[which.lvs[[2]]]))
-            plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
-                 ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
+            if(opt.region=="confidence"){
+              #zoom in on optima that have decently sized SD. If the SD are too large, we're not really interested.
+              xlim<-range(c(rbind(upper[apply(abs(optima)<optSD,1,all),],lower[apply(abs(optima)<optSD,1,all),])[,1],lvs[,1]))
+              ylim<-range(c(rbind(upper[apply(abs(optima)<optSD,1,all),],lower[apply(abs(optima)<optSD,1,all),])[,2],lvs[,2]))
+              if(any(xlim<(-20)|xlim>20)){
+                xlim <- ifelse(xlim<(-20),-10,xlim)
+                xlim <- ifelse(xlim>20,10,xlim)
+              }
+              if(any(ylim<(-20)|ylim>20)){
+                ylim <- ifelse(ylim<(-20),-10,ylim)
+                ylim <- ifelse(ylim>20,10,ylim)
+              }
+              
+              
+              plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
+                   ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
+              
+            }else if (opt.region=="distribution"){
+              xlim<-range(c(rbind(upper,lower)[,1],lvs[,1]))
+              ylim<-range(c(rbind(upper,lower)[,1],lvs[,1]))  
+              plot(NA, xlim=xlim,ylim=ylim,xlab = paste("LV", which.lvs[1]), 
+                   ylab = paste("LV", which.lvs[2]), main = main, type = "n", ...)
+            }
           }
           
           if (site.region) {
@@ -358,13 +380,27 @@
             text(lvs, labels = row.names(object$y),col=s.colors)
           }
           text(optima, labels = row.names(optima), col = cols, cex=cex.spp)
-          if(opt.region!=F){
-            for (j in 1:nrow(optima)) {
-              ellipse(optima[j,which.lvs], covM = diag(optSD[j,]), rad = sqrt(qchisq(ifelse(length(level)>1,level[2],level), df=object$num.lv)), col=scales::alpha(cols[j], ifelse(length(alpha.col)>1,alpha.col[2],alpha.col)), lty=ifelse(length(lty.ellips)>1,lty.ellips[2],lty.ellips), lwd=ifelse(length(lwd.ellips)>1,lwd.ellips[2],lwd.ellips))#these ignore scaling for now
+          if(opt.region=="distribution"){
+            for (j in 2:nrow(optima)) {
+              ellipse(optima[j,], covM = diag(optSD[j,]), rad = sqrt(qchisq(ifelse(length(level)>1,level[2],level), df=object$num.lv)), col=scales::alpha(cols[j], ifelse(length(alpha.col)>1,alpha.col[2],alpha.col)), lty=ifelse(length(lty.ellips)>1,lty.ellips[2],lty.ellips), lwd=ifelse(length(lwd.ellips)>1,lwd.ellips[2],lwd.ellips))#these ignore scaling for now
               #need to draw a line for the species optima that are fixed at zero
               #car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col=scales::alpha(cols[j], 0.7), lty = "dashed", lwd=1)
             }
-            if(flag)message("Some ranges are too large to plot.")
+          }else if(opt.region=="confidence"){
+            for (j in 1:nrow(optima)) {
+              if(!all(optima[j,]==0)){
+                if(any(optima[j,]==0)){
+                  if(optima[j,1]==0){
+                    segments(x0=0,x1=0,y0=lower[1,2],y1=upper[1,2],col=scales::alpha(cols[j], ifelse(length(alpha.col)>1,alpha.col[2],alpha.col)), lty=ifelse(length(lty.ellips)>1,lty.ellips[2],lty.ellips), lwd=ifelse(length(lwd.ellips)>1,lwd.ellips[2],lwd.ellips))
+                  }else{
+                    segments(y0=0,y1=0,x0=lower[1,1],x1=upper[1,1],col=scales::alpha(cols[j], ifelse(length(alpha.col)>1,alpha.col[2],alpha.col)), lty=ifelse(length(lty.ellips)>1,lty.ellips[2],lty.ellips), lwd=ifelse(length(lwd.ellips)>1,lwd.ellips[2],lwd.ellips))
+                    
+                  }
+                }else{
+                  ellipse(optima[j,], covM = diag(optSD[j,]), rad = sqrt(qchisq(ifelse(length(level)>1,level[2],level), df=object$num.lv)), col=scales::alpha(cols[j], ifelse(length(alpha.col)>1,alpha.col[2],alpha.col)), lty=ifelse(length(lty.ellips)>1,lty.ellips[2],lty.ellips), lwd=ifelse(length(lwd.ellips)>1,lwd.ellips[2],lwd.ellips))#these ignore scaling for now
+                }
+              }
+            }
           }
         } else {
           stop("Not enough LVs for an optiplot")
