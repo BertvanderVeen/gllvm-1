@@ -46,12 +46,12 @@
       optiplot.gllvm.quadratic <- function(object,  ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, 
                                            s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", ylim=NULL, xlim=NULL, lwd.ellips = 1, ...) {
         if(class(object)!="gllvm.quadratic")
-          stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.")
+          stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.\n")
         if(is.null(object$sd)){
-          warning("No standard errors present in model, setting `opt.region = FALSE`")
+          warning("No standard errors present in model, setting `opt.region = FALSE`.\n")
         }
         if(!opt.region%in%c("distribution","confidence",FALSE)){
-          stop("Wrong input for `opt.region`")
+          stop("Wrong input for `opt.region`.\n")
         }
         n <- NROW(object$y)
         p <- NCOL(object$y)
