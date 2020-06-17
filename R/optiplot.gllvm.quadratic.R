@@ -111,12 +111,12 @@
             if(is.null(xlim)){
               xlim <- c(c(min(object$lvs[,which.lvs])-.05,max(object$lvs[,which.lvs])+.05))
             }
-            plot(NA, xlim = xlim, ylim = ylim, ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
+            plot(NA, xlim = xlim, ylim = ylim, ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", main = main, ...)
           }else{
             if(is.null(xlim)){
               xlim<-c(range(object$lvs[,which.lvs]))
             }
-            plot(NA, xlim = xlim, ylim = ylim, ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
+            plot(NA, xlim = xlim, ylim = ylim, ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", main = main, ...)
           }
           
           if(legend==T){
