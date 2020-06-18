@@ -264,8 +264,16 @@
             }
             if(legend==F){
               opt <- summary(object)$Optima[largest.lnorms,which.lvs]
-              if(type=="response")maximum <- linkinv(summary(object)$Maxima[largest.lnorms,which.lvs][j])
-              if(type=="link")maximum <- summary(object)$Maxima[largest.lnorms,which.lvs][j]
+              if(intercept==FALSE){
+                if(type=="response")maximum <- linkinv(summary(object)$Maxima[largest.lnorms,which.lvs][j])
+                if(type=="link")maximum <- summary(object)$Maxima[largest.lnorms,which.lvs][j]
+              }else{
+                maximum <-opt * object$params$theta[,1:object$num.lv,drop=F] + opt^2 * object$params$theta[,-c(1:object$num.lv),drop=F]
+                of(type=="response"){
+                  maximum <- linkinv(maximum)
+                }
+              }
+              
               if(opt[j]<max(object$lvs[,which.lvs])&opt[j]>min(object$lvs[,which.lvs])){
                 text(x = opt[j], y = maximum+0.1, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0.5,-0.5))#should adjust "adj" rather than adding 0.1 to the maximum.
                 segments(x0=opt[j],x1 = opt[j],y0 = 0, y1=maximum,lty="dashed",col=cols[j])
