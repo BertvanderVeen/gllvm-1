@@ -269,7 +269,7 @@
                 if(type=="link")maximum <- summary(object)$Maxima[largest.lnorms,which.lvs][j]
               }else{
                 maximum <-opt * object$params$theta[,1:object$num.lv,drop=F] + opt^2 * object$params$theta[,-c(1:object$num.lv),drop=F]
-                of(type=="response"){
+                if(type=="response"){
                   maximum <- linkinv(maximum)
                 }
               }
