@@ -958,7 +958,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         V.theta2 <- V.theta[idx,idx]
         
         for(i in 1:num.lv){
-          du <- c(-0.5*out$params$theta[j,num.lv+i,drop=F],2*(out$params$theta[j,i,drop=F]/(2*out$params$theta[j,num.lv+i,drop=F])^2))  
+          du <- c((2*out$params$theta[j,num.lv+i,drop=F])^-1,2*(out$params$theta[j,i,drop=F]/(2*out$params$theta[j,num.lv+i,drop=F])^2))  
           out$sd$optima[j,i] <-  sqrt(abs(t(du)%*%V.theta2[c(i,num.lv+i),c(i,num.lv+i)]%*%du))
           #sd tolerances also
           dt <- 1/(2*out$params$theta[,-c(1:num.lv)][j,i]*(sqrt(-2*out$params$theta[,-c(1:num.lv)][j,i])))#need to be calculated with covariance of gamma3 if gamma2>0..that also requires subtracting theta3 from theta2
