@@ -214,17 +214,17 @@
                   idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"|colnames(V)=="lambda3"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <- c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(p*object$num.lv+1:object$num.lv)[which.lvs])
+                    idx <- c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],((1+ncol(V.theta)-object$num.lv):ncol(V.theta))[which.lvs])
                   }else{
-                    idx <- c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(1+object$num.lv*p+(j-1*2)+j:(j+object$num.lv-1))[which.lvs],c(p*object$num.lv*4+1:object$num.lv)[which.lvs])
+                    idx <- c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],((1+p*object$num.lv+(object$num.lv*(j-1))):(p*object$num.lv+(object$num.lv*(j-1))+object$num.lv))[which.lvs],((1+ncol(V.theta)-object$num.lv):ncol(V.theta))[which.lvs])
                   }
                 }else{
                   idx <- colnames(V)=="lambda"|colnames(V)=="lambda2"
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
-                    idx <-  c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(p*object$num.lv+1:object$num.lv)[which.lvs]) 
+                    idx <-  c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],((1+ncol(V.theta)-object$num.lv):ncol(V.theta))[which.lvs])
                   }else{
-                    idx <- c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(1+object$num.lv*p+(j-1*2)+j:(j+object$num.lv-1))[which.lvs],c(p*object$num.lv*4+1:object$num.lv)[which.lvs])
+                    idx <- c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],((1+p*object$num.lv+(object$num.lv*(j-1))):(p*object$num.lv+(object$num.lv*(j-1))+object$num.lv))[which.lvs])
                   }
                 }
                 V.theta2 <- V.theta[idx,idx]
@@ -235,7 +235,7 @@
                   if(object$common.tolerances==T){
                     idx <-c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(p*object$num.lv+1:object$num.lv)[which.lvs]))
                   }else{
-                    idx <- c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(1+object$num.lv*p+(j-1*2)+j:(j+object$num.lv-1))[which.lvs],c(p*object$num.lv*2+1:object$num.lv)[which.lvs]))
+                    idx <- c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],((1+p*object$num.lv+(object$num.lv*(j-1))):(p*object$num.lv+(object$num.lv*(j-1))+object$num.lv))[which.lvs],((1+ncol(V.theta)-object$num.lv):ncol(V.theta))[which.lvs]))
                   }
                   
                   V.theta2 <- V.theta[idx,idx]
@@ -245,7 +245,7 @@
                   if(object$common.tolerances==T){
                     idx <- c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(p*object$num.lv+1:object$num.lv)[which.lvs]) )
                   }else{
-                    idx <- c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(1+object$num.lv*p+(j-1*2)+j:(j+object$num.lv-1))[which.lvs]))
+                    idx <- c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],((1+p*object$num.lv+(object$num.lv*(j-1))):(p*object$num.lv+(object$num.lv*(j-1))+object$num.lv))[which.lvs]))
                   }
                   
                   V.theta2 <- V.theta[idx,idx]
@@ -264,11 +264,12 @@
             }
             if(legend==F){
               opt <- summary(object)$Optima[largest.lnorms,which.lvs]
-              if(intercept==FALSE){
-                if(type=="response")maximum <- linkinv(summary(object)$Maxima[largest.lnorms,which.lvs][j])
-                if(type=="link")maximum <- summary(object)$Maxima[largest.lnorms,which.lvs][j]
+              if(intercept==TRUE){
+                maximum <- summary(object)$Maxima[largest.lnorms,which.lvs][j]
+                if(type=="response")maximum <- linkinv(maximum)
+                
               }else{
-                maximum <-opt * object$params$theta[,1:object$num.lv,drop=F] + opt^2 * object$params$theta[,-c(1:object$num.lv),drop=F]
+                maximum <-(summary(mod)$Optima * object$params$theta[,1:object$num.lv,drop=F] + summary(mod)$Optima^2 * object$params$theta[,-c(1:object$num.lv),drop=F])[largest.lnorms,which.lvs][j]
                 if(type=="response"){
                   maximum <- linkinv(maximum)
                 }
