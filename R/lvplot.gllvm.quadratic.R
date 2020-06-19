@@ -19,7 +19,7 @@
 #'@aliases lvplot lvplot.gllvm.quadratic
 #'@export
 lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, which.lvs = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4, 6, 2, 1), 
-                                     xlim.list = rep(list(c(-15,15)),length(which.lvs)),level=0.95, ...) {
+                                     xlim.list = rep(list(c(-5,5)),length(which.lvs)),level=0.95, ...) {
   
   if (any(class(object) != "gllvm.quadratic")) 
     stop("Class of the object isn't 'gllvm'.\n")
@@ -97,11 +97,11 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
       col.seq <- rep("black", p)
       #grey out tolerances as if they cross 0 it's unclear if we have a quadratic response.
       
-      CIquad <- confint(object)[-c(1:(object$num.lv*ncol(object$y))),][1:(object$num.lv*ncol(object$y)),][(1+(i-1)*p):(i*p),]
+      CIquad <- confint(object)[-c(1:(object$num.lv*ncol(object$y))),][((which.lvs[i]-1)*p+1):(which.lvs[i]*p),]
       row.names(CIquad) <- colnames(object$y)
       CIquad <- CIquad[names(tolerances),]
       #grey out species that are not sure to have a quadratic response
-      col.seq[CIquad<0& CIquad[,2]>0] <- "grey"
+      col.seq[CIquad[,1]<0& CIquad[,2]>0] <- "grey"
       
       if(length(xlim.list)!=length(which.lvs)&plot.optima==FALSE){
         if(length(xlim.list)<which.lvs[i]){

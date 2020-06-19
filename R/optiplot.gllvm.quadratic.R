@@ -44,7 +44,7 @@
       #'@export
       #'@export optiplot.gllvm.quadratic
       optiplot.gllvm.quadratic <- function(object,  ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, 
-                                           s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=FALSE, type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", ylim=NULL, xlim=NULL, lwd.ellips = 1, ...) {
+                                           s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=ifelse(length(which.lvs)==1,"confidence","distribution"), type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", ylim=NULL, xlim=NULL, lwd.ellips = 1, ...) {
         if(class(object)!="gllvm.quadratic")
           stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.\n")
         if(is.null(object$sd)){
@@ -79,10 +79,10 @@
           rownames(object$params$theta) = paste("v", 1:p)
           
         if (length(which.lvs) == 1) {
-          if(!is.null(object$X)){
-            intercept <- FALSE
-            warning("Setting intercept to FALSE due to included covariates.")
-          }
+          # if(!is.null(object$X)){
+          #   intercept <- FALSE
+          #   warning("Setting intercept to FALSE due to included covariates.")
+          # }
           resid.cov <- object$params$theta[,which.lvs,drop=F]^2 + 2*object$params$theta[,-c(1:object$num.lv),drop=F][,which.lvs,drop=F]^2
           largest.lnorms <- order(rowSums(resid.cov), decreasing = TRUE)[ind.spp]
           cols <- (grDevices::rainbow(ncol(object$y) + 1)[2:(ncol(object$y) + 1)])[largest.lnorms]
@@ -94,7 +94,19 @@
           
           quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
           
-          if(object$family=="ordinal")type="link"
+          if(type=="response"){
+            if(family=="gaussian"){
+             linkinv <- function(x)x
+            }else if(object$family=="binomial"){
+              linkinv<-pnorm
+            }else if(object$family%in%c("poisson", "negative.binomial","gamma")){
+              linkinv <- exp
+            }else if(family=="ordinal"){
+              warning("Ordinal model plot not yet implemented on response scale")
+              type="link"
+            }
+          }
+          
           #mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
           #have to rebuiltin the backtransformation of the linear predictor now I included curve
           mu<-predict(object, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
@@ -122,15 +134,7 @@
           if(legend==T){
             legend(x="topleft",text.col=cols,colnames(mu), cex=cex.spp)
           }
-          if(type=="response"){
-            if(object$family=="binomial"){
-              linkinv<-pnorm
-            }else if(object$family%in%c("poisson", "negative.binomial","gamma")){
-              linkinv <- exp
-            }else{
-              stop("Ordinal model plot not yet implemented on response scale")
-            }
-          }
+
           if(opt.region=="confidence"){
             if(intercept==F){
               if(object$ridge[[2]]>0&object$common.tolerances==F)  {
@@ -185,14 +189,20 @@
             row.names(V)[row.names(V)==""]<-"lambda"
           }
           
-  
+          if(!is.null(xlim)){
+            minLV <- xlim[1]
+            maxLV <- xlim[2]
+          }else{
+            minLV <- min(object$lvs[,which.lvs])
+            maxLV <- max(object$lvs[,which.lvs])
+          }
           for (j in 1:ncol(mu)) {
             if(intercept==F){
               if(type=="link"){func <-function(x,u,u2)x*u+x^2*u2}else{func <-function(x,u,u2)linkinv(x*u+x^2*u2)}
-              curvePlot<-curve(func(x,u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],from = min(object$lvs[,which.lvs]),to = max(object$lvs[,which.lvs]),add=T)  
+              curvePlot<-curve(func(x,u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],from = minLV,to = maxLV,add=T)  
             }else{
               if(type=="link"){func <-function(x,beta,u,u2)beta+x*u+x^2*u2}else{func <-function(x,beta,u,u2)linkinv(beta+x*u+x^2*u2)}
-              curvePlot<-curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],from = min(object$lvs[,which.lvs]),to = max(object$lvs[,which.lvs]), add=T)
+              curvePlot<-curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],from = minLV,to = maxLV, add=T)
             }
             if(opt.region=="confidence"){
               if(intercept==F){
@@ -234,7 +244,7 @@
                   V.theta <- V[idx,idx]
                   if(object$common.tolerances==T){
                     idx <-c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],c(p*object$num.lv+1:object$num.lv)[which.lvs]))
-                  }else{
+                  }else{ #old index for quadratic was c(1+object$num.lv*p+(j-1*2)+j:(j+object$num.lv-1))[which.lvs]
                     idx <- c(j,p+c(c((c(1:object$num.lv)-1)*p+j)[which.lvs],((1+p*object$num.lv+(object$num.lv*(j-1))):(p*object$num.lv+(object$num.lv*(j-1))+object$num.lv))[which.lvs],((1+ncol(V.theta)-object$num.lv):ncol(V.theta))[which.lvs]))
                   }
                   
