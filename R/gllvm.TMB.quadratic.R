@@ -852,6 +852,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       incl[names(objr$par)=="lg_Ar"] <- FALSE;
       incl[names(objr$par)=="Au"] <- FALSE;
       incl[names(objr$par)=="r0"] <- FALSE; 
+      incl[names(objr$par)=="log_sigma"] <- FALSE
       
       if(family!="ordinal") incl[names(objr$par)=="zeta"] <- FALSE
       
@@ -862,10 +863,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       if(row.eff=="random") {
         incld[names(objr$par)=="lg_Ar"] <- TRUE
         incld[names(objr$par)=="r0"] <- FALSE
+        incl[names(objr$par)=="log_sigma"] <- TRUE
       }
       if(row.eff==FALSE) {incl[names(objr$par)=="r0"] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
-      if(row.eff=="fixed" || row.eff==FALSE) {incl[names(objr$par)=="r0"] <- TRUE; incl[1] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
-      
+      if(row.eff=="fixed")incl[names(objr$par)=="r0"] <- TRUE; incl[1] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
+
       incl[names(objr$par)=="u"] <- FALSE;
       incld[names(objr$par)=="u"] <- TRUE;
       incld[names(objr$par)=="Au"] <- TRUE;
