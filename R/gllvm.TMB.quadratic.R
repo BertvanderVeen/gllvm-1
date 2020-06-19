@@ -1032,9 +1032,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   out$TMBfn <- objr
   out$TMBfn$par <- optr$par
   out$logL <- -out$logL
-  out$LL <- -LL #for now to return all LL from n.init
+  out$LL <- -LL
   out$start.struc <- start.struc
   out$common.tolerances <- common.tolerances
+  out$ridge <- list(gamma1,gamma2)
     if(row.eff == "random") out$logL = out$logL + n*0.5
     if(family=="gaussian") {
       out$logL <- out$logL - n*p*log(pi)/2
