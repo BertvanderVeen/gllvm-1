@@ -832,6 +832,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   
   if(row.eff=="random"){
     Ar <- exp(param[names(param)=="lg_Ar"])
+    names(Ar) <- paste("Ar",1:n,sep="")
     out$Ar <- Ar^2
   }
   
@@ -851,24 +852,25 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       incl[names(objr$par)=="lg_Ar"] <- FALSE;
       incl[names(objr$par)=="Au"] <- FALSE;
       incl[names(objr$par)=="r0"] <- FALSE; 
+      
       if(family!="ordinal") incl[names(objr$par)=="zeta"] <- FALSE
       
-      if(common.tolerances==TRUE){
-        incl[names(objr$par)=="lambda3"] <- FALSE;
-      }else if(gamma2==0){
+      if(common.tolerances==TRUE|gamma2==0){
         incl[names(objr$par)=="lambda3"] <- FALSE;
       }
+ 
       if(row.eff=="random") {
         incld[names(objr$par)=="lg_Ar"] <- TRUE
-        incld[names(objr$par)=="r0"] <- TRUE
+        incld[names(objr$par)=="r0"] <- FALSE
       }
-      if(row.eff=="fixed" || row.eff==FALSE) {incl[names(objr$par)=="log_sigma"] <- FALSE}
+      if(row.eff==FALSE) {incl[names(objr$par)=="r0"] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
+      if(row.eff=="fixed" || row.eff==FALSE) {incl[names(objr$par)=="r0"] <- TRUE; incl[1] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
       
       incl[names(objr$par)=="u"] <- FALSE;
       incld[names(objr$par)=="u"] <- TRUE;
       incld[names(objr$par)=="Au"] <- TRUE;
       
-      if(family=="gaussian" || family=="binomial" || family=="ordinal") incl[names(objr$par)=="lg_phi"] <- FALSE
+      if(family=="gaussian" || family=="binomial" || family=="ordinal" || family == "poisson") incl[names(objr$par)=="lg_phi"] <- FALSE
     
       if(family=="ordinal") incl[names(objr$par)=="zeta"] <- TRUE
       
@@ -876,6 +878,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       D.mat <- -sdr[incld, incld] # d x d
       B.mat <- -sdr[incl, incld] # a x d
       cov.mat.mod <- try(MASS::ginv(A.mat-B.mat%*%solve(D.mat)%*%t(B.mat)),silent=TRUE)
+
       se <- sqrt(diag(abs(cov.mat.mod)))
       
       incla<-rep(FALSE, length(incl))
@@ -989,6 +992,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         out$sd$phi <- se.lphis*out$params$phi;
         names(out$sd$phi) <- colnames(y);  se <- se[-(1:p)]
       }
+      if(row.eff=="random") { out$sd$sigma <- se*out$params$sigma; names(out$sd$sigma) <- "sigma" }
+      
       if(family %in% c("ordinal")){
         se.zetanew <- se.zetas <- se;
         if(zeta.struc == "species"){
@@ -1014,7 +1019,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           
         }
       }
-      if(row.eff=="random") { out$sd$sigma <- se*out$params$sigma; names(out$sd$sigma) <- "sigma" }
+     
       
     }}, silent=T)
   
@@ -1028,9 +1033,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   out$LL <- -LL #for now to return all LL from n.init
   out$start.struc <- start.struc
   out$common.tolerances <- common.tolerances
-  out$ridge <- list(gamma1,gamma2)
-  #if(num.lv > 0) out$logL = out$logL + n*0.5*num.lv
-  if(row.eff == "random") out$logL = out$logL + n*0.5
-  #if(!is.null(randomX)) out$logL = out$logL + p*0.5*ncol(xb)
+    if(row.eff == "random") out$logL = out$logL + n*0.5
+    if(family=="gaussian") {
+      out$logL <- out$logL - n*p*log(pi)/2
+    }
+
   return(out)
 }
