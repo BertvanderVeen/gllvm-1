@@ -21,6 +21,7 @@
       #' @param col.ellips colors for site prediction ellipses.
       #' @param level level for prediction regions. Can be a vector of size two. Defaults to 0.95.
       #' @param alpha.col used to control the transparency of confidence interval ribbons in 1D plot, and prediction regions in 2D plot.
+      #' @param length.out number of points to evaluate the function at for 1D plots. Defaults to 100.
       #' @param xlim
       #' @param ylim
       #' @param ... additional graphical arguments.
@@ -44,7 +45,7 @@
       #'@export
       #'@export optiplot.gllvm.quadratic
       optiplot.gllvm.quadratic <- function(object,  ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL, 
-                                           s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=ifelse(length(which.lvs)==1,"confidence","distribution"), type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, level = 0.95, alpha.col = 0.4, lty.ellips = c("solid","dashed"), col.ellips = "gray", ylim=NULL, xlim=NULL, lwd.ellips = 1, ...) {
+                                           s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=ifelse(length(which.lvs)==1,"confidence","distribution"), type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, lty.ellips = c("solid","dashed"), lwd.ellips = 1, col.ellips = "gray", alpha.col = 0.4, level = 0.95, ylim=NULL, xlim=NULL, length.out=100,...) {
         if(class(object)!="gllvm.quadratic")
           stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.\n")
         if(is.null(object$sd)){
@@ -53,6 +54,10 @@
         if(!opt.region%in%c("distribution","confidence",FALSE)){
           stop("Wrong input for `opt.region`.\n")
         }
+        # if(object$row.eff!=FALSE&opt.region=="confidence"&length(which.lvs)==1){
+        #   warning("Confidence interval bands not yet implement with row-effects.\n")
+        #   opt.region <- FALSE
+        # }
         n <- NROW(object$y)
         p <- NCOL(object$y)
         if(!is.null(ind.spp)){
@@ -136,31 +141,10 @@
           }
 
           if(opt.region=="confidence"){
-            if(intercept==F){
-              if(object$ridge[[2]]>0&object$common.tolerances==F)  {
-                idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
-                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"),
-                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda3"))
-              }else{
-                idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
-                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"))
-              }
-            }else{
-              if(object$ridge[[2]]>0&object$common.tolerances==F){
-                idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="b"),
-                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
-                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"),
-                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda3"))
-              }else{
-                idx<-c(which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="b"),
-                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda"),
-                       which(colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])=="lambda2"))
-              }
-            }
-            
-            V <- -object$Hess$cov.mat.mod
+                V <- -object$Hess$cov.mat.mod
             colnames(V) <- colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])
             row.names(V) <- row.names(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])
+            V <- V[colnames(V)!="r0",colnames(V)!="r0"]
             #remove everything before the intercept
             #V<-solve(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl][idx,idx])
             #stilll need to reduce V to dim(mu) here      
@@ -196,14 +180,22 @@
             minLV <- min(object$lvs[,which.lvs])
             maxLV <- max(object$lvs[,which.lvs])
           }
+          if(intercept==F){
+            if(type=="link"){func <-function(x,u,u2)x*u+x^2*u2}else{func <-function(x,u,u2)linkinv(x*u+x^2*u2)}
+          }else{
+            if(type=="link"){func <-function(x,beta,u,u2)beta+x*u+x^2*u2}else{func <-function(x,beta,u,u2)linkinv(beta+x*u+x^2*u2)}
+          }
           for (j in 1:ncol(mu)) {
+            curvePlot <- list(x=NA,y=NA)
+            curvePlot$x <- seq(minLV,maxLV,length.out=length.out)
             if(intercept==F){
-              if(type=="link"){func <-function(x,u,u2)x*u+x^2*u2}else{func <-function(x,u,u2)linkinv(x*u+x^2*u2)}
-              curvePlot<-curve(func(x,u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],from = minLV,to = maxLV,add=T)  
+              curvePlot$y<-func(curvePlot$x,u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs])
             }else{
-              if(type=="link"){func <-function(x,beta,u,u2)beta+x*u+x^2*u2}else{func <-function(x,beta,u,u2)linkinv(beta+x*u+x^2*u2)}
-              curvePlot<-curve(func(x,beta=object$params$beta0[largest.lnorms][j],u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs]),col=cols[j],from = minLV,to = maxLV, add=T)
+              curvePlot$y<-func(curvePlot$x,beta=object$params$beta0[largest.lnorms][j],u=object$params$theta[largest.lnorms,,drop=F][j,which.lvs],u2=object$params$theta[largest.lnorms,,drop=F][j,-(1:object$num.lv),drop=F][,which.lvs])
             }
+            
+            lines(x=curvePlot$x,y=curvePlot$y,col=cols[j])
+            
             if(opt.region=="confidence"){
               if(intercept==F){
                 if(object$ridge[[2]]>0&object$common.tolerances==F){
@@ -286,7 +278,7 @@
               }
               
               if(opt[j]<max(object$lvs[,which.lvs])&opt[j]>min(object$lvs[,which.lvs])){
-                text(x = opt[j], y = maximum+0.1, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, adj=c(0.5,-0.5))#should adjust "adj" rather than adding 0.1 to the maximum.
+                text(x = opt[j], y = maximum, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=3)#should adjust "adj" rather than adding 0.1 to the maximum.
                 segments(x0=opt[j],x1 = opt[j],y0 = 0, y1=maximum,lty="dashed",col=cols[j])
               }else if(opt[j]<min(object$lvs[,which.lvs])){
                 text(x = min(object$lvs[,which.lvs]), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=4)    
