@@ -54,6 +54,14 @@
         if(!opt.region%in%c("distribution","confidence",FALSE)){
           stop("Wrong input for `opt.region`.\n")
         }
+        if(object$family=="binomial"&opt.region=="confidence"&type=="response"){
+          stop("Plots on the response scale with confidence intervals not yet supported for the binomial distribution. \n")
+        }
+        if(!is.null(object$X)){
+          if(any(round(apply(object$X,2,mean),0)!=0)){
+            warning("Your plot will look best with standardized covariates.\n")
+          }
+        }
         # if(object$row.eff!=FALSE&opt.region=="confidence"&length(which.lvs)==1){
         #   warning("Confidence interval bands not yet implement with row-effects.\n")
         #   opt.region <- FALSE
@@ -100,13 +108,13 @@
           quadr.coef[which(round(quadr.coef, 3) == 0)] <- 0
           
           if(type=="response"){
-            if(family=="gaussian"){
+            if(object$family=="gaussian"){
              linkinv <- function(x)x
             }else if(object$family=="binomial"){
               linkinv<-pnorm
             }else if(object$family%in%c("poisson", "negative.binomial","gamma")){
               linkinv <- exp
-            }else if(family=="ordinal"){
+            }else if(object$family=="ordinal"){
               warning("Ordinal model plot not yet implemented on response scale")
               type="link"
             }
@@ -141,7 +149,7 @@
           }
 
           if(opt.region=="confidence"){
-                V <- -object$Hess$cov.mat.mod
+            V <- -object$Hess$cov.mat.mod
             colnames(V) <- colnames(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])
             row.names(V) <- row.names(object$Hess$Hess.full[object$Hess$incl,object$Hess$incl])
             V <- V[colnames(V)!="r0",colnames(V)!="r0"]
@@ -271,22 +279,33 @@
                 if(type=="response")maximum <- linkinv(maximum)
                 
               }else{
-                maximum <-(summary(mod)$Optima * object$params$theta[,1:object$num.lv,drop=F] + summary(mod)$Optima^2 * object$params$theta[,-c(1:object$num.lv),drop=F])[largest.lnorms,which.lvs][j]
+                maximum <-(summary(object)$Optima * object$params$theta[,1:object$num.lv,drop=F] + summary(object)$Optima^2 * object$params$theta[,-c(1:object$num.lv),drop=F])[largest.lnorms,which.lvs][j]
                 if(type=="response"){
                   maximum <- linkinv(maximum)
                 }
               }
               
+            if(type=="response"){
               if(opt[j]<max(object$lvs[,which.lvs])&opt[j]>min(object$lvs[,which.lvs])){
                 text(x = opt[j], y = maximum, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=3)#should adjust "adj" rather than adding 0.1 to the maximum.
                 segments(x0=opt[j],x1 = opt[j],y0 = 0, y1=maximum,lty="dashed",col=cols[j])
               }else if(opt[j]<min(object$lvs[,which.lvs])){
                 text(x = min(object$lvs[,which.lvs]), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=4)    
-              }else if(opt[j]>max(object$lvs[,which.lvs]))
+              }else if(opt[j]>max(object$lvs[,which.lvs])){
                 text(x = max(object$lvs[,which.lvs]), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=2)    
+              }
+            }else{
+              if(opt[j]<max(object$lvs[,which.lvs])&opt[j]>min(object$lvs[,which.lvs])){
+                text(x = opt[j], y = maximum, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=3)#should adjust "adj" rather than adding 0.1 to the maximum.
+                segments(x0=opt[j],x1 = opt[j],y0 = min(mu), y1=maximum,lty="dashed",col=cols[j])
+              }else if(opt[j]<min(object$lvs[,which.lvs])){
+                text(x = min(object$lvs[,which.lvs]), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=4)    
+              }else if(opt[j]>max(object$lvs[,which.lvs])){
+                text(x = max(object$lvs[,which.lvs]), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=2)    
+              }
             }
           }
- 
+          }
           if(s.labels=="numeric"){
             text(x = object$lvs[, which.lvs], y = -1, labels = 1:nrow(object$y), col = s.colors)  
           }else if(s.labels=="rug"){
