@@ -924,7 +924,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                which(colnames(sdr[incl,incl])=="lambda2"))
       }
       
-      V <- cov.mat.mod
+      V <- -cov.mat.mod
       colnames(V) <- colnames(sdr[incl,incl])
       row.names(V) <- row.names(sdr[incl,incl])
       
