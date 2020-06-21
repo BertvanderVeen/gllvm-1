@@ -1,18 +1,18 @@
 #' @title Extract latent variables
 #' @description  Extract latent variables from gllvm object.
-#' 
+#'
 #' @param object an object of class 'gllvm'.
-#' 
-#'@aliases getLV getLV.gllvm.quadratic
-#'@method getLV gllvm.quadratic
+#'
+#' @aliases getLV getLV.gllvm.quadratic
+#' @method getLV gllvm.quadratic
 #'
 
 getLV.gllvm.quadratic <- function(object) {
-    return(object$lvs)
+  return(object$lvs)
 }
 
-#'@export getLV
+#' @export getLV
 
 getLV <- function(object) {
-    UseMethod(generic = "getLV")
+  UseMethod(generic = "getLV")
 }

@@ -14,7 +14,7 @@
 #' distribution, \eqn{F_{ij}^-(y))} is the limit as \eqn{F_{ij}(y)} is approached from the negative side, and \eqn{u_{ij}} has been
 #' generated at random from the standard uniform distribution.
 #'
-#' @return 
+#' @return
 #'  \item{residuals }{matrix of residuals}
 #'  \item{linpred }{matrix of linear predictors}
 #'
@@ -27,177 +27,192 @@
 #' Hui, F. K. C., Taskinen, S., Pledger, S., Foster, S. D., and Warton, D. I. (2015).  Model-based approaches to unconstrained ordination. Methods in Ecology and Evolution, 6:399-411.
 #'
 #' @examples
-#'# Load a dataset from the mvabund package
-#'data(antTraits)
-#'y <- as.matrix(antTraits$abund)
-#'# Fit gllvm model
-#'fit <- gllvm(y = y, family = poisson())
-#'# residuals
-#'res <- residuals(fit)
-#'
-#'@export
+#' # Load a dataset from the mvabund package
+#' data(antTraits)
+#' y <- as.matrix(antTraits$abund)
+#' # Fit gllvm model
+#' fit <- gllvm(y = y, family = poisson())
+#' # residuals
+#' res <- residuals(fit)
+#' @export
 
 
 residuals.gllvm.quadratic <- function(object, ...) {
-    n <- NROW(object$y)
-    p <- NCOL(object$y)
-    
-    num.lv <- object$num.lv
-    X <- object$X
-    y <- object$y
-    
-    num.X <- ncol(object$X)
-    num.T <- ncol(object$TR)
-    
-    pzip <- function(y, mu, sigma) {
-        pp <- NULL
-        if (y > -1) {
-            cdf <- ppois(y, lambda = mu, lower.tail = TRUE, log.p = FALSE)
-            cdf <- sigma + (1 - sigma) * cdf
-            pp <- cdf
-        }
-        if (y < 0) {
-            pp <- 0
-        }
-        pp
-    }
-    
-    if (is.null(object$offset)) {
-        offset <- matrix(0, nrow = n, ncol = p)
-    } else {
-        offset <- object$offset
-    }
-    
-    eta.mat <- matrix(object$params$beta0, n, p, byrow = TRUE) + offset
-    if (!is.null(object$X) && is.null(object$TR)) 
-        eta.mat <- eta.mat + (X %*% matrix(t(object$params$Xcoef), num.X, p))
-    if (!is.null(object$TR)) 
-        eta.mat <- eta.mat + matrix(object$X.design %*% c(object$params$B), n, p)
-    if (object$row.eff != FALSE) 
-        eta.mat <- eta.mat + matrix(object$params$row.params, n, p, byrow = FALSE)
-    if (num.lv > 0) 
-        eta.mat <- eta.mat + object$lvs %*% t(object$params$theta[, 1:num.lv]) + object$lvs^2 %*% t(object$params$theta[, -c(1:num.lv)])
-    mu <- exp(eta.mat)
-    if (any(mu == 0)) 
-        mu <- mu + 1e-10
-    if (object$family == "binomial") 
-        mu <- binomial(link = object$link)$linkinv(eta.mat)
-    if (object$family == "gaussian")
-        mu <- (eta.mat)
-    
-    ds.res <- matrix(NA, n, p)
-    rownames(ds.res) <- rownames(y)
-    colnames(ds.res) <- colnames(y)
-    for (i in 1:n) {
-        for (j in 1:p) {
-            if (object$family == "poisson") {
-                a <- ppois(as.vector(unlist(y[i, j])) - 1, mu[i, j])
-                b <- ppois(as.vector(unlist(y[i, j])), mu[i, j])
-                  if(a<b){
-                    u <- runif(n = 1, min = a, max = b)
-                  }else{
-                    u <- runif(n = 1, min = b, max = a)
-                  }
-                if (u == 1) 
-                  u = 1 - 1e-16
-                if (u == 0) 
-                  u = 1e-16
-                ds.res[i, j] <- qnorm(u)
-            }
-            if (object$family == "gaussian") {
-                phis <- object$params$phi
-                a <- pnorm(as.vector(unlist(y[i, j])), mu[i, j], sd = phis[j])
-                b <- pnorm(as.vector(unlist(y[i, j])), mu[i, j], sd = phis[j])
-                u <- runif(n = 1, min = a, max = b)
-                if(u==1) u=1-1e-16
-                if(u==0) u=1e-16
-                ds.res[i, j] <- qnorm(u)
-            }
-            if (object$family == "gamma") {
-                phis <- object$params$phi # - 1
-                a <- pgamma(as.vector(unlist(y[i, j])), shape = 1/phis[j], scale = phis[j]*mu[i, j])
-                b <- pgamma(as.vector(unlist(y[i, j])), shape = 1/phis[j], scale = phis[j]*mu[i, j])
-                u <- runif(n = 1, min = a, max = b)
-                if(u==1) u=1-1e-16
-                if(u==0) u=1e-16
-                ds.res[i, j] <- qnorm(u)
-            }
-            if (object$family == "negative.binomial") {#still fix this, need to find correct size and prob
-                phis <- object$params$phi + 1e-05 # for nb1
-                #a <- pnbinom(as.vector(unlist(y[i, j]))-1,mu = mu[i, j], size=mu[i,j]*phis[j])
-                #b <- pnbinom(as.vector(unlist(y[i, j])),mu = mu[i, j], size=mu[i,j]*phis[j])
-                a <- pnbinom(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], size = 1 / phis[j])
-                b <- pnbinom(as.vector(unlist(y[i, j])), mu = mu[i, j], size = 1 / phis[j])
-                  u <- runif(n = 1, min = a, max = b)
-                  if(a<b){
-                    u <- runif(n = 1, min = a, max = b)
-                  }else{
-                    u <- runif(n = 1, min = b, max = a)
-                  }
-                if (u == 1) 
-                  u = 1 - 1e-16
-                if (u == 0) 
-                  u = 1e-16
-                ds.res[i, j] <- qnorm(u)
-            }
+  n <- NROW(object$y)
+  p <- NCOL(object$y)
 
-            if (object$family == "binomial") {
-                a <- pbinom(as.vector(unlist(y[i, j])) - 1, 1, mu[i, j])
-                b <- pbinom(as.vector(unlist(y[i, j])), 1, mu[i, j])
-                  u <- runif(n = 1, min = a, max = b)
-                  if(a<b){
-                    u <- runif(n = 1, min = a, max = b)
-                  }else{
-                    u <- runif(n = 1, min = b, max = a)
-                  }
-                if (u == 1) 
-                  u = 1 - 1e-16
-                if (u == 0) 
-                  u = 1e-16
-                ds.res[i, j] <- qnorm(u)
-            }
-            
-          if (object$family == "ordinal") {
-            if(object$zeta.struc == "species"){
-              probK <- NULL
-              probK[1] <- pnorm(object$params$zeta[j, 1] - eta.mat[i, j], log.p = FALSE)
-              probK[max(y[, j]) + 1 - min(y[, j])] <- 1 - pnorm(object$params$zeta[j, max(y[, j]) - min(y[, j])] - eta.mat[i, j])
-              if(length(unique(y[,j]))>2) {
-                j.levels <- 2:(max(y[, j]) - min(y[, j]))
-                for (k in j.levels) {
-                  probK[k] <- pnorm(object$params$zeta[j, k] - eta.mat[i, j]) - pnorm(object$params$zeta[j, k - 1] - eta.mat[i, j])
-                }
-              }
-              probK <- c(0, probK)
-              cumsum.b <- sum(probK[1:(y[i, j] + 2 - min(y[, j]))])
-              cumsum.a <- sum(probK[1:(y[i, j])])
-              u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
-              if (abs(u - 1) < 1e-05)
-                u <- 1
-              if (abs(u - 0) < 1e-05)
-                u <- 0
-              ds.res[i, j] <- qnorm(u)
-            }else{
-              probK <- NULL
-              probK[1] <- pnorm(object$params$zeta[1] - eta.mat[i, j], log.p = FALSE)
-              probK[max(y) + 1 - min(y)] <- 1 - pnorm(object$params$zeta[max(y) - min(y)] - eta.mat[i, j])
-              levels <- 2:(max(y) - min(y))#
-              for (k in levels) {
-                probK[k] <- pnorm(object$params$zeta[k] - eta.mat[i, j]) - pnorm(object$params$zeta[k - 1] - eta.mat[i, j])
-              }
-              probK <- c(0, probK)
-              cumsum.b <- sum(probK[1:(y[i, j] + 2 - min(y))])
-              cumsum.a <- sum(probK[1:(y[i, j])])
-              u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
-              if (abs(u - 1) < 1e-05)
-                u <- 1
-              if (abs(u - 0) < 1e-05)
-                u <- 0
-              ds.res[i, j] <- qnorm(u)
-            }
-            
-          }
-        }
+  num.lv <- object$num.lv
+  X <- object$X
+  y <- object$y
+
+  num.X <- ncol(object$X)
+  num.T <- ncol(object$TR)
+
+  pzip <- function(y, mu, sigma) {
+    pp <- NULL
+    if (y > -1) {
+      cdf <- ppois(y, lambda = mu, lower.tail = TRUE, log.p = FALSE)
+      cdf <- sigma + (1 - sigma) * cdf
+      pp <- cdf
     }
-    return(list(residuals = ds.res, linpred = eta.mat))
+    if (y < 0) {
+      pp <- 0
+    }
+    pp
+  }
+
+  if (is.null(object$offset)) {
+    offset <- matrix(0, nrow = n, ncol = p)
+  } else {
+    offset <- object$offset
+  }
+
+  eta.mat <- matrix(object$params$beta0, n, p, byrow = TRUE) + offset
+  if (!is.null(object$X) && is.null(object$TR)) {
+    eta.mat <- eta.mat + (X %*% matrix(t(object$params$Xcoef), num.X, p))
+  }
+  if (!is.null(object$TR)) {
+    eta.mat <- eta.mat + matrix(object$X.design %*% c(object$params$B), n, p)
+  }
+  if (object$row.eff != FALSE) {
+    eta.mat <- eta.mat + matrix(object$params$row.params, n, p, byrow = FALSE)
+  }
+  if (num.lv > 0) {
+    eta.mat <- eta.mat + object$lvs %*% t(object$params$theta[, 1:num.lv]) + object$lvs^2 %*% t(object$params$theta[, -c(1:num.lv)])
+  }
+  mu <- exp(eta.mat)
+  if (any(mu == 0)) {
+    mu <- mu + 1e-10
+  }
+  if (object$family == "binomial") {
+    mu <- binomial(link = object$link)$linkinv(eta.mat)
+  }
+  if (object$family == "gaussian") {
+    mu <- (eta.mat)
+  }
+
+  ds.res <- matrix(NA, n, p)
+  rownames(ds.res) <- rownames(y)
+  colnames(ds.res) <- colnames(y)
+  for (i in 1:n) {
+    for (j in 1:p) {
+      if (object$family == "poisson") {
+        a <- ppois(as.vector(unlist(y[i, j])) - 1, mu[i, j])
+        b <- ppois(as.vector(unlist(y[i, j])), mu[i, j])
+        if (a < b) {
+          u <- runif(n = 1, min = a, max = b)
+        } else {
+          u <- runif(n = 1, min = b, max = a)
+        }
+        if (u == 1) {
+          u <- 1 - 1e-16
+        }
+        if (u == 0) {
+          u <- 1e-16
+        }
+        ds.res[i, j] <- qnorm(u)
+      }
+      if (object$family == "gaussian") {
+        phis <- object$params$phi
+        a <- pnorm(as.vector(unlist(y[i, j])), mu[i, j], sd = phis[j])
+        b <- pnorm(as.vector(unlist(y[i, j])), mu[i, j], sd = phis[j])
+        u <- runif(n = 1, min = a, max = b)
+        if (u == 1) u <- 1 - 1e-16
+        if (u == 0) u <- 1e-16
+        ds.res[i, j] <- qnorm(u)
+      }
+      if (object$family == "gamma") {
+        phis <- object$params$phi # - 1
+        a <- pgamma(as.vector(unlist(y[i, j])), shape = 1 / phis[j], scale = phis[j] * mu[i, j])
+        b <- pgamma(as.vector(unlist(y[i, j])), shape = 1 / phis[j], scale = phis[j] * mu[i, j])
+        u <- runif(n = 1, min = a, max = b)
+        if (u == 1) u <- 1 - 1e-16
+        if (u == 0) u <- 1e-16
+        ds.res[i, j] <- qnorm(u)
+      }
+      if (object$family == "negative.binomial") { # still fix this, need to find correct size and prob
+        phis <- object$params$phi + 1e-05 # for nb1
+        # a <- pnbinom(as.vector(unlist(y[i, j]))-1,mu = mu[i, j], size=mu[i,j]*phis[j])
+        # b <- pnbinom(as.vector(unlist(y[i, j])),mu = mu[i, j], size=mu[i,j]*phis[j])
+        a <- pnbinom(as.vector(unlist(y[i, j])) - 1, mu = mu[i, j], size = 1 / phis[j])
+        b <- pnbinom(as.vector(unlist(y[i, j])), mu = mu[i, j], size = 1 / phis[j])
+        u <- runif(n = 1, min = a, max = b)
+        if (a < b) {
+          u <- runif(n = 1, min = a, max = b)
+        } else {
+          u <- runif(n = 1, min = b, max = a)
+        }
+        if (u == 1) {
+          u <- 1 - 1e-16
+        }
+        if (u == 0) {
+          u <- 1e-16
+        }
+        ds.res[i, j] <- qnorm(u)
+      }
+
+      if (object$family == "binomial") {
+        a <- pbinom(as.vector(unlist(y[i, j])) - 1, 1, mu[i, j])
+        b <- pbinom(as.vector(unlist(y[i, j])), 1, mu[i, j])
+        u <- runif(n = 1, min = a, max = b)
+        if (a < b) {
+          u <- runif(n = 1, min = a, max = b)
+        } else {
+          u <- runif(n = 1, min = b, max = a)
+        }
+        if (u == 1) {
+          u <- 1 - 1e-16
+        }
+        if (u == 0) {
+          u <- 1e-16
+        }
+        ds.res[i, j] <- qnorm(u)
+      }
+
+      if (object$family == "ordinal") {
+        if (object$zeta.struc == "species") {
+          probK <- NULL
+          probK[1] <- pnorm(object$params$zeta[j, 1] - eta.mat[i, j], log.p = FALSE)
+          probK[max(y[, j]) + 1 - min(y[, j])] <- 1 - pnorm(object$params$zeta[j, max(y[, j]) - min(y[, j])] - eta.mat[i, j])
+          if (length(unique(y[, j])) > 2) {
+            j.levels <- 2:(max(y[, j]) - min(y[, j]))
+            for (k in j.levels) {
+              probK[k] <- pnorm(object$params$zeta[j, k] - eta.mat[i, j]) - pnorm(object$params$zeta[j, k - 1] - eta.mat[i, j])
+            }
+          }
+          probK <- c(0, probK)
+          cumsum.b <- sum(probK[1:(y[i, j] + 2 - min(y[, j]))])
+          cumsum.a <- sum(probK[1:(y[i, j])])
+          u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
+          if (abs(u - 1) < 1e-05) {
+            u <- 1
+          }
+          if (abs(u - 0) < 1e-05) {
+            u <- 0
+          }
+          ds.res[i, j] <- qnorm(u)
+        } else {
+          probK <- NULL
+          probK[1] <- pnorm(object$params$zeta[1] - eta.mat[i, j], log.p = FALSE)
+          probK[max(y) + 1 - min(y)] <- 1 - pnorm(object$params$zeta[max(y) - min(y)] - eta.mat[i, j])
+          levels <- 2:(max(y) - min(y)) #
+          for (k in levels) {
+            probK[k] <- pnorm(object$params$zeta[k] - eta.mat[i, j]) - pnorm(object$params$zeta[k - 1] - eta.mat[i, j])
+          }
+          probK <- c(0, probK)
+          cumsum.b <- sum(probK[1:(y[i, j] + 2 - min(y))])
+          cumsum.a <- sum(probK[1:(y[i, j])])
+          u <- runif(n = 1, min = cumsum.a, max = cumsum.b)
+          if (abs(u - 1) < 1e-05) {
+            u <- 1
+          }
+          if (abs(u - 0) < 1e-05) {
+            u <- 0
+          }
+          ds.res[i, j] <- qnorm(u)
+        }
+      }
+    }
+  }
+  return(list(residuals = ds.res, linpred = eta.mat))
 }

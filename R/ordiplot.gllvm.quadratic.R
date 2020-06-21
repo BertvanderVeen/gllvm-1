@@ -30,32 +30,32 @@
 #' is used to control the relative scaling of the latent variables and their coefficients.
 #' If \code{alpha = 0.5}, the latent variables and their coefficients are on the same scale.
 #' For details for constructing a biplot, see Gabriel (1971).
-#' 
-#' @note 
+#'
+#' @note
 #' - If error is occurred when using \code{ordiplot()}, try full name of the function \code{ordiplot.gllvm.quadratic()} as functions named 'ordiplot' might be found in other packages as well.
-#' 
-#' @references 
+#'
+#' @references
 #' Gabriel, K. R. (1971). The biplot graphic display of matrices with application to principal component analysis. Biometrika, 58, 453-467.
-#' 
+#'
 #' @author Jenni Niku <jenni.m.e.niku@@jyu.fi>, Francis K.C. Hui
 #'
 #' @examples
-#' #'## Load a dataset from the mvabund package
-#'data(antTraits)
-#'y <- as.matrix(antTraits$abund)
-#'fit <- gllvm(y, family = poisson())
-#'# Ordination plot:
-#'ordiplot(fit)
-#'# Biplot with 10 species
-#'ordiplot(fit, biplot = TRUE, ind.spp = 10)
-#'
-#'@aliases ordiplot ordiplot.gllvm.quadratic
-#'@export
-#'@export ordiplot.gllvm.quadratic
-ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = c(1, 2), site.region = FALSE, level =0.95,
-                           jitter = FALSE, jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, lwd.ellips = 0.5, col.ellips = 4, lty.ellips = 1,...) {
-  if (any(class(object) != "gllvm.quadratic"))
+#' #' ## Load a dataset from the mvabund package
+#' data(antTraits)
+#' y <- as.matrix(antTraits$abund)
+#' fit <- gllvm(y, family = poisson())
+#' # Ordination plot:
+#' ordiplot(fit)
+#' # Biplot with 10 species
+#' ordiplot(fit, biplot = TRUE, ind.spp = 10)
+#' @aliases ordiplot ordiplot.gllvm.quadratic
+#' @export
+#' @export ordiplot.gllvm.quadratic
+ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = c(1, 2), site.region = FALSE, level = 0.95,
+                                     jitter = FALSE, jitter.amount = 0.2, s.colors = 1, symbols = FALSE, cex.spp = 0.7, lwd.ellips = 0.5, col.ellips = 4, lty.ellips = 1, ...) {
+  if (any(class(object) != "gllvm.quadratic")) {
     stop("Class of the object isn't 'gllvm.quadratic'.")
+  }
   a <- jitter.amount
   n <- NROW(object$y)
   p <- NCOL(object$y)
@@ -64,88 +64,103 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
   } else {
     ind.spp <- p
   }
-  if (object$num.lv == 0)
+  if (object$num.lv == 0) {
     stop("No latent variables to plot.")
-  
-  if (is.null(rownames(object$params$theta)))
-    rownames(object$params$theta) = paste("V", 1:p)
-  
+  }
+
+  if (is.null(rownames(object$params$theta))) {
+    rownames(object$params$theta) <- paste("V", 1:p)
+  }
+
   if (object$num.lv == 1) {
     plot(1:n, object$lvs, ylab = "LV1", xlab = "Row index")
   }
-  
+
   if (object$num.lv > 1) {
-    testcov <- object$lvs %*% t(object$params$theta[,1:object$num.lv]) + object$lvs^2 %*% t(object$params$theta[,-c(1:object$num.lv)])
+    testcov <- object$lvs %*% t(object$params$theta[, 1:object$num.lv]) + object$lvs^2 %*% t(object$params$theta[, -c(1:object$num.lv)])
     do.svd <- svd(testcov, object$num.lv, object$num.lv)
-    choose.lvs <- do.svd$u * matrix( do.svd$d[1:object$num.lv] ^ alpha,
-                                     nrow = n, ncol = object$num.lv, byrow = TRUE )
-    choose.lv.coefs <- do.svd$v * matrix(do.svd$d[1:object$num.lv] ^ (1 - alpha),
-                                         nrow = p, ncol = object$num.lv, byrow = TRUE )
-    
-    
+    choose.lvs <- do.svd$u * matrix(do.svd$d[1:object$num.lv]^alpha,
+      nrow = n, ncol = object$num.lv, byrow = TRUE
+    )
+    choose.lv.coefs <- do.svd$v * matrix(do.svd$d[1:object$num.lv]^(1 - alpha),
+      nrow = p, ncol = object$num.lv, byrow = TRUE
+    )
+
+
     if (!biplot) {
-      sdd<- diag(sqrt(diag(cov(object$lvs))), nrow = object$num.lv)
-      choose.lvs <- scale(choose.lvs)%*%sdd
+      sdd <- diag(sqrt(diag(cov(object$lvs))), nrow = object$num.lv)
+      choose.lvs <- scale(choose.lvs) %*% sdd
       plot(choose.lvs[, which.lvs],
-           xlab = paste("Latent variable ", which.lvs[1]),
-           ylab = paste("Latent variable ", which.lvs[2]),
-           main = main , type = "n", ... )
-      
+        xlab = paste("Latent variable ", which.lvs[1]),
+        ylab = paste("Latent variable ", which.lvs[2]),
+        main = main, type = "n", ...
+      )
+
       if (site.region) {
-        if(length(col.ellips)!=n){ col.ellips =rep(col.ellips,n)}
-        
-        sdb<-sdA(object)
-        object$A<-sdb+object$A
-        
+        if (length(col.ellips) != n) {
+          col.ellips <- rep(col.ellips, n)
+        }
+
+        sdb <- sdA(object)
+        object$A <- sdb + object$A
+
         for (i in 1:n) {
-          #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
-          covm <- object$A[i,which.lvs,which.lvs];
-          ellipse( choose.lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)), col = col.ellips[i], lwd = lwd.ellips, lty = lty.ellips)
+          # covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
+          covm <- object$A[i, which.lvs, which.lvs]
+          ellipse(choose.lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df = object$num.lv)), col = col.ellips[i], lwd = lwd.ellips, lty = lty.ellips)
         }
       }
-      
-      
-      if (!jitter)
+
+
+      if (!jitter) {
         if (symbols) {
           points(choose.lvs[, which.lvs], col = s.colors, ...)
         } else {
           text(choose.lvs[, which.lvs], label = 1:n, cex = 1.2, col = s.colors)
         }
-      if (jitter)
+      }
+      if (jitter) {
         if (symbols) {
-          points(choose.lvs[, which.lvs][, 1] + runif(n,-a,a), choose.lvs[, which.lvs][, 2] + runif(n,-a,a), col =
-                   s.colors, ...)
+          points(choose.lvs[, which.lvs][, 1] + runif(n, -a, a), choose.lvs[, which.lvs][, 2] + runif(n, -a, a),
+            col =
+              s.colors, ...
+          )
         } else {
           text(
-            (choose.lvs[, which.lvs][, 1] + runif(n,-a,a)),
-            (choose.lvs[, which.lvs][, 2] + runif(n,-a,a)),
-            label = 1:n, cex = 1.2, col = s.colors )
-        }
-    }
-    
-    if (biplot) {
-      largest.lnorms <- order(apply(object$params$theta ^ 2, 1, sum), decreasing = TRUE)[1:ind.spp]
-      
-      plot(
-        rbind(choose.lvs[, which.lvs,drop=F], choose.lv.coefs[, which.lvs,drop=F]),#added drop=F here to prevent error
-        xlab = paste("Latent variable ", which.lvs[1]),
-        ylab = paste("Latent variable ", which.lvs[2]),
-        main = main, type = "n", ... )
-      
-      if (site.region) {
-        if(length(col.ellips)!=n){ col.ellips =rep(col.ellips,n)}
-        
-        sdb<-sdA(object)
-        object$A<-sdb+object$A
-        
-        for (i in 1:n) {
-            #covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
-            covm <- object$A[i,which.lvs,which.lvs];
-          ellipse( choose.lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df=object$num.lv)), col = col.ellips[i], lwd = lwd.ellips, lty = lty.ellips)
+            (choose.lvs[, which.lvs][, 1] + runif(n, -a, a)),
+            (choose.lvs[, which.lvs][, 2] + runif(n, -a, a)),
+            label = 1:n, cex = 1.2, col = s.colors
+          )
         }
       }
-      
-      if (!jitter){
+    }
+
+    if (biplot) {
+      largest.lnorms <- order(apply(object$params$theta^2, 1, sum), decreasing = TRUE)[1:ind.spp]
+
+      plot(
+        rbind(choose.lvs[, which.lvs, drop = F], choose.lv.coefs[, which.lvs, drop = F]), # added drop=F here to prevent error
+        xlab = paste("Latent variable ", which.lvs[1]),
+        ylab = paste("Latent variable ", which.lvs[2]),
+        main = main, type = "n", ...
+      )
+
+      if (site.region) {
+        if (length(col.ellips) != n) {
+          col.ellips <- rep(col.ellips, n)
+        }
+
+        sdb <- sdA(object)
+        object$A <- sdb + object$A
+
+        for (i in 1:n) {
+          # covm <- diag(diag(object$A[i,which.lvs,which.lvs]));
+          covm <- object$A[i, which.lvs, which.lvs]
+          ellipse(choose.lvs[i, which.lvs], covM = covm, rad = sqrt(qchisq(level, df = object$num.lv)), col = col.ellips[i], lwd = lwd.ellips, lty = lty.ellips)
+        }
+      }
+
+      if (!jitter) {
         if (symbols) {
           points(choose.lvs[, which.lvs], col = s.colors, ...)
         } else {
@@ -154,34 +169,34 @@ ordiplot.gllvm.quadratic <- function(object, biplot = FALSE, ind.spp = NULL, alp
         text(
           matrix(choose.lv.coefs[largest.lnorms, which.lvs], nrow = length(largest.lnorms)),
           label = rownames(object$params$theta)[largest.lnorms],
-          col = 4, cex = cex.spp )
+          col = 4, cex = cex.spp
+        )
       }
-      if (jitter){
+      if (jitter) {
         if (symbols) {
-          points(choose.lvs[, which.lvs[1]] + runif(n,-a,a), (choose.lvs[, which.lvs[2]] + runif(n,-a,a)), col =
-                   s.colors, ...)
+          points(choose.lvs[, which.lvs[1]] + runif(n, -a, a), (choose.lvs[, which.lvs[2]] + runif(n, -a, a)),
+            col =
+              s.colors, ...
+          )
         } else {
           text(
-            (choose.lvs[, which.lvs[1]] + runif(n,-a,a)),
-            (choose.lvs[, which.lvs[2]] + runif(n,-a,a)),
-            label = 1:n, cex = 1.2, col = s.colors )
+            (choose.lvs[, which.lvs[1]] + runif(n, -a, a)),
+            (choose.lvs[, which.lvs[2]] + runif(n, -a, a)),
+            label = 1:n, cex = 1.2, col = s.colors
+          )
         }
         text(
-          (matrix(choose.lv.coefs[largest.lnorms, which.lvs], nrow = length(largest.lnorms)) + runif(2*length(largest.lnorms),-a,a)),
+          (matrix(choose.lv.coefs[largest.lnorms, which.lvs], nrow = length(largest.lnorms)) + runif(2 * length(largest.lnorms), -a, a)),
           label = rownames(object$params$theta)[largest.lnorms],
-          col = 4, cex = cex.spp )
+          col = 4, cex = cex.spp
+        )
       }
     }
-    
-    
-    
   }
 }
 
 
-#'@export ordiplot
-ordiplot <- function(object, ...)
-{
+#' @export ordiplot
+ordiplot <- function(object, ...) {
   UseMethod(generic = "ordiplot")
 }
-

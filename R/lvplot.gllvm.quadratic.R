@@ -12,139 +12,147 @@
 #' @param level the confidence level. Scalar between 0 and 1.
 #' @param ... additional graphical arguments.
 #'
-#'@details
-#'Species optima and tolerances per latent variable are plotted with confidence intervals. Ablines at -2,2 and -5,5 are added for assistance, but do not have any meaning. Tolerances of which the CI of the quadratic coefficient crosses zero are greyed out. Tolerances are shown opposite of optima for readability, though are always positive. Optima of which the SE is larger than the optima are greyed out. Statistical uncertainties of optima that are larger than  15 or smaller than -15 are not plotted by default.
+#' @details
+#' Species optima and tolerances per latent variable are plotted with confidence intervals. Ablines at -2,2 and -5,5 are added for assistance, but do not have any meaning. Tolerances of which the CI of the quadratic coefficient crosses zero are greyed out. Tolerances are shown opposite of optima for readability, though are always positive. Optima of which the SE is larger than the optima are greyed out. Statistical uncertainties of optima that are larger than  15 or smaller than -15 are not plotted by default.
 #'
 #' @author Bert van der Veen
-#'@aliases lvplot lvplot.gllvm.quadratic
-#'@export
-lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, which.lvs = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4, 6, 2, 1), 
-                                     xlim.list = rep(list(c(-5,5)),length(which.lvs)),level=0.95, ...) {
-  
-  if (any(class(object) != "gllvm.quadratic")) 
+#' @aliases lvplot lvplot.gllvm.quadratic
+#' @export
+lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, which.lvs = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4, 6, 2, 1),
+                                   xlim.list = rep(list(c(-5, 5)), length(which.lvs)), level = 0.95, ...) {
+  if (any(class(object) != "gllvm.quadratic")) {
     stop("Class of the object isn't 'gllvm'.\n")
+  }
 
-  if(is.null(object$sd)){
+  if (is.null(object$sd)) {
     warning("No standard errors present in model.\n")
   }
-    if (is.null(which.lvs)) 
+  if (is.null(which.lvs)) {
     which.lvs <- c(1:NCOL(object$lvs))
+  }
 
-    cnames <- paste("LV",which.lvs)
-    optima <- summary(object)$Optima[, which.lvs,drop=F]
-    labely <- rownames(optima)
-    p <- ncol(object$y)
-  
-    if (is.null(mfrow) && length(which.lvs) > 1) 
-      mfrow <- c(1, length(which.lvs))
-    
-    if (!is.null(mfrow)) 
-      par(mfrow = mfrow, mar = mar)
-    if (is.null(mfrow)) 
-      par(mar = mar)
+  cnames <- paste("LV", which.lvs)
+  optima <- summary(object)$Optima[, which.lvs, drop = F]
+  labely <- rownames(optima)
+  p <- ncol(object$y)
 
-    for (i in 1:length(which.lvs)) {
-      Xc <- optima[,i]
-      sdoptima <- object$sd$optima[, which.lvs[i]]
-      lower <- Xc + qnorm(level) * sdoptima
-      upper <- Xc + qnorm(1-level) * sdoptima
-      Xc <- sort(Xc)
-      sdoptima <- sdoptima[names(Xc)]
-      lower <- lower[names(Xc)]
-      upper <- upper[names(Xc)]
-      
-      col.seq <- rep("black", p)
-      #grey out species with SD larger than optima
-      col.seq[!sdoptima<abs(Xc)] <- "grey"
-      
-      #don't want to greyout optima. 
-      # col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
-      if(length(xlim.list)!=length(which.lvs)&plot.optima==TRUE){
-        if(length(xlim.list)<which.lvs[i]){
-          xlim.list<-append(xlim.list,list(c(min(lower), max(upper))))
-        }
-      }
-      
-      At.y <- seq(1, p)
-   
-      if (plot.optima==TRUE) {
-        plot(x = Xc, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = "o", cex.lab = 1.3, 
-             ...)
-      } 
-      
-      if(plot.optima==T){
-      for(j in 1:ncol(object$y)){
-      if(Xc[j]>(-15)&Xc[j]<15)
-      segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
-      }
-      }
-      
-      #tolerances
-      tolerances <- 1/sqrt(-2*object$params$theta[,-c(1:object$num.lv)][,which.lvs[i]])
-      sdtolerances <- object$sd$tolerances[, which.lvs[i]]
-      lower <- tolerances + qnorm(level) * sdtolerances
-      upper <- tolerances + qnorm(1-level) * sdtolerances
-      if(plot.optima==TRUE)tolerances <- tolerances[names(Xc)]
-      if(plot.optima==FALSE)tolerances <- sort(tolerances)
-      lower <- lower[names(tolerances)]
-      upper <- upper[names(tolerances)]
-      if(plot.optima==TRUE)sgn.opt <- -sign(Xc)
-      if(plot.optima==FALSE)sgn.opt<-1
-      lower <- lower * sgn.opt
-      upper <- upper * sgn.opt
-      tolerances <- tolerances * sgn.opt
-      
-      col.seq <- rep("black", p)
-      #grey out tolerances as if they cross 0 it's unclear if we have a quadratic response.
-      
-      CIquad <- confint(object)[-c(1:(object$num.lv*ncol(object$y))),][((which.lvs[i]-1)*p+1):(which.lvs[i]*p),]
-      row.names(CIquad) <- colnames(object$y)
-      CIquad <- CIquad[names(tolerances),]
-      #grey out species that are not sure to have a quadratic response
-      col.seq[CIquad[,1]<0& CIquad[,2]>0] <- "grey"
-      
-      if(length(xlim.list)!=length(which.lvs)&plot.optima==FALSE){
-        if(length(xlim.list)<which.lvs[i]){
-          xlim.list<-append(xlim.list,list(c(min(lower), max(upper))))
-        }
-      }
-      
-      if (plot.optima==FALSE) {
-        plot(x = tolerances, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = "t", cex.lab = 1.3, 
-             ...)
-      } 
-      
-      if(plot.optima==TRUE)points(x=tolerances, y = At.y, pch="t", col = col.seq)
-      for(j in 1:ncol(object$y)){
-        if(tolerances[j]>(-10)&tolerances[j]<10)
-          segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
-      }
-            if(xlim.list[[i]][1]<(-5)){
-              abline(v = -5, lty = "dashed", col="grey")
-            }
-          if(xlim.list[[i]][2]>5){
-        abline(v = 5, lty = "dashed", col="grey")
-          }
-      if(xlim.list[[i]][1]<(-2)){
-        abline(v = -2, lty = "dashed", col="grey")
-      }
-      if(xlim.list[[i]][2]>2){
-        abline(v = 2, lty = "dashed", col="grey")
-      }
-      if(xlim.list[[i]][1]>=-2&xlim.list[[i]][[1]]!=0|xlim.list[[i]][2]<=2&xlim.list[[i]][[1]]!=0){
-        abline(v = 0, lty = "dashed", col="grey")
-      }
+  if (is.null(mfrow) && length(which.lvs) > 1) {
+    mfrow <- c(1, length(which.lvs))
+  }
 
-      if (y.label) {
-        if(plot.optima==TRUE)axis(2, at = At.y, labels = names(Xc), las = 1, cex.axis = cex.ylab)
-        if(plot.optima==FALSE)axis(2, at = At.y, labels = names(tolerances), las = 1, cex.axis = cex.ylab)
+  if (!is.null(mfrow)) {
+    par(mfrow = mfrow, mar = mar)
+  }
+  if (is.null(mfrow)) {
+    par(mar = mar)
+  }
+
+  for (i in 1:length(which.lvs)) {
+    Xc <- optima[, i]
+    sdoptima <- object$sd$optima[, which.lvs[i]]
+    lower <- Xc + qnorm(level) * sdoptima
+    upper <- Xc + qnorm(1 - level) * sdoptima
+    Xc <- sort(Xc)
+    sdoptima <- sdoptima[names(Xc)]
+    lower <- lower[names(Xc)]
+    upper <- upper[names(Xc)]
+
+    col.seq <- rep("black", p)
+    # grey out species with SD larger than optima
+    col.seq[!sdoptima < abs(Xc)] <- "grey"
+
+    # don't want to greyout optima.
+    # col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
+    if (length(xlim.list) != length(which.lvs) & plot.optima == TRUE) {
+      if (length(xlim.list) < which.lvs[i]) {
+        xlim.list <- append(xlim.list, list(c(min(lower), max(upper))))
       }
-        
     }
+
+    At.y <- seq(1, p)
+
+    if (plot.optima == TRUE) {
+      plot(
+        x = Xc, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = "o", cex.lab = 1.3,
+        ...
+      )
+    }
+
+    if (plot.optima == T) {
+      for (j in 1:ncol(object$y)) {
+        if (Xc[j] > (-15) & Xc[j] < 15) {
+          segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
+        }
+      }
+    }
+
+    # tolerances
+    tolerances <- 1 / sqrt(-2 * object$params$theta[, -c(1:object$num.lv)][, which.lvs[i]])
+    sdtolerances <- object$sd$tolerances[, which.lvs[i]]
+    lower <- tolerances + qnorm(level) * sdtolerances
+    upper <- tolerances + qnorm(1 - level) * sdtolerances
+    if (plot.optima == TRUE) tolerances <- tolerances[names(Xc)]
+    if (plot.optima == FALSE) tolerances <- sort(tolerances)
+    lower <- lower[names(tolerances)]
+    upper <- upper[names(tolerances)]
+    if (plot.optima == TRUE) sgn.opt <- -sign(Xc)
+    if (plot.optima == FALSE) sgn.opt <- 1
+    lower <- lower * sgn.opt
+    upper <- upper * sgn.opt
+    tolerances <- tolerances * sgn.opt
+
+    col.seq <- rep("black", p)
+    # grey out tolerances as if they cross 0 it's unclear if we have a quadratic response.
+
+    CIquad <- confint(object)[-c(1:(object$num.lv * ncol(object$y))), ][((which.lvs[i] - 1) * p + 1):(which.lvs[i] * p), ]
+    row.names(CIquad) <- colnames(object$y)
+    CIquad <- CIquad[names(tolerances), ]
+    # grey out species that are not sure to have a quadratic response
+    col.seq[CIquad[, 1] < 0 & CIquad[, 2] > 0] <- "grey"
+
+    if (length(xlim.list) != length(which.lvs) & plot.optima == FALSE) {
+      if (length(xlim.list) < which.lvs[i]) {
+        xlim.list <- append(xlim.list, list(c(min(lower), max(upper))))
+      }
+    }
+
+    if (plot.optima == FALSE) {
+      plot(
+        x = tolerances, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = "t", cex.lab = 1.3,
+        ...
+      )
+    }
+
+    if (plot.optima == TRUE) points(x = tolerances, y = At.y, pch = "t", col = col.seq)
+    for (j in 1:ncol(object$y)) {
+      if (tolerances[j] > (-10) & tolerances[j] < 10) {
+        segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
+      }
+    }
+    if (xlim.list[[i]][1] < (-5)) {
+      abline(v = -5, lty = "dashed", col = "grey")
+    }
+    if (xlim.list[[i]][2] > 5) {
+      abline(v = 5, lty = "dashed", col = "grey")
+    }
+    if (xlim.list[[i]][1] < (-2)) {
+      abline(v = -2, lty = "dashed", col = "grey")
+    }
+    if (xlim.list[[i]][2] > 2) {
+      abline(v = 2, lty = "dashed", col = "grey")
+    }
+    if (xlim.list[[i]][1] >= -2 & xlim.list[[i]][[1]] != 0 | xlim.list[[i]][2] <= 2 & xlim.list[[i]][[1]] != 0) {
+      abline(v = 0, lty = "dashed", col = "grey")
+    }
+
+    if (y.label) {
+      if (plot.optima == TRUE) axis(2, at = At.y, labels = names(Xc), las = 1, cex.axis = cex.ylab)
+      if (plot.optima == FALSE) axis(2, at = At.y, labels = names(tolerances), las = 1, cex.axis = cex.ylab)
+    }
+  }
 }
 
-#'@export
+#' @export
 lvplot <- function(object, ...) {
   UseMethod(generic = "lvplot")
 }
-

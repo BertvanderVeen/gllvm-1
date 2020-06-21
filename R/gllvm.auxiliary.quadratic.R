@@ -1,6 +1,6 @@
-# start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family, 
-#                                              offset= NULL, trial.size = 1, num.lv = 0, start.lvs = NULL, 
-#                                              seed = NULL,starting.val="res",formula=NULL, 
+# start.values.gllvm.TMB.quadratic <- function(y, X = NULL, TR=NULL, family,
+#                                              offset= NULL, trial.size = 1, num.lv = 0, start.lvs = NULL,
+#                                              seed = NULL,starting.val="res",formula=NULL,
 #                                              jitter.var=0,yXT=NULL, row.eff=FALSE, randomX = NULL, start.method="FA", zeta.struc = "species") {
 #   if(!is.null(seed)) set.seed(seed)
 #   N<-n <- nrow(y); p <- ncol(y); y <- as.matrix(y)
@@ -9,7 +9,7 @@
 #   Br <- sigmaB <- sigmaij <- NULL
 #   mu<-NULL
 #   out <- list()
-#   
+#
 #   sigma=1
 #   row.params <- rep(0, n);
 #   if(starting.val %in% c("res","random") || row.eff == "random"){
@@ -38,38 +38,38 @@
 #     if(any(abs(row.params)>1.5)) row.params[abs(row.params)>1.5] <- 1.5 * sign(row.params[abs(row.params)>1.5])
 #     sigma=sd(row.params)
 #   }
-#   
+#
 #   if(!is.numeric(y))
 #     stop("y must a numeric.")# If ordinal data, please convert to numeric with lowest level equal to 1. Thanks")
-#   
+#
 #   if(!(family %in% c("poisson","negative.binomial","binomial","ordinal")))
 #     stop("inputed family not allowed...sorry =(")
-#   
+#
 #   unique.ind <- which(!duplicated(y))
 #   if(is.null(start.lvs)) {
 #     index <- mvtnorm::rmvnorm(N, rep(0, num.lv));
 #     unique.index <- as.matrix(index[unique.ind,])
 #   }
-#   
+#
 #   if(!is.null(start.lvs)) {
 #     index <- as.matrix(start.lvs)
 #     unique.index <- as.matrix(index[unique.ind,])
 #   }
-#   
+#
 #   y <- as.matrix(y)
-#   
+#
 #   if(family == "ordinal" && zeta.struc == "species") {
 #     max.levels <- apply(y,2,function(x) length(min(x):max(x)));
 #     if(any(max.levels == 1) || all(max.levels == 2)) stop("Ordinal data requires all columns to have at least has two levels. If al columns only have two levels, please use family == binomial instead. Thanks")
 #   }else if(family=="ordinal" && zeta.struc=="common"){
 #     max.levels=length(min(y):max(y))
 #   }
-#   
+#
 #   if(is.null(rownames(y))) rownames(y) <- paste("row",1:N,sep="")
 #   if(is.null(colnames(y))) colnames(y) <- paste("col",1:p,sep="")
-#   
+#
 #   options(warn = -1)
-#   
+#
 #   if(family!="ordinal") {
 #     if(starting.val=="res" && is.null(start.lvs) ){# && num.lv>0
 #       if(is.null(TR)){
@@ -86,15 +86,15 @@
 #           fit.mva$phi <- apply(fit.mva$residuals,2,sd)
 #         }
 #         gamma=NULL
-#         
+#
 #         if(start.method=="FA"){
-#           lastart <- FAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)  
+#           lastart <- FAstart(mu=NULL, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi, resi=resi)
 #         }else{
 #           lastart <- CAstart(mu=NULL, family=family, y=y, num.lv = num.lv)
 #         }
-#         
-#         
-#         
+#
+#
+#
 #         gamma<-lastart$gamma
 #         index<-lastart$index
 #         lambda2<-lastart$lambda2
@@ -108,7 +108,7 @@
 #         # }
 #         # coef <- t(fit.mva2$coef)
 #         #potentially add the lv coefficients for gaussian shaped responses
-#         
+#
 #       } else {
 #         n1 <- colnames(X)
 #         n2 <- colnames(TR)
@@ -138,7 +138,7 @@
 #           B<-fit.mva$coef$B#<-rep(0, length(fit.mva$coef$B));
 #           if(!is.null(fit.mva$coef$row.params)) row.params=fit.mva$coef$row.params
 #         }
-#         
+#
 #         fit.mva$phi <- phi <- fit.mva$coef$phi
 #         ds.res <- matrix(NA, n, p)
 #         rownames(ds.res) <- rownames(y)
@@ -157,10 +157,10 @@
 #         if(family == "binomial") {
 #           mu <-  binomial(link = "probit")$linkinv(mu)
 #         }
-#         
+#
 #         gamma=NULL
 #         if(start.method=="FA"){
-#           lastart <- FAstart(mu=mu, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)  
+#           lastart <- FAstart(mu=mu, family=family, y=y, num.lv = num.lv, phis=fit.mva$phi)
 #         }else{
 #           lastart <- CAstart(mu=mu, family=family, y=y, num.lv = num.lv)
 #         }
@@ -168,8 +168,8 @@
 #         index<-lastart$index
 #         lambda2<-lastart$lambda2
 #       }
-#       
-#       
+#
+#
 #       if(is.null(TR)){params <- cbind(coef,gamma)
 #       } else { params <- cbind((fit.mva$coef$beta0),gamma)}
 #     } else {
@@ -201,14 +201,14 @@
 #         params <- t(fit.mva$coef)
 #       }
 #     }
-#   
-#   
+#
+#
 #   if(family == "negative.binomial") {
 #     phi <- fit.mva$phi  + 1e-5
 #   } else if(family == "gaussian") {
 #     phi <- fit.mva$phi
 #   } else { phi <- NULL }
-#   
+#
 #   if(family == "ordinal") {
 #     max.levels <- length(unique(c(y)))
 #     params <- matrix(NA,p,ncol(cbind(1,X))+num.lv)
@@ -232,7 +232,7 @@
 #         lambda2[is.infinite(lambda2)]<--0.5
 #       }
 #     }
-#     
+#
 #     for(j in 1:p) {
 #       y.fac <- factor(y[,j])
 #       if(length(levels(y.fac)) > 2) {
@@ -242,8 +242,8 @@
 #         } else if(starting.val=="random"){
 #           if(is.null(X) || !is.null(TR)) cw.fit <- MASS::polr(y.fac ~ index + offset((index^2%*%t(lambda2))[,j]), method = "probit")
 #           if(!is.null(X) & is.null(TR) ) cw.fit <- MASS::polr(y.fac ~ X + index + offset((index^2%*%t(lambda2))[,j]), method = "probit")
-#         } 
-# 
+#         }
+#
 #         if(starting.val=="random"){
 #           params[j,] <- c(cw.fit$zeta[1],-cw.fit$coefficients)
 #           if(zeta.struc == "species"){
@@ -281,14 +281,14 @@
 #       lambda2<-lastart$lambda2
 #       params[,(ncol(cbind(1,X))+1):ncol(params)]=gamma
 #     }
-#     
+#
 #     env <- rep(0,num.X)
 #     trait <- rep(0,num.T)
 #     inter <- rep(0, num.T * num.X)
 #     B=c(env,trait,inter)
 #   }
-#   
-#     
+#
+#
 #   if((family!="ordinal" || (family=="ordinal" & starting.val=="res")) & starting.val!="zero"){
 #     if(num.lv>1 && p>2){
 #       gamma<-as.matrix(params[,(ncol(params) - num.lv + 1):ncol(params)])
@@ -354,16 +354,16 @@
 #     out$sigmaij <- sigmaij
 #   }
 #   return(out)
-# }                                        
-# 
+# }
+#
 
 
-# 
-# 
-# FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL, 
+#
+#
+# FAstart <- function(mu, family, y, num.lv, zeta = NULL, phis = NULL,
 #                     jitter.var = 0, resi = NULL, start.method=start.method, zeta.struc = zeta.struc){
 #   n<-NROW(y); p <- NCOL(y)
-#   
+#
 #   if(is.null(resi)){
 #     ds.res <- matrix(NA, n, p)
 #     rownames(ds.res) <- rownames(y)
@@ -444,7 +444,7 @@
 #     ds.res <- resi
 #   }
 #   resi <- as.matrix(ds.res); resi[is.infinite(resi)] <- 0; resi[is.nan(resi)] <- 0
-#   
+#
 #   if(p>2 && n>2){
 #     if(any(is.nan(resi))){stop("Method 'res' for starting values can not be used, when glms fit too poorly to the data. Try other starting value methods 'zero' or 'random' or change the model.")}
 #     if(n>p){
@@ -472,7 +472,7 @@
 #     gamma[upper.tri(gamma)]=0
 #     index <- matrix(0,n,num.lv)
 #   }
-#   
+#
 #   if(num.lv>1 && p>2){
 #     qr.gamma <- qr(t(gamma))
 #     gamma.new<-t(qr.R(qr.gamma))
@@ -510,24 +510,24 @@
 #   #     eta<-pnorm(mu)
 #   #   }
 #   #   quadratic.start.offset <- index%*%t(gamma) + eta
-#   #   
-#   #   
+#   #
+#   #
 #   # }else {
 #   #   quadratic.start.offset <- index%*%t(gamma)
 #   # }
 #   #     for(j in 1:p){
 #   #         lambda2[j,]<-coef(zetadiv::glm.cons(resi[,j]~-1+index^2+offset(quadratic.start.offset[,j]),cons=rep(-1,num.lv-1),cons.inter = -1,family="gaussian"))  #first coefficient the packages thinks is the intercept
 #   # }
-#   
+#
 #   index <- index + mvtnorm::rmvnorm(n, rep(0, num.lv),diag(num.lv)*jitter.var);
 #   return(list(index = index, gamma = gamma, lambda2 = lambda2))
 # }
 
-# 
+#
 # CAstart <- function(mu, family, y, num.lv, start.method=start.method, jitter.var = 0){
-#   
+#
 #   n<-NROW(y); p <- NCOL(y)
-#   
+#
 #   if(is.null(mu)){
 #     eta<-matrix(0,n,p)
 #   }else if(family=="poisson"|family=="negative.binomial"){
@@ -542,16 +542,16 @@
 #     if(any(tol==0))tol[tol==0]<-1
 #     lambda2<--0.5/tol^2
 #     gamma <- vegan::scores(ca,choices=1:num.lv)$species
-# 
+#
 #     index <- vegan::scores(ca,choices=1:num.lv)$sites
-#     
+#
 #   } else {
 #     gamma <- matrix(1,p,num.lv)
 #     gamma[upper.tri(gamma)]<- 0
 #     index <- matrix(0,n,num.lv)
 #     lambda2 <- matrix(-0.5,p,num.lv)
 #   }
-#   
+#
 #   if(num.lv>1 && p>2){
 #     qr.gamma <- qr(t(gamma))
 #     gamma.new<-t(qr.R(qr.gamma))
@@ -572,9 +572,9 @@
 #     gammascale <- diag(x = 0.8/sdt, nrow = length(sdi))
 #     gamma <- gamma%*%gammascale
 #   }
-#   
+#
 #   lambda2<--.5/tol^2
-#   
+#
 #   # for(j in 1:p){
 #   #   for(q in 1:num.lv){
 #   #     lambda2[j,q]<--.5/(sum((index[,q]-(sum(y[,j]*index[,q])/sum(y[,j])))^2*y[,j])/sum(y[,j]))
@@ -584,53 +584,59 @@
 #   return(list(index = index, gamma = gamma, lambda2 = lambda2))
 # }
 
-inf.criteria <- function(fit)
-{
-  family=fit$family
-  abund=fit$y
-  num.lv=fit$num.lv
+inf.criteria <- function(fit) {
+  family <- fit$family
+  abund <- fit$y
+  num.lv <- fit$num.lv
   n <- dim(abund)[1]
-  k<-attributes(logLik(fit))$df
-  
-  BIC <- -2*fit$logL + (k) * log(n)
+  k <- attributes(logLik(fit))$df
+
+  BIC <- -2 * fit$logL + (k) * log(n)
   # AIC
-  AIC <- -2*fit$logL + (k) * 2
+  AIC <- -2 * fit$logL + (k) * 2
   # AICc
-  AICc <- AIC + 2*k*(k+1)/(n-k-1)
+  AICc <- AIC + 2 * k * (k + 1) / (n - k - 1)
   list(BIC = BIC, AIC = AIC, AICc = AICc, k = k)
 }
 
 # Creates matrix of fourth corner terms from a vector
-getFourthCorner<- function(object){
-  if(is.null(object$X) || is.null(object$TR)) stop();
-  
-  n1=colnames(object$X)
-  n2=colnames(object$TR)
-  
-  nams=names(object$params$B)
-  fx<-cbind(apply(sapply(n1,function(x){grepl(x, nams)}),1,any), apply(sapply(n2,function(x){grepl(x, nams)}),1,any))
-  fourth.index<-rowSums(fx)>1
-  nams2=nams[fourth.index]
-  fourth.corner=object$params$B[fourth.index]
-  
-  i=1; j=1;
-  fourth<-matrix(0,length(n1),length(n2))
+getFourthCorner <- function(object) {
+  if (is.null(object$X) || is.null(object$TR)) stop()
+
+  n1 <- colnames(object$X)
+  n2 <- colnames(object$TR)
+
+  nams <- names(object$params$B)
+  fx <- cbind(apply(sapply(n1, function(x) {
+    grepl(x, nams)
+  }), 1, any), apply(sapply(n2, function(x) {
+    grepl(x, nams)
+  }), 1, any))
+  fourth.index <- rowSums(fx) > 1
+  nams2 <- nams[fourth.index]
+  fourth.corner <- object$params$B[fourth.index]
+
+  i <- 1
+  j <- 1
+  fourth <- matrix(0, length(n1), length(n2))
   for (i in 1:length(n1)) {
     for (j in 1:length(n2)) {
-      fur=(grepl(n1[i], nams2)+grepl(n2[j], nams2))>1
-      if(any(fur)){ fourth[i,j]=fourth.corner[fur]}
+      fur <- (grepl(n1[i], nams2) + grepl(n2[j], nams2)) > 1
+      if (any(fur)) {
+        fourth[i, j] <- fourth.corner[fur]
+      }
     }
   }
-  colnames(fourth)=n2
-  rownames(fourth)=n1
+  colnames(fourth) <- n2
+  rownames(fourth) <- n1
   return(fourth)
 }
 
 
 # Calculates standard errors for random effects
-sdrandom<-function(obj, Vtheta, incl, ignore.u = FALSE){
+sdrandom <- function(obj, Vtheta, incl, ignore.u = FALSE) {
   r <- obj$env$random
-  par = obj$env$last.par.best
+  par <- obj$env$last.par.best
   hessian.random <- obj$env$spHess(par, random = TRUE)
   L <- obj$env$L.created.by.newton
   if (ignore.u) {
@@ -644,8 +650,9 @@ sdrandom<-function(obj, Vtheta, incl, ignore.u = FALSE){
     }
     nonr <- setdiff(seq_along(par), r)
     tmp <- sapply(nonr, reverse.sweep)
-    if (!is.matrix(tmp))
+    if (!is.matrix(tmp)) {
       tmp <- matrix(tmp, ncol = length(nonr))
+    }
     A <- solve(hessian.random, tmp[, incl])
     diag.term2 <- diag(rowSums((A %*% Vtheta) * A))
   }
@@ -655,22 +662,23 @@ sdrandom<-function(obj, Vtheta, incl, ignore.u = FALSE){
 }
 
 # Calculates adjusted prediction errors for random effects
-sdA<-function(fit){
-  n<-nrow(fit$y)
-  A<- -fit$Hess$cov.mat.mod  #
-  B<- fit$Hess$Hess.full[fit$Hess$incl, fit$Hess$incla]
-  C<- fit$Hess$Hess.full[fit$Hess$incla, fit$Hess$incl]
-  D<- solve(fit$Hess$Hess.full[fit$Hess$incla, fit$Hess$incla])
-  covb <- (D%*%C)%*%(A)%*%(B%*%t(D))
+sdA <- function(fit) {
+  n <- nrow(fit$y)
+  A <- -fit$Hess$cov.mat.mod #
+  B <- fit$Hess$Hess.full[fit$Hess$incl, fit$Hess$incla]
+  C <- fit$Hess$Hess.full[fit$Hess$incla, fit$Hess$incl]
+  D <- solve(fit$Hess$Hess.full[fit$Hess$incla, fit$Hess$incla])
+  covb <- (D %*% C) %*% (A) %*% (B %*% t(D))
   se <- (diag(abs(covb)))
-  CovAerr<-array(0, dim(fit$A))
+  CovAerr <- array(0, dim(fit$A))
   for (i in 1:ncol(fit$A)) {
-    CovAerr[,i,i] <- se[1:n]; se<-se[-(1:n)]
+    CovAerr[, i, i] <- se[1:n]
+    se <- se[-(1:n)]
   }
   CovAerr
 }
 # draw an ellipse
-ellipse<-function(center, covM, rad, col=4, lwd = 1, lty = 1){
+ellipse <- function(center, covM, rad, col = 4, lwd = 1, lty = 1) {
   seg <- 51
   Qc <- chol(covM, pivot = TRUE)
   angles <- (0:seg) * 2 * pi / seg
@@ -680,16 +688,15 @@ ellipse<-function(center, covM, rad, col=4, lwd = 1, lty = 1){
   lines(ellips, col = col, lwd = lwd, lty = lty)
 }
 
-gamEnvelope <- function(x, y,line.col = "red", envelope.col = c("blue","lightblue"), col = 1, envelopes = TRUE, ...){
+gamEnvelope <- function(x, y, line.col = "red", envelope.col = c("blue", "lightblue"), col = 1, envelopes = TRUE, ...) {
   xSort <- sort(x, index.return = TRUE)
   gam.yx <- gam(y[xSort$ix] ~ xSort$x)
   pr.y <- predict.gam(gam.yx, se.fit = TRUE)
   n.obs <- length(xSort$ix)
-  prHi <- pr.y$fit + 1.96*pr.y$se.fit
-  prLow <- pr.y$fit - 1.96*pr.y$se.fit
-  if(envelopes) polygon(xSort$x[c(1:n.obs,n.obs:1)], c(prHi,prLow[n.obs:1]), col = envelope.col[2], border = NA)
+  prHi <- pr.y$fit + 1.96 * pr.y$se.fit
+  prLow <- pr.y$fit - 1.96 * pr.y$se.fit
+  if (envelopes) polygon(xSort$x[c(1:n.obs, n.obs:1)], c(prHi, prLow[n.obs:1]), col = envelope.col[2], border = NA)
   lines(xSort$x, pr.y$fit, col = envelope.col[1])
   abline(h = 0, col = 1)
   points(x, y, col = col, ...)
 }
-

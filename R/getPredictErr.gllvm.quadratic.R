@@ -3,10 +3,10 @@
 #'
 #' @param object   an object of class 'gllvm'.
 #'
-#' @details 
-#' If variational approximation is used, prediction errors are based on covariances 
-#' of the variational distributions, and therefore they do not take into account 
-#' the uncertainty in the estimation of (fixed) parameters. 
+#' @details
+#' If variational approximation is used, prediction errors are based on covariances
+#' of the variational distributions, and therefore they do not take into account
+#' the uncertainty in the estimation of (fixed) parameters.
 #'
 #' @return Function returns following components:
 #'  \item{lvs }{prediction errors for latent variables}
@@ -15,34 +15,35 @@
 #' @author Francis K.C. Hui, Jenni Niku, David I. Warton
 #'
 #' @examples
-#'# Load a dataset from the mvabund package
-#'data(antTraits)
-#'y <- as.matrix(antTraits$abund)
-#'# Fit gllvm model
-#'fit <- gllvm(y = y, family = poisson())
-#'# prediction errors for latent variables:
-#'getPredictErr(fit)
-#'
-#'
-#'@aliases getPredictErr simulate.gllvm.quadratic
-#'@method getPredictErr gllvm.quadratic
-#'@export
-#'@export simulate.gllvm.quadratic
-getPredictErr.gllvm.quadratic = function(object) {
-    out <- list()
-    
-    if (object$method == "VA") {
-        if (object$num.lv > 0) 
-            out$lvs <- sqrt(apply(object$A, 1, diag))
-        if (object$row.eff == "random") 
-            out$row.effects <- sqrt(abs(object$Ar))
+#' # Load a dataset from the mvabund package
+#' data(antTraits)
+#' y <- as.matrix(antTraits$abund)
+#' # Fit gllvm model
+#' fit <- gllvm(y = y, family = poisson())
+#' # prediction errors for latent variables:
+#' getPredictErr(fit)
+#' @aliases getPredictErr simulate.gllvm.quadratic
+#' @method getPredictErr gllvm.quadratic
+#' @export
+#' @export simulate.gllvm.quadratic
+getPredictErr.gllvm.quadratic <- function(object) {
+  out <- list()
+
+  if (object$method == "VA") {
+    if (object$num.lv > 0) {
+      out$lvs <- sqrt(apply(object$A, 1, diag))
     }
-    if (object$num.lv > 1) 
-        out$lvs <- t(out$lvs)
-    return(out)
+    if (object$row.eff == "random") {
+      out$row.effects <- sqrt(abs(object$Ar))
+    }
+  }
+  if (object$num.lv > 1) {
+    out$lvs <- t(out$lvs)
+  }
+  return(out)
 }
 
-#'@export getPredictErr
+#' @export getPredictErr
 getPredictErr <- function(object) {
-    UseMethod(generic = "getPredictErr")
+  UseMethod(generic = "getPredictErr")
 }
