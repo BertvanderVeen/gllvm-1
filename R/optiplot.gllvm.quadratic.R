@@ -48,7 +48,7 @@
                                            s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=ifelse(length(which.lvs)==1,"confidence","distribution"), type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, lty.ellips = c("solid","dashed"), lwd.ellips = 1, col.ellips = "gray", alpha.col = 0.4, level = 0.95, ylim=NULL, xlim=NULL, length.out=100,...) {
         if(class(object)!="gllvm.quadratic")
           stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.\n")
-        if(object$sd==FALSE){
+        if(!is.list(mod$sd)){
           warning("No standard errors present in model, setting `opt.region = FALSE`.\n")
           opt.region <- FALSE
         }
@@ -69,9 +69,15 @@
         # }
         n <- NROW(object$y)
         p <- NCOL(object$y)
+        
         if(!is.null(ind.spp)){
         if(length(ind.spp)==1){
-          ind.spp <- 1:ind.spp
+          if(ind.spp>p){
+            stop("There are not that many species in the model. \n")
+          }else{
+            ind.spp <- 1:ind.spp  
+          }
+          
         }
         } else {
           ind.spp <- 1:p
@@ -295,7 +301,7 @@
               }else if(opt[j]>max(object$lvs[,which.lvs])){
                 text(x = max(object$lvs[,which.lvs]), y = apply(mu,2,max)[j], labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=2)    
               }
-            }else{
+            }else{#not going correct yet for poisson
               if(opt[j]<max(object$lvs[,which.lvs])&opt[j]>min(object$lvs[,which.lvs])){
                 text(x = opt[j], y = maximum, labels = colnames(mu)[j], col = cols[j], cex=cex.spp, pos=3)#should adjust "adj" rather than adding 0.1 to the maximum.
                 segments(x0=opt[j],x1 = opt[j],y0 = min(mu), y1=maximum,lty="dashed",col=cols[j])
