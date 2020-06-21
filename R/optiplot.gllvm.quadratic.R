@@ -48,8 +48,9 @@
                                            s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region=ifelse(length(which.lvs)==1,"confidence","distribution"), type = "response", intercept = TRUE, legend=FALSE,scale=FALSE, site.region = FALSE, lty.ellips = c("solid","dashed"), lwd.ellips = 1, col.ellips = "gray", alpha.col = 0.4, level = 0.95, ylim=NULL, xlim=NULL, length.out=100,...) {
         if(class(object)!="gllvm.quadratic")
           stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.\n")
-        if(is.null(object$sd)){
+        if(object$sd==FALSE){
           warning("No standard errors present in model, setting `opt.region = FALSE`.\n")
+          opt.region <- FALSE
         }
         if(!opt.region%in%c("distribution","confidence",FALSE)){
           stop("Wrong input for `opt.region`.\n")
