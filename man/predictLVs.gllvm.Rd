@@ -31,7 +31,8 @@ Obtains predictions for latent variables from a fitted generalized linear latent
 Obtains predictions for latent variables from a fitted generalized linear latent variable model object.
 }
 \examples{
- \donttest{
+
+\donttest{
 # Load a dataset from the mvabund package
 data(antTraits)
 y <- as.matrix(antTraits$abund)

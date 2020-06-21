@@ -20,8 +20,8 @@ Function returns following components:
 Calculates the prediction errors for latent variables for gllvm model.
 }
 \details{
-If variational approximation is used, prediction errors are based on covariances 
-of the variational distributions, and therefore they do not take into account 
+If variational approximation is used, prediction errors are based on covariances
+of the variational distributions, and therefore they do not take into account
 the uncertainty in the estimation of (fixed) parameters.
 }
 \examples{
@@ -32,8 +32,6 @@ y <- as.matrix(antTraits$abund)
 fit <- gllvm(y = y, family = poisson())
 # prediction errors for latent variables:
 getPredictErr(fit)
-
-
 }
 \author{
 Francis K.C. Hui, Jenni Niku, David I. Warton

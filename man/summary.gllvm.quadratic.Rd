@@ -14,6 +14,9 @@
 \description{
 A summary of the fitted 'gllvm' object, including function call, distribution family and model parameters.
 }
+\details{
+Also gives species optimum, tolerances and maxima per latent variable. Maxima are on the link scale.
+}
 \examples{
 ## Load a dataset from the mvabund package
 data(antTraits)
@@ -21,7 +24,6 @@ y <- as.matrix(antTraits$abund)
 # Fit gllvm model
 fit <- gllvm(y = y, family = poisson())
 summary(fit)
-
 }
 \author{
 Jenni Niku <jenni.m.e.niku@jyu.fi>

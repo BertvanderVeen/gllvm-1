@@ -42,19 +42,20 @@ data(antTraits)
 y <- as.matrix(antTraits$abund)
 X <- as.matrix(antTraits$env)
 # Fit model with environmental covariates
-fit <- gllvm(y, X, formula = ~ Bare.ground + Shrub.cover,
-            family = poisson())
+fit <- gllvm(y, X,
+  formula = ~ Bare.ground + Shrub.cover,
+  family = poisson()
+)
 coefplot.gllvm(fit)
-
 \donttest{
 # Fit model with all environmental covariates
-fitx <- gllvm(y, X, family = 'negative.binomial')
-coefplot(fitx, mfrow = c(3,2))
+fitx <- gllvm(y, X, family = "negative.binomial")
+coefplot(fitx, mfrow = c(3, 2))
 coefplot(fitx, which.Xcoef = 1:2)
 
 # Fit gllvm model with environmental and trait covariates
 TR <- antTraits$traits
-fitT <- gllvm(y = y, X = X, TR = TR, family = 'negative.binomial')
+fitT <- gllvm(y = y, X = X, TR = TR, family = "negative.binomial")
 coefplot(fitT)
 }
 }

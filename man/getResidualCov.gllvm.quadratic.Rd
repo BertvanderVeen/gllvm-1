@@ -56,7 +56,6 @@ rescov$cov
 rescov$tr
 # Trace per latent variable
 rescov$trace.q
-
 }
 \author{
 Francis K.C. Hui, Jenni Niku, David I. Warton

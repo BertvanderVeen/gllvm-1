@@ -30,7 +30,8 @@ an option is to add a conditional argument, which would fix the LVs.
 David Warton--change this
 }
 \examples{
- \donttest{
+
+\donttest{
 # Load a dataset from the mvabund package
 data(antTraits)
 y <- as.matrix(antTraits$abund)

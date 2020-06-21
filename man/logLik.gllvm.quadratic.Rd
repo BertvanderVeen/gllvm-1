@@ -22,7 +22,6 @@ y <- as.matrix(antTraits$abund)
 fit <- gllvm(y = y, family = poisson())
 # log-Likelihood:
 logLik(fit)
-
 }
 \author{
 David I. Warton, Jenni Niku

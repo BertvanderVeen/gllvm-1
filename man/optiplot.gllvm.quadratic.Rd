@@ -12,25 +12,29 @@
   main = NULL,
   which.lvs = NULL,
   s.colors = 1,
+  s.labels = "rug",
   cex.spp = 0.7,
-  opt.region = FALSE,
+  opt.region = ifelse(length(which.lvs) == 1, "confidence", "distribution"),
   type = "response",
   intercept = TRUE,
   legend = FALSE,
   scale = FALSE,
   site.region = FALSE,
-  level = 0.95,
-  alpha.col = 0.4,
   lty.ellips = c("solid", "dashed"),
-  col.ellips = "gray",
   lwd.ellips = 1,
+  col.ellips = "gray",
+  alpha.col = 0.4,
+  level = 0.95,
+  ylim = NULL,
+  xlim = NULL,
+  length.out = 100,
   ...
 )
 }
 \arguments{
 \item{object}{an object of class 'gllvm'.}
 
-\item{ind.spp}{the number of response variables (usually, species) to include on the biplot (sorted by varianve explained). The default is all.}
+\item{ind.spp}{the number of response variables (usually, species) to include on the biplot (sorted by varianve explained). The default is all. Can supply a vector, in which case those species will be picked from the order of variation explained on the latent variable (e.g. the species that explain fourth and sixth most variation).}
 
 \item{alpha}{a numeric scalar between 0 and 1 that is used to control the relative scaling of the latent variables and their coefficients, when constructing a biplot.}
 
@@ -40,9 +44,11 @@
 
 \item{s.colors}{colors for sites}
 
+\item{s.labels}{Can be FALSE, for no labels, "row.names" or "rug".}
+
 \item{cex.spp}{size of species labels in biplot}
 
-\item{opt.region}{Only for 2D plots, efaults to FALSE. If "statistical", plots statistical uncertainties for species optima. If "environmental" plots preicted environmental ranges}
+\item{opt.region}{Only for 2D plots, efaults to FALSE. If "confidence", plots confidence intervals for species optima as ellipses. If "distribution" plots predicted species distributions.}
 
 \item{type}{Can be used to predict on the response or link scale. Default is response (except for ordinal, for which the only option is "link").}
 
@@ -54,15 +60,17 @@
 
 \item{site.region}{logical, if \code{TRUE} prediction regions for the predicted latent variables are plotted, defaults to \code{FALSE}.}
 
-\item{level}{level for prediction regions. Can be a vector of size two. Defaults to 0.95.}
-
-\item{alpha.col}{used to control the transparency of confidence interval ribbons in 1D plot, and prediction regions in 2D plot.}
-
 \item{lty.ellips}{line type for prediction ellipses. Can be a vector of size two. See graphical parameter lty.}
+
+\item{lwd.ellips}{line width for prediction ellipses. Can be a vector of size two. See graphical parameter lwd.}
 
 \item{col.ellips}{colors for site prediction ellipses.}
 
-\item{lwd.ellips}{line width for prediction ellipses. Can be a vector of size two. See graphical parameter lwd.}
+\item{alpha.col}{used to control the transparency of confidence interval ribbons in 1D plot, and prediction regions in 2D plot.}
+
+\item{level}{level for prediction regions. Can be a vector of size two. Defaults to 0.95.}
+
+\item{length.out}{number of points to evaluate the function at for 1D plots. Defaults to 100.}
 
 \item{...}{additional graphical arguments.}
 }
@@ -70,12 +78,10 @@
 Plots latent variables and their corresponding species optima.
 }
 \details{
-Function constructs a plot of species optima.
-
-Plots species optima in one or two dimensions, potentially with predicted environmental ranges.
+Function constructs a plot of species optima. in 1D a dashed line indicates the optimum of species. In 2D species distributions can be added as ellipses.
 }
 \examples{
-#'## Load a dataset from the mvabund package
+#' ## Load a dataset from the mvabund package
 data(antTraits)
 y <- as.matrix(antTraits$abund)
 fit <- gllvm.quadratic(y, family = poisson())
@@ -83,7 +89,6 @@ fit <- gllvm.quadratic(y, family = poisson())
 optiplot(fit)
 # Optiplot with 10 species
 optiplot(fit, ind.spp = 10)
-
 }
 \author{
 Bert van der Veen

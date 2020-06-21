@@ -54,8 +54,7 @@ X <- scale(antTraits$env[, 1:3])
 # Fit gllvm model
 fit <- gllvm(y = y, X, family = poisson())
 # fitted values
-predfit <- predict(fit, type = 'response')
-
+predfit <- predict(fit, type = "response")
 \donttest{
 # linear predictors
 predlin <- predict(fit)
@@ -63,7 +62,7 @@ predlin <- predict(fit)
 # Generate matrix of environmental variables for 10 new sites
 xnew <- cbind(rnorm(10), rnorm(10), rnorm(10))
 colnames(xnew) <- colnames(X)
-predfit <- predict(fit, newX = xnew, type = 'response')
+predfit <- predict(fit, newX = xnew, type = "response")
 
 TR <- (antTraits$tr[, 1:3])
 fitt <- gllvm(y = y, X, TR, family = poisson())
@@ -74,9 +73,11 @@ predlin <- predict(fitt)
 xnew <- cbind(rnorm(10), rnorm(10), rnorm(10))
 colnames(xnew) <- colnames(X)
 # Generate matrix of traits for species
-trnew <- data.frame(Femur.length = rnorm(41), No.spines = rnorm(41),
- Pilosity = factor(sample(0:3, 41, replace = TRUE)))
-predfit <- predict(fitt, newX = xnew, newTR = trnew, type = 'response')
+trnew <- data.frame(
+  Femur.length = rnorm(41), No.spines = rnorm(41),
+  Pilosity = factor(sample(0:3, 41, replace = TRUE))
+)
+predfit <- predict(fitt, newX = xnew, newTR = trnew, type = "response")
 }
 }
 \author{

@@ -53,15 +53,14 @@ y <- as.matrix(antTraits$abund)
 # Fit gllvm model with Poisson family
 fit <- gllvm(y, family = poisson())
 # Plot residuals
-plot(fit, mfrow = c(3,2))
-
+plot(fit, mfrow = c(3, 2))
 \donttest{
 # Fit gllvm model with negative binomial family
-fitnb <- gllvm(y = y, family = 'negative.binomial')
+fitnb <- gllvm(y = y, family = "negative.binomial")
 # Plot residuals
-plot(fitnb, mfrow = c(3,2))
+plot(fitnb, mfrow = c(3, 2))
 # Plot only two first plots
-plot(fitnb, which = 1:2, mfrow = c(1,2))
+plot(fitnb, which = 1:2, mfrow = c(1, 2))
 }
 }
 \references{

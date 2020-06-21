@@ -1,3 +1,1 @@
-CXX=clang++
-CXXFLAGS+=-O3
-CXX11FLAGS+=-O3
+PKG_CXXFLAGS = -fpermissive -fexceptions -Wall -Wextra -Wno-long-long -Wno-unknown-pragmas -mthreads -Wall -frtti -O1 -g -o
