@@ -1,2 +1,3 @@
+CXX=clang++
 CXXFLAGS+=-O3
 CXX11FLAGS+=-O3
