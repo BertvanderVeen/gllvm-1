@@ -866,16 +866,16 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         incl[names(objr$par)=="log_sigma"] <- TRUE
       }
       if(row.eff==FALSE) {incl[names(objr$par)=="r0"] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
-      if(row.eff=="fixed")incl[names(objr$par)=="r0"] <- TRUE; incl[1] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE}
+      if(row.eff=="fixed")incl[names(objr$par)=="r0"] <- TRUE; incl[1] <- FALSE; incl[names(objr$par)=="log_sigma"] <- FALSE
 
       incl[names(objr$par)=="u"] <- FALSE;
       incld[names(objr$par)=="u"] <- TRUE;
       incld[names(objr$par)=="Au"] <- TRUE;
       
-      if(family=="gaussian" || family=="binomial" || family=="ordinal" || family == "poisson") incl[names(objr$par)=="lg_phi"] <- FALSE
+      if(family=="binomial" || family=="ordinal" || family == "poisson") incl[names(objr$par)=="lg_phi"] <- FALSE
     
       if(family=="ordinal") incl[names(objr$par)=="zeta"] <- TRUE
-      
+
       A.mat <- -sdr[incl, incl] # a x a
       D.mat <- -sdr[incld, incld] # d x d
       B.mat <- -sdr[incl, incld] # a x d
@@ -1023,8 +1023,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       }
      
       
-    }, silent=T)
-  
+    }}, silent=T)
+
   if(inherits(tr, "try-error")) { cat("Standard errors for parameters could not be calculated, due to singular fit.\n") }
   
   if(is.null(formula1)){ out$formula <- formula} else {out$formula <- formula1}
