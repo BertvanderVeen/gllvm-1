@@ -180,9 +180,8 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
   if (object$num.lv > 0) {
     theta <- object$params$theta
     if (is.null(newLV) && is.null(newdata) && is.null(newTR)) {
-      eta <- eta + object$lvs[, which.lvs, drop = F] %*% t(theta[, -c(object$num.lv + object$num.lv), drop = F][, which.lvs,
-        drop = F
-      ]) + object$lvs[, which.lvs, drop = F]^2 %*% t(theta[, -c(1:object$num.lv), drop = F][, which.lvs, drop = F])
+      eta <- eta + object$lvs[, which.lvs, drop = F] %*% t(theta[, (1:object$num.lv)][,which.lvs,drop=F]) + 
+        object$lvs[, which.lvs, drop = F]^2 %*% t(theta[, -c(1:object$num.lv), drop = F][, which.lvs, drop = F])
     }
     if (!is.null(newLV)) {
       # if(ncol(newLV) != object$num.lv) stop('Number of latent variables in input doesn't equal to the number of latent variables in
@@ -193,18 +192,20 @@ predict.gllvm.quadratic <- function(object, newX = NULL, newTR = NULL, newLV = N
         }
       }
       lvs <- newLV
-      eta <- eta + lvs[, , drop = F] %*% t(theta[, -c(object$num.lv + object$num.lv), drop = F][, which.lvs, drop = F]) + lvs[, ,
+      eta <- eta + lvs[, , drop = F] %*% t(theta[, (1:object$num.lv)][,which.lvs,drop=F]) + lvs[, ,
         drop = F
       ]^2 %*% t(theta[, -c(1:object$num.lv), drop = F][, which.lvs, drop = F])
     }
   }
 
-
-  if (object$family %in% c("poisson", "negative.binomial")) {
+  if(object$family == "gaussian"){
+    ilinkfun <- function(x)x
+  }
+  if (object$family %in% c("poisson", "negative.binomial","gamma")) {
     ilinkfun <- exp
   }
   if (object$family == "binomial") {
-    ilinkfun <- binomial(link = object$link)$linkinv
+    ilinkfun <- pnorm
   }
   if (object$family == "ordinal") {
     ilinkfun <- pnorm
