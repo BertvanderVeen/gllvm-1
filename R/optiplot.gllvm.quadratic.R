@@ -460,6 +460,7 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
         # car::ellipse(c(optima[j, 1], optima[j, 2]), s, env.range[j, ], center.pch = NULL, col=scales::alpha(cols[j], 0.7), lty = "dashed", lwd=1)
       }
     } else if (opt.region == "confidence") {
+      ellipse <- gllvm:::ellipse
       for (j in 1:nrow(optima)) {
         if (!all(optima[j, ] == 0)) {
           if (any(optima[j, ] == 0)) {
