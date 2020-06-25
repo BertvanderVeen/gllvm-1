@@ -44,8 +44,10 @@
 #' rescov$cov
 #' # Trace of the covariance matrix
 #' rescov$tr
-#' # Trace per latent variable
+#' # Trace for linear term per latent variable
 #' rescov$trace.q
+#' #Trace for quadratic term per latent variable
+#' rescov$trace.q2
 #' @aliases getResidualCov getResidualCov.gllvm.quadratic
 #' @method getResidualCov gllvm.quadratic
 #' @export

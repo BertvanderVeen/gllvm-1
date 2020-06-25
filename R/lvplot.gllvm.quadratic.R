@@ -13,13 +13,13 @@
 #' @param ... additional graphical arguments.
 #'
 #' @details
-#' Species optima and tolerances per latent variable are plotted with confidence intervals. Ablines at -2,2 and -5,5 are added for assistance, but do not have any meaning. Tolerances of which the CI of the quadratic coefficient crosses zero are greyed out. Tolerances are shown opposite of optima for readability, though are always positive. Optima of which the SE is larger than the optima are greyed out. Statistical uncertainties of optima that are larger than  15 or smaller than -15 are not plotted by default.
+#' Species optima and tolerances per latent variable are plotted with confidence intervals. Ablines at -2,2 and -5,5 are added for assistance, but do not have any meaning. Tolerances of which the CI of the quadratic coefficient crosses zero are greyed out. Tolerances are shown opposite of optima for readability, though are always positive. Optima of which the SE is larger than the optima are greyed out. Statistical uncertainties of optima that are larger than  15 or smaller than -15 are not plotted by default. Plots are ordered by variation explained (only from the quadratic term if plot.optima is FALSE).
 #'
 #' @author Bert van der Veen
 #' @aliases lvplot lvplot.gllvm.quadratic
 #' @export
 lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, which.lvs = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4, 6, 2, 1),
-                                   xlim.list = rep(list(c(-5, 5)), length(which.lvs)), level = 0.95, ...) {
+                                   xlim.list = ifelse(plot.optima==T,rep(list(c(-5, 5)), length(which.lvs)),rep(list(c(0, 2)), length(which.lvs))), level = 0.95, ...) {
   if (any(class(object) != "gllvm.quadratic")) {
     stop("Class of the object isn't 'gllvm'.\n")
   }
@@ -29,6 +29,8 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
   }
   if (is.null(which.lvs)) {
     which.lvs <- c(1:NCOL(object$lvs))
+  }else{
+    which.lvs <- sort(which.lvs)#for get resid cov below
   }
 
   cnames <- paste("LV", which.lvs)
@@ -46,8 +48,13 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
   if (is.null(mfrow)) {
     par(mar = mar)
   }
-
-  for (i in 1:length(which.lvs)) {
+  LVidx <- 1:length(which.lvs)
+  if(plot.optima==T){
+    LVidx <- LVidx[order(getResidualCov(object)$trace.q[which.lvs]+getResidualCov(object)$trace.q2[which.lvs],decreasing=T)]
+  }else{
+    LVidx <- LVidx[order(getResidualCov(object)$trace.q2[which.lvs],decreasing=T)]
+  }
+  for (i in LVidx) {
     Xc <- optima[, i]
     sdoptima <- object$sd$optima[, which.lvs[i]]
     lower <- Xc + qnorm(level) * sdoptima
