@@ -10,6 +10,7 @@
 #' @param mar vector of length 4, which defines the margin sizes: \code{c(bottom, left, top, right)}. Defaults to \code{c(4,5,2,1)}.
 #' @param xlim.list list of vectors with length of two to define the intervals for an x axis in each covariate plot. Defaults to NULL when the interval is defined by the range of point estimates and confidence intervals
 #' @param level the confidence level. Scalar between 0 and 1.
+#' @param number of species to include in the plots. Either an integer (number of species) or a vector of length two with the first species and the last.
 #' @param ... additional graphical arguments.
 #'
 #' @details
@@ -19,29 +20,42 @@
 #' @aliases lvplot lvplot.gllvm.quadratic
 #' @export
 lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, which.lvs = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4, 6, 2, 1),
-                                   xlim.list = ifelse(plot.optima==T,rep(list(c(-5, 5)), length(which.lvs)),rep(list(c(0, 2)), length(which.lvs))), level = 0.95, ...) {
+                                   xlim.list = ifelse(plot.optima==T,rep(list(c(-5, 5)), length(which.lvs)),rep(list(c(0, 2)), length(which.lvs))), level = 0.95, spp = NULL, ...) {
   if (any(class(object) != "gllvm.quadratic")) {
-    stop("Class of the object isn't 'gllvm'.\n")
+    stop("Class of the object isn't 'gllvm.quadratic'.")
   }
-
+  
   if (is.null(object$sd)) {
-    warning("No standard errors present in model.\n")
+    stop("No standard errors present in model.")
   }
   if (is.null(which.lvs)) {
-    which.lvs <- c(1:NCOL(object$lvs))
+    which.lvs <- c(1:ncol(object$lvs))
   }else{
     which.lvs <- sort(which.lvs)#for get resid cov below
   }
-
+  
   cnames <- paste("LV", which.lvs)
-  optima <- summary(object)$Optima[, which.lvs, drop = F]
-  labely <- rownames(optima)
-  p <- ncol(object$y)
-
+  if(!is.null(spp)){
+    if(length(spp)==1){
+      sppmax <- if(is.null(spp)){ncol(object$y)}else{spp}
+      sppmin <- 1
+    }else{
+      sppmax <- spp[2]
+      sppmin <- spp[1]
+    }
+  }else{
+    sppmax <- ncol(object$y)
+    sppmin <- 1
+  }
+  
+  
+  optima <- summary(object)$Optima[sppmin:sppmax, which.lvs, drop = F]
+  labely <- rownames(optima)[sppmin:sppmax]
+  
   if (is.null(mfrow) && length(which.lvs) > 1) {
     mfrow <- c(1, length(which.lvs))
   }
-
+  
   if (!is.null(mfrow)) {
     par(mfrow = mfrow, mar = mar)
   }
@@ -56,18 +70,18 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
   }
   for (i in LVidx) {
     Xc <- optima[, i]
-    sdoptima <- object$sd$optima[, which.lvs[i]]
+    sdoptima <- object$sd$optima[sppmin:sppmax, which.lvs[i]]
     lower <- Xc + qnorm(level) * sdoptima
     upper <- Xc + qnorm(1 - level) * sdoptima
     Xc <- sort(Xc)
     sdoptima <- sdoptima[names(Xc)]
     lower <- lower[names(Xc)]
     upper <- upper[names(Xc)]
-
-    col.seq <- rep("black", p)
+    
+    col.seq <- rep("black", pmax-pmin)
     # grey out species with SD larger than optima
     col.seq[!sdoptima < abs(Xc)] <- "grey"
-
+    
     # don't want to greyout optima.
     # col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
     if (length(xlim.list) != length(which.lvs) & plot.optima == TRUE) {
@@ -75,27 +89,27 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
         xlim.list <- append(xlim.list, list(c(min(lower), max(upper))))
       }
     }
-
-    At.y <- seq(1, p)
-
+    
+    At.y <- seq(1, pmax-pmin)
+    
     if (plot.optima == TRUE) {
       plot(
         x = Xc, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = "o", cex.lab = 1.3,
         ...
       )
     }
-
+    
     if (plot.optima == T) {
-      for (j in 1:ncol(object$y)) {
+      for (j in sppmin:sppmax) {
         if (Xc[j] > (-15) & Xc[j] < 15) {
           segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
         }
       }
     }
-
+    
     # tolerances
-    tolerances <- 1 / sqrt(-2 * object$params$theta[, -c(1:object$num.lv)][, which.lvs[i]])
-    sdtolerances <- object$sd$tolerances[, which.lvs[i]]
+    tolerances <- 1 / sqrt(-2 * object$params$theta[sppmin:sppmax, -c(1:object$num.lv)][sppmin:sppmax, which.lvs[i]])
+    sdtolerances <- object$sd$tolerances[sppmin:sppmax, which.lvs[i]]
     lower <- tolerances + qnorm(level) * sdtolerances
     upper <- tolerances + qnorm(1 - level) * sdtolerances
     if (plot.optima == TRUE) tolerances <- tolerances[names(Xc)]
@@ -107,31 +121,31 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     lower <- lower * sgn.opt
     upper <- upper * sgn.opt
     tolerances <- tolerances * sgn.opt
-
-    col.seq <- rep("black", p)
+    
+    col.seq <- rep("black", pmax-pmin)
     # grey out tolerances as if they cross 0 it's unclear if we have a quadratic response.
-
-    CIquad <- confint(object)[-c(1:(object$num.lv * ncol(object$y))), ][((which.lvs[i] - 1) * p + 1):(which.lvs[i] * p), ]
-    row.names(CIquad) <- colnames(object$y)
+    
+    CIquad <- confint(object)[-c(1:(object$num.lv * ncol(object$y))), ][((which.lvs[i] - 1) * p + 1):(which.lvs[i] * p), ][sppmin:sppmax,]
+    row.names(CIquad) <- colnames(object$y)[sppmin:sppmax,]
     CIquad <- CIquad[names(tolerances), ]
     # grey out species that are not sure to have a quadratic response
     col.seq[CIquad[, 1] < 0 & CIquad[, 2] > 0] <- "grey"
-
+    
     if (length(xlim.list) != length(which.lvs) & plot.optima == FALSE) {
       if (length(xlim.list) < which.lvs[i]) {
         xlim.list <- append(xlim.list, list(c(min(lower), max(upper))))
       }
     }
-
+    
     if (plot.optima == FALSE) {
       plot(
         x = tolerances, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = "t", cex.lab = 1.3,
         ...
       )
     }
-
+    
     if (plot.optima == TRUE) points(x = tolerances, y = At.y, pch = "t", col = col.seq)
-    for (j in 1:ncol(object$y)) {
+    for (j in sppmin:sppmax) {
       if (tolerances[j] > (-10) & tolerances[j] < 10) {
         segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
       }
@@ -151,7 +165,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     if (xlim.list[[i]][1] >= -2 & xlim.list[[i]][[1]] != 0 | xlim.list[[i]][2] <= 2 & xlim.list[[i]][[1]] != 0) {
       abline(v = 0, lty = "dashed", col = "grey")
     }
-
+    
     if (y.label) {
       if (plot.optima == TRUE) axis(2, at = At.y, labels = names(Xc), las = 1, cex.axis = cex.ylab)
       if (plot.optima == FALSE) axis(2, at = At.y, labels = names(tolerances), las = 1, cex.axis = cex.ylab)
