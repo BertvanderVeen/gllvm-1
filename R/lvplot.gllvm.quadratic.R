@@ -25,7 +25,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     stop("Class of the object isn't 'gllvm.quadratic'.")
   }
   
-  if (is.null(object$sd)|object$sd==FALSE) {
+  if (!is.list(object$sd)) {
     stop("No standard errors present in model.")
   }
   if (is.null(which.lvs)) {
@@ -78,7 +78,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     lower <- lower[names(Xc)]
     upper <- upper[names(Xc)]
     
-    col.seq <- rep("black", pmax-pmin)
+    col.seq <- rep("black", sppmax-sppmin+1)
     # grey out species with SD larger than optima
     col.seq[!sdoptima < abs(Xc)] <- "grey"
     
@@ -90,7 +90,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
       }
     }
     
-    At.y <- seq(1, pmax-pmin)
+    At.y <- seq(1, sppmax-sppmin+1)
     
     if (plot.optima == TRUE) {
       plot(
@@ -122,11 +122,11 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     upper <- upper * sgn.opt
     tolerances <- tolerances * sgn.opt
     
-    col.seq <- rep("black", pmax-pmin)
+    col.seq <- rep("black", sppmax-sppmin+1)
     # grey out tolerances as if they cross 0 it's unclear if we have a quadratic response.
     
     CIquad <- confint(object)[-c(1:(object$num.lv * ncol(object$y))), ][((which.lvs[i] - 1) * p + 1):(which.lvs[i] * p), ][sppmin:sppmax,]
-    row.names(CIquad) <- colnames(object$y)[sppmin:sppmax,]
+    row.names(CIquad) <- colnames(object$y)[sppmin:sppmax]
     CIquad <- CIquad[names(tolerances), ]
     # grey out species that are not sure to have a quadratic response
     col.seq[CIquad[, 1] < 0 & CIquad[, 2] > 0] <- "grey"
