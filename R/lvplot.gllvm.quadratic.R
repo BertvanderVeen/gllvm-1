@@ -25,7 +25,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     stop("Class of the object isn't 'gllvm.quadratic'.")
   }
   
-  if (is.null(object$sd)) {
+  if (is.null(object$sd)|object$sd==FALSE) {
     stop("No standard errors present in model.")
   }
   if (is.null(which.lvs)) {
