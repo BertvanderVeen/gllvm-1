@@ -171,8 +171,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, y
     if (y.label) {
       if (plot.optima == TRUE) text(y = At.y, x = par("usr")[1], labels = names(Xc), srt = y.label.angle, pos = 2, xpd = TRUE, cex=cex.ylab)
       if (plot.optima == FALSE) text(y = At.y, x = par("usr")[1], labels = names(tolerances), srt = y.label.angle, pos = 2, xpd = TRUE, cex=cex.ylab)
-      if (plot.optima == TRUE) axis(2, at = At.y, labels = FALSE, las = 1, cex.axis = cex.ylab)
-      if (plot.optima == FALSE) axis(2, at = At.y, labels = FALSE, las = 1, cex.axis = cex.ylab)
+      axis(2, at = At.y, labels = FALSE, las = 1, cex.axis = cex.ylab, tck = -0.015)
     }
 
   }
