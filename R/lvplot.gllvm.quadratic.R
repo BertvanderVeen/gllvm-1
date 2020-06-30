@@ -33,15 +33,15 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
   }else{
     which.lvs <- sort(which.lvs)#for get resid cov below
   }
-  
+  p <- ncol(object$y)
   cnames <- paste("LV", which.lvs)
   if(!is.null(spp)){
     if(length(spp)==1){
       sppmax <- if(is.null(spp)){ncol(object$y)}else{spp}
       sppmin <- 1
     }else{
-      sppmax <- spp[2]
-      sppmin <- spp[1]
+      sppmax <- max(spp)
+      sppmin <- min(spp)
     }
   }else{
     sppmax <- ncol(object$y)
@@ -100,7 +100,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     }
     
     if (plot.optima == T) {
-      for (j in sppmin:sppmax) {
+      for (j in 1:(sppmax-sppmin+1)) {
         if (Xc[j] > (-15) & Xc[j] < 15) {
           segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
         }
@@ -145,7 +145,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     }
     
     if (plot.optima == TRUE) points(x = tolerances, y = At.y, pch = "t", col = col.seq)
-    for (j in sppmin:sppmax) {
+    for (j in 1:(sppmax-sppmin+1)) {
       if (tolerances[j] > (-10) & tolerances[j] < 10) {
         segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
       }
