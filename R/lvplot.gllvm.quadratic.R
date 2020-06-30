@@ -4,6 +4,7 @@
 #' @param object an object of class 'gllvm'.
 #' @param plot.optima logical, defaults to \code{TRUE}. If \code{FALSE}, only plots species tolerances.
 #' @param y.label logical, if \code{TRUE} (default) colnames of y with respect to coefficients are added to plot.
+#' @param y.label.angle in degrees, the angle at which the y.label should be drawn.
 #' @param which.lvs vector indicating which LVs will be plotted. Default is \code{NULL} when optima and tolerances of all LVs are plotted.
 #' @param cex.ylab the magnification to be used for axis annotation relative to the current setting of cex.
 #' @param mfrow same as \code{mfrow} in \code{par}. If \code{NULL} (default) it is determined automatically.
@@ -19,8 +20,8 @@
 #' @author Bert van der Veen
 #' @aliases lvplot lvplot.gllvm.quadratic
 #' @export
-lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, which.lvs = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4, 6, 2, 1),
-                                   xlim.list = ifelse(plot.optima==T,rep(list(c(-5, 5)), length(which.lvs)),rep(list(c(0, 2)), length(which.lvs))), level = 0.95, spp = NULL, ...) {
+lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, y.label.angle = 0, which.lvs = NULL, cex.ylab = 0.5, mfrow = NULL, mar = c(4, 6, 2, 1),
+                                   xlim.list = NULL, level = 0.95, spp = NULL, ...) {
   if (any(class(object) != "gllvm.quadratic")) {
     stop("Class of the object isn't 'gllvm.quadratic'.")
   }
@@ -86,11 +87,22 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     # col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
     if (length(xlim.list) != length(which.lvs) & plot.optima == TRUE) {
       if (length(xlim.list) < which.lvs[i]) {
-        xlim.list <- append(xlim.list, list(c(min(lower), max(upper))))
+        xlim.list <- append(xlim.list, list(c(Xc[which.min(lower)]-min(lower), Xc[which.max(upper)]+max(upper))))
       }
     }
     
     At.y <- seq(1, sppmax-sppmin+1)
+    # 
+    # if(any(Xc<xlim.list[[i]][1])|any(Xc>xlim.list[[i]][2])){
+    #   warning("Estimates outside of the axis range removed.\n")
+    #   idx <- which(Xc<xlim.list[[i]][1]|Xc>xlim.list[[i]][2])
+    #   Xc <- Xc[-idx]
+    #   lower <- lower[-idx]
+    #   upper <- upper[-idx]
+    #   At.Y <- At.y[-idx]
+    #   col.seq <- col.seq[-idx]
+    # }
+    # 
     
     if (plot.optima == TRUE) {
       plot(
@@ -108,7 +120,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     }
     
     # tolerances
-    tolerances <- 1 / sqrt(-2 * object$params$theta[sppmin:sppmax, -c(1:object$num.lv)][sppmin:sppmax, which.lvs[i]])
+    tolerances <- 1 / sqrt(-2 * object$params$theta[, -c(1:object$num.lv)][sppmin:sppmax, which.lvs[i]])
     sdtolerances <- object$sd$tolerances[sppmin:sppmax, which.lvs[i]]
     lower <- tolerances + qnorm(level) * sdtolerances
     upper <- tolerances + qnorm(1 - level) * sdtolerances
@@ -133,7 +145,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
     
     if (length(xlim.list) != length(which.lvs) & plot.optima == FALSE) {
       if (length(xlim.list) < which.lvs[i]) {
-        xlim.list <- append(xlim.list, list(c(min(lower), max(upper))))
+        xlim.list <- append(xlim.list, list(c(tolerances[which.min(lower)]-min(lower), tolerances[which.max(upper)]+max(upper))))
       }
     }
     
@@ -150,26 +162,18 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, w
         segments(x0 = lower[j], y0 = At.y[j], x1 = upper[j], y1 = At.y[j], col = col.seq[j])
       }
     }
-    if (xlim.list[[i]][1] < (-5)) {
-      abline(v = -5, lty = "dashed", col = "grey")
-    }
-    if (xlim.list[[i]][2] > 5) {
-      abline(v = 5, lty = "dashed", col = "grey")
-    }
-    if (xlim.list[[i]][1] < (-2)) {
-      abline(v = -2, lty = "dashed", col = "grey")
-    }
-    if (xlim.list[[i]][2] > 2) {
-      abline(v = 2, lty = "dashed", col = "grey")
-    }
-    if (xlim.list[[i]][1] >= -2 & xlim.list[[i]][[1]] != 0 | xlim.list[[i]][2] <= 2 & xlim.list[[i]][[1]] != 0) {
-      abline(v = 0, lty = "dashed", col = "grey")
-    }
+    
+      if(plot.optima==T){
+        abline(v=seq(xlim.list[[i]][1],xlim.list[[i]][2],by=1),lty="dashed",col="grey")
+      }else{
+        abline(v=seq(xlim.list[[i]][1],xlim.list[[i]][2],by=0.5),lty="dashed",col="grey")
+      }
     
     if (y.label) {
-      if (plot.optima == TRUE) axis(2, at = At.y, labels = names(Xc), las = 1, cex.axis = cex.ylab)
-      if (plot.optima == FALSE) axis(2, at = At.y, labels = names(tolerances), las = 1, cex.axis = cex.ylab)
+      if (plot.optima == TRUE) text(y = At.y, x = par("usr")[1], labels = names(Xc), srt = y.label.angle, pos = 2, xpd = TRUE, cex=cex.ylab)
+      if (plot.optima == FALSE) text(y = At.y, x = par("usr")[1], labels = names(tolerances), srt = y.label.angle, pos = 2, xpd = TRUE, cex=cex.ylab)
     }
+
   }
 }
 
