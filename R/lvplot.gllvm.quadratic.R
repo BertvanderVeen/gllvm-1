@@ -87,7 +87,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, y
     # col.seq[lower < 2*Xc & upper > 2*Xc] <- "grey"
     if (length(xlim.list) != length(which.lvs) & plot.optima == TRUE) {
       if (length(xlim.list) < which.lvs[i]) {
-        xlim.list <- append(xlim.list, list(c(Xc[which.min(lower)]-min(lower), Xc[which.max(upper)]+max(upper))))
+        xlim.list <- append(xlim.list, list(c(min(Xc-lower), max(Xc+upper))))
       }
     }
     
@@ -145,8 +145,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, y
     
     if (length(xlim.list) != length(which.lvs) & plot.optima == FALSE) {
       if (length(xlim.list) < which.lvs[i]) {
-        xlim.list <- append(xlim.list, list(c(tolerances[which.min(lower)]-min(lower), tolerances[which.max(upper)]+max(upper))))
-      }
+      xlim.list <- append(xlim.list, list(c(min(tolerances-lower), max(tolerances+upper))))      }
     }
     
     if (plot.optima == FALSE) {
