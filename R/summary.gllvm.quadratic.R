@@ -34,7 +34,7 @@ summary.gllvm.quadratic <- function(object, ...) {
 
   max <- object$params$beta0 + opt * object$params$theta[, 1:object$num.lv, drop = F] + opt^2 * object$params$theta[, -c(1:object$num.lv), drop = F]
 
-  row.names(max) <- row.names(tol) <- row.names(opt)
+  row.names(max) <- row.names(tol) <- colnames(object$y)
   colnames(max) <- colnames(tol) <- colnames(opt)
 
   sumry <- list()
