@@ -24,6 +24,7 @@
 #' @param length.out number of points to evaluate the function at for 1D plots. Defaults to 100.
 #' @param xlim
 #' @param ylim
+#' @param ylab
 #' @param ... additional graphical arguments.
 #'
 #' @details
@@ -44,7 +45,7 @@
 #' @export
 #' @export optiplot.gllvm.quadratic
 optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main = NULL, which.lvs = NULL,
-                                     s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region = ifelse(length(which.lvs) == 1, "confidence", "distribution"), type = "response", intercept = TRUE, legend = FALSE, scale = FALSE, site.region = FALSE, lty.ellips = c("solid", "dashed"), lwd.ellips = 1, col.ellips = "gray", alpha.col = 0.4, level = 0.95, ylim = NULL, xlim = NULL, length.out = 100, ...) {
+                                     s.colors = 1, s.labels = "rug", cex.spp = 0.7, opt.region = ifelse(length(which.lvs) == 1, "confidence", "distribution"), type = "response", intercept = TRUE, legend = FALSE, scale = FALSE, site.region = FALSE, lty.ellips = c("solid", "dashed"), lwd.ellips = 1, col.ellips = "gray", alpha.col = 0.4, level = 0.95, ylim = NULL, xlim = NULL, ylab = NULL, length.out = 100, ...) {
   if (class(object) != "gllvm.quadratic") {
     stop("Class of the object isn't 'gllvm.quadratic'. linear GLLVM not implemented yet.\n")
   }
@@ -136,6 +137,9 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
     if (is.null(ylim)) {
       ylim <- range(mu)
     }
+    if(is.NULL(ylab)){
+    ylab <- "Predicted"
+    }
     if (legend == F) {
       # pdf(NULL)
       # plot(NA, xlim = c(range(object$lvs)), ylim = range(mu), ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", ...)
@@ -145,12 +149,12 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
       if (is.null(xlim)) {
         xlim <- c(c(min(object$lvs[, which.lvs]) - .05, max(object$lvs[, which.lvs]) + .05))
       }
-      plot(NA, xlim = xlim, ylim = ylim, ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", main = main, ...)
+      plot(NA, xlim = xlim, ylim = ylim, ylab = ylab, xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", main = main, ...)
     } else {
       if (is.null(xlim)) {
         xlim <- c(range(object$lvs[, which.lvs]))
       }
-      plot(NA, xlim = xlim, ylim = ylim, ylab = "Predicted ", xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", main = main, ...)
+      plot(NA, xlim = xlim, ylim = ylim, ylab = ylab, xlab = paste("LV", which.lvs, sep = " "), xaxs = "i", main = main, ...)
     }
 
     if (legend == T) {
