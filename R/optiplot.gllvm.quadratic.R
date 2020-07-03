@@ -137,7 +137,7 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
     if (is.null(ylim)) {
       ylim <- range(mu)
     }
-    if(is.NULL(ylab)){
+    if(is.null(ylab)){
     ylab <- "Predicted"
     }
     if (legend == F) {
