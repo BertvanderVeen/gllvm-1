@@ -106,7 +106,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, y
     
     if (plot.optima == TRUE) {
       plot(
-        x = Xc, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = "o", cex.lab = 1.3,
+        x = Xc, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = 15, cex.lab = 1.3,
         ...
       )
     }
@@ -150,7 +150,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, y
     
     if (plot.optima == FALSE) {
       plot(
-        x = tolerances, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = "t", cex.lab = 1.3,
+        x = tolerances, y = At.y, yaxt = "n", ylab = "", col = col.seq, xlab = cnames[i], xlim = xlim.list[[i]], pch = 16, cex.lab = 1.3,
         ...
       )
     }
