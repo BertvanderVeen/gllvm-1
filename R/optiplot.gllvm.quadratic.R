@@ -60,7 +60,7 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
   #   stop("Plots on the response scale with confidence intervals not yet supported for the binomial distribution. \n")
   # }
   if (!is.null(object$X)) {
-    if (any(round(apply(object$X, 2, mean), 0) != 0)) {
+    if (any(round(apply(object$X, 2, mean), 0) != 0) & length(which.lvs)==1) {
       warning("Your plot will look best with standardized covariates.\n")
     }
   }
@@ -368,16 +368,11 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
 
 
     if (scale == "species") {
-      optima <- sweep(optima, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / sum(getResidualCov(object)$trace.q)), "*")
-      if (opt.region != F) optSD <- sweep(optSD, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / getResidualCov(object)$trace), "*")
+      optima <- sweep(optima, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / sum(getResidualCov(object)$trace.q))[which.lvs], "*")
+      if (opt.region != F) optSD <- sweep(optSD, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / getResidualCov(object)$trace)[which.lvs], "*")
     } else if (scale == "sites") {
-      lvs <- sweep(lvs, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / sum(getResidualCov(object)$trace.q)), "*")
+      lvs <- sweep(lvs, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / sum(getResidualCov(object)$trace.q))[which.lvs], "*")
     }
-    # else if (scale == "tolerances"&opt.region!=FALSE) {
-    #  optima <- optima/tolerances
-    #  lvs <- lvs/apply(tolerances, 2, mean)
-    #  tolerances <- tolerances/tolerances
-    # }
 
     if (opt.region == F) {
       plot(rbind(optima, lvs),
