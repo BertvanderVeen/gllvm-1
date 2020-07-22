@@ -9,7 +9,7 @@
 #' @param s.colors colors for sites
 #' @param s.labels Can be FALSE, for no labels, "row.names" or "rug".
 #' @param cex.spp size of species labels in biplot
-#' @param scale For 2D plots, either "FALSE",species" or "sites" to scale optima or site scores by the ratio variance explained. Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
+#' @param scale For 2D plots, to scale optima, tolerances, and site scores by the ratio variance explained. OLD: Alternatively can be "tolerances" to scale optima by tolerances and site scores by average tolerances per latent variable.
 #' @param opt.region Only for 2D plots, efaults to FALSE. If "confidence", plots confidence intervals for species optima as ellipses. If "distribution" plots predicted species distributions.
 #' @param type Can be used to predict on the response or link scale. Default is response (except for ordinal, for which the only option is "link").
 #' @param intercept Can be used to include species-intercepts in the plot. Default is TRUE
@@ -369,9 +369,8 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
 
     if (scale == "species") {
       optima <- sweep(optima, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / sum(getResidualCov(object)$trace.q))[which.lvs], "*")
-      if (opt.region != F) optSD <- sweep(optSD, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / getResidualCov(object)$trace)[which.lvs], "*")
-    } else if (scale == "sites") {
       lvs <- sweep(lvs, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / sum(getResidualCov(object)$trace.q))[which.lvs], "*")
+      if (opt.region != F) optSD <- sweep(optSD, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / getResidualCov(object)$trace)[which.lvs], "*")
     }
 
     if (opt.region == F) {
