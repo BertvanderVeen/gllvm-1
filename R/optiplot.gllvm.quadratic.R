@@ -367,7 +367,7 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
     lvs <- object$lvs[, which.lvs]
 
 
-    if (scale == "species") {
+    if (scale == TRUE) {
       optima <- sweep(optima, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / sum(getResidualCov(object)$trace.q))[which.lvs], "*")
       lvs <- sweep(lvs, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / sum(getResidualCov(object)$trace.q))[which.lvs], "*")
       if (opt.region != F) optSD <- sweep(optSD, 2, ((getResidualCov(object)$trace.q + getResidualCov(object)$trace.q2) / getResidualCov(object)$trace)[which.lvs], "*")
