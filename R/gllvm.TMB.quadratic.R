@@ -1012,7 +1012,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         out$sd$theta <- cbind(out$sd$theta, se.lambdas2)
 
 
-        # Calculate SE optimate
+        # Calculate SE optima and tolerances
         out$sd$optima <- matrix(NA, nrow = p, ncol = num.lv)
         out$sd$tolerances <- matrix(NA, nrow = p, ncol = num.lv)
 
@@ -1071,7 +1071,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             du <- c((2 * out$params$theta[j, num.lv + i, drop = F])^-1, 2 * (out$params$theta[j, i, drop = F] / (2 * out$params$theta[j, num.lv + i, drop = F])^2))
             out$sd$optima[j, i] <- sqrt(abs(t(du) %*% V.theta2[c(i, num.lv + i), c(i, num.lv + i)] %*% du))
             # sd tolerances also
-            dt <- 1 / (2 * out$params$theta[, -c(1:num.lv)][j, i] * (sqrt(-2 * out$params$theta[, -c(1:num.lv)][j, i]))) # need to be calculated with covariance of gamma3 if gamma2>0..that also requires subtracting theta3 from theta2
+            dt <- 1 / (2 * out$params$theta[, -c(1:num.lv),drop=F][j, i] * (sqrt(-2 * out$params$theta[, -c(1:num.lv),drop=F][j, i]))) # need to be calculated with covariance of gamma3 if gamma2>0..that also requires subtracting theta3 from theta2
             out$sd$tolerances[j, i] <- sqrt(abs(V.theta2[-c(1:num.lv), -c(1:num.lv)][i, i] * dt^2))
           }
         }
