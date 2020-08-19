@@ -39,24 +39,24 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if (any(max.levels == 1) & zeta.struc == "species" || all(max.levels == 2) & zeta.struc == "species") {
       stop("Ordinal data requires all columns to have at least has two levels. If all columns only have two levels, please use family == binomial instead. Thanks")
     }
-
+    
     if (any(!apply(y, 2, function(x) all(diff(sort(unique(x))) == 1))) & zeta.struc == "species") {
       stop("Can't fit ordinal model if there are species with missing classes. Please reclassify per species or use zeta.struc = `common` ")
     }
-
+    
     if (any(diff(sort(unique(c(y)))) != 1) & zeta.struc == "common") {
       stop("Can't fit ordinal model if there are missing classes. Please reclassify.")
     }
   }
   num.X <- 0
-
+  
   if (!is.null(X)) {
     if (!is.null(formula)) {
       xb <- as.matrix(model.matrix(formula, data = data.frame(X)))
       X <- as.matrix(xb[, !(colnames(xb) %in% c("(Intercept)"))])
       colnames(X) <- colnames(xb)[!(colnames(xb) %in% c("(Intercept)"))]
       Xd <- X1 <- X
-
+      
       num.X <- dim(X)[2]
     } else {
       n1 <- colnames(X)
@@ -72,10 +72,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       num.X <- dim(X)[2]
       colnames(X) <- colnames(xb)[!(colnames(xb) %in% c("(Intercept)"))]
       Xd <- X1 <- X
-
+      
       nxd <- colnames(Xd)
       formulab <- paste("~", nxd[1], sep = "")
-
+      
       for (i in 2:length(nxd)) {
         formulab <- paste(formulab, nxd[i], sep = "+")
       }
@@ -89,7 +89,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   if (!is.null(seed)) {
     set.seed(seed)
   }
-
+  
   out <- list(y = y, X = X, logL = Inf, X.design = X)
   old.logL <- Inf
   if (starting.val == "lingllvm") {
@@ -102,7 +102,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     }
     if (length(jitter.var) > 1) {
       jitter.var2 <- jitter.var[1]
-
+      
       jitter.var <- jitter.var[2]
     } else {
       jitter.var2 <- jitter.var
@@ -119,7 +119,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if (length(n.init) > 1) n.init <- n.init[2]
     if (length(jitter.var) > 1) {
       jitter.var2 <- jitter.var[1]
-
+      
       jitter.var <- jitter.var[2]
     } else {
       jitter.var2 <- jitter.var
@@ -127,9 +127,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     }
     if (length(diag.iter) > 1) diag.iter <- diag.iter[2]
   }
-
-
-
+  
+  
+  
   if (is.null(theta4)) {
     theta4 <- rep(0, num.lv)
   } else if (length(theta4) == 1) {
@@ -137,7 +137,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   } else if (length(theta4) != num.lv) {
     stop("Wrong length theta4 supplied.")
   }
-
+  
   if (starting.val == "lingllvm") {
     if (is.null(maxit.lingllvm)) {
       maxit.lingllvm <- maxit
@@ -148,7 +148,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if (trace2) cat("Done! \n")
   }
   if (n.init[1] > 1) seed <- sample(1:10000, n.init)
-
+  
   # helper function for parallel optimization
   makeMod <- function(i) {
     sigma <- 1
@@ -163,12 +163,12 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         betas <- c(fit$params[, 2:(num.X + 1)])
       }
       lambdas <- NULL
-
+      
       lambdas <- as.matrix(fit$params[, (ncol(fit$params) - num.lv + 1):ncol(fit$params)])
       lambdas[upper.tri(lambdas)] <- 0
       fit$params <- cbind(fit$params, matrix(Lambda2.start, ncol = num.lv, nrow = p))
       row.params <- NULL
-
+      
       if (row.eff != FALSE) {
         row.params <- fit$row.params
         if (row.eff == "random") {
@@ -184,12 +184,12 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       #   #lambdas <- fit$params[,(ncol(fit$params) - num.lv*2 + 1):(ncol(fit$params)-num.lv)]
       #   if(common.tolerances==F)lambda2 <- fit$params[,-c(1:(num.lv+1))]
       # }
-
+      
       # subtract a fraction from the 0 quadratic scores, otherwise the optimization can't get away from the 0s where necessary.
     } else {
       if (dim(start.params$y) == dim(y) &&
-        is.null(X) == is.null(start.params$X) &&
-        (row.eff == start.params$row.eff)) {
+          is.null(X) == is.null(start.params$X) &&
+          (row.eff == start.params$row.eff)) {
         if (start.params$family == "ordinal") {
           if (start.params$zeta.struc == "species") zeta <- start.params$params$zeta[, -1]
           if (start.params$zeta.struc == "common") zeta <- start.params$params$zeta[-1]
@@ -249,7 +249,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if (family %in% c("gaussian", "gamma")) {
       phi <- fit$phi
     }
-
+    
     if (family == "negative.binomial") {
       phis <- fit$phi
       if (starting.val != "lingllvm") {
@@ -272,11 +272,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         zeta <- 0
       }
     }
-
+    
     if (is.null(offset)) {
       offset <- matrix(0, nrow = n, ncol = p)
     }
-
+    
     if (!is.null(row.params)) {
       r0 <- row.params
     } else {
@@ -288,18 +288,18 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     # diag(lambdas) <- log(diag(lambdas)) !!!
     lambda <- lambdas[lower.tri(lambdas, diag = TRUE)]
     u <- lvs
-
+    
     if (!is.null(phis)) {
       phi <- phis
     } else {
       phi <- rep(1, p)
       fit$phi <- phi
     }
-
+    
     optr <- NULL
     timeo <- NULL
     se <- NULL
-
+    
     if (is.null(start.params) || start.params$method != "VA") {
       if (Lambda.struc == "diagonal" || diag.iter > 0) {
         Au <- log(rep(Lambda.start[1], num.lv * n)) # 1/2, 1
@@ -336,7 +336,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       }
       if (common.tolerances == TRUE) start.struc <- "common"
     }
-
+    
     if (start.struc == "common") {
       lambda3 <- 0
       lambda2 <- matrix(Lambda2.start, ncol = num.lv, nrow = 1)
@@ -344,9 +344,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       lambda2 <- matrix(Lambda2.start, ncol = num.lv, nrow = p)
       lambda3 <- rep(0, num.lv)
     }
-
+    
     u <- u + mvtnorm::rmvnorm(n, rep(0, num.lv), diag(num.lv) * jitter.var) # mostly makes sense when using lingllvm
-
+    
     # lambda2 <- matrix(apply(lambda2,2,mean),ncol=num.lv)#perhaps think about doing something else here still? i.e. start at..tol from lingllvm?
     if (length(Lambda.start) < 2) {
       Ar <- rep(1, n)
@@ -382,10 +382,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if (family == "gamma") {
       familyn <- 4
     }
-
+    
     if (starting.val != "zero" & start.struc != "common" | class(start.params) == "lingllvm" & start.struc != "common") {
       mp <- list(r0 = factor(rep(NA, length(r0))), b = factor(rep(NA, length(rbind(a, b)))), B = factor(rep(NA, 1)), lambda = factor(rep(NA, length(lambda))), lambda3 = factor(rep(NA, num.lv)), u = factor(rep(NA, length(u))), lg_phi = factor(rep(NA, length(phi))), log_sigma = factor(rep(NA, length(sigma))), Au = factor(rep(NA, length(Au))), lg_Ar = factor(rep(NA, length(Ar))), zeta = factor(rep(NA, length(zeta))))
-
+      
       if (row.eff == "random") {
         objr <- TMB::MakeADFun(
           data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
@@ -401,7 +401,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           DLL = "qgllvm"
         ) ## GLLVM
       }
-
+      
       if (optimizer == "nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
       }
@@ -425,8 +425,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       }
       lambda2 <- matrix(optr$par, byrow = T, ncol = num.lv, nrow = p)
     }
-
-
+    
+    
     if (row.eff == "random") {
       objr <- TMB::MakeADFun(
         data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
@@ -442,7 +442,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         DLL = "qgllvm"
       ) ## GLLVM
     }
-
+    
     if (optimizer == "nlminb") {
       timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
     }
@@ -482,18 +482,18 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       Au1 <- c(pmax(param1[nam == "Au"], rep(log(1e-4), num.lv * n)), rep(1e-4, num.lv * (num.lv - 1) / 2 * n)) # c(rep(0,length(param1[names(param1)=="Au"])), rep(0.01,num.lv*(num.lv-1)/2*n))
       # this is causing issues I think...
       lg_Ar1 <- param1[nam == "lg_Ar"]
-
+      
       zeta <- param1[nam == "zeta"]
-
+      
       if (common.tolerances == F & start.struc != "common") {
         lambda2 <- t(matrix(param1[nam == "lambda2"], byrow = T, ncol = num.lv, nrow = p))
       } else {
         lambda2 <- t(matrix(param1[nam == "lambda2"], byrow = T, ncol = num.lv, nrow = 1))
       }
-
+      
       lambda3 <- param1[nam == "lambda3"]
       # lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
-
+      
       if (row.eff == "random") {
         objr <- TMB::MakeADFun(
           data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
@@ -509,7 +509,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           DLL = "qgllvm"
         ) # GLLVM#
       }
-
+      
       if (optimizer == "nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
       }
@@ -560,9 +560,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       # previously  c(pmax(param1[nam=="Au"],rep(log(0.001), num.lv*n)), rep(0.01,num.lv*(num.lv-1)/2*n))
       # this line adds the covariance parameters after diag iter, it didn't start though, this does, sometimes.
       Au1 <- param1[nam == "Au"]
-
+      
       lg_Ar1 <- param1[nam == "lg_Ar"]
-
+      
       zeta <- param1[nam == "zeta"]
       # if(gamma2==0){
       lambda2 <- t(matrix(param1[nam == "lambda2"], byrow = T, ncol = num.lv, nrow = p))
@@ -579,7 +579,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       }
       # }
       # lambda3 <- ifelse(lambda3<0.1,0.5,lambda3)#added this line for the binomial
-
+      
       if (starting.val == "zero") {
         # starting values for unequal tolerances, weighted averaging at the moment
         # lambda2<-matrix(lambda3,ncol=p,nrow=num.lv)#this didnt work for the NB
@@ -610,7 +610,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             DLL = "qgllvm"
           ) # GLLVM#
         }
-
+        
         if (optimizer == "nlminb") {
           timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
         }
@@ -634,8 +634,8 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         }
         lambda2 <- t(matrix(optr$par[names(optr$par) == "lambda2"], byrow = T, ncol = num.lv, nrow = p)) # doesnt always work for NB
       }
-
-
+      
+      
       if (row.eff == "random") {
         objr <- TMB::MakeADFun(
           data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
@@ -651,7 +651,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
           DLL = "qgllvm"
         ) # GLLVM#
       }
-
+      
       if (optimizer == "nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
       }
@@ -733,7 +733,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   #
   # }
   #
-
+  
   if (n.init > 1 & parallel == TRUE) {
     # clusterEvalQ(cl,library.dynam("qgllvm","gllvm.quadratic",lib.loc="C:/Users/beve/Documents/R/win-library/3.6/"))
     # start.values.gllvm.TMB.quadratic<-getFromNamespace("start.values.gllvm.TMB.quadratic","gllvm.quadratic")
@@ -751,7 +751,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       results[[i]] <- makeMod(i)
     }
   }
-
+  
   if (n.init > 1) {
     try(
       {
@@ -771,7 +771,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     fit <- results$fit
     timeo <- results$timeo
   }
-
+  
   if (inherits(optr, "try-error")) warning(optr[1])
   param <- optr$par
   if (family %in% c("negative.binomial", "gaussian", "gamma")) {
@@ -799,11 +799,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       zetanew <- c(0, zetas)
       names(zetanew) <- paste(min(y00):(max(y00) - 1), "|", (min(y00) + 1):max(y00), sep = "")
     }
-
+    
     zetas <- zetanew
     out$y <- y00
   }
-
+  
   bi <- names(param) == "b"
   li <- names(param) == "lambda"
   l2i <- names(param) == "lambda2"
@@ -830,26 +830,26 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     } else {
       theta2 <- -matrix(abs(param[l2i]) + theta4, ncol = num.lv, nrow = p, byrow = T)
     }
-
+    
     theta <- cbind(theta, theta2)
   } else {
     theta <- param[li]
     theta <- c(theta, param[l2i])
   }
   # diag(theta) <- exp(diag(theta)) !!!
-
-
+  
+  
   if (family %in% c("negative.binomial", "gaussian", "gamma")) {
     phis <- exp(param[names(param) == "lg_phi"])
   }
-
+  
   out$start <- fit
   try(out$convergence <- optr$convergence, silent = T)
   out$logL <- objr$env$value.best[1]
   out$lvs <- lvs
   out$params$theta <- theta
   rownames(out$lvs) <- rownames(out$y)
-
+  
   if (num.lv > 1) {
     colnames(out$lvs) <- paste("LV", 1:num.lv, sep = "")
     colnames(out$params$theta) <- c(paste("LV", 1:num.lv, sep = ""), paste("LV", 1:num.lv, "^2", sep = ""))
@@ -886,7 +886,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     names(out$params$row.params) <- rownames(out$y)
   }
   if (family == "binomial") out$link <- link
-
+  
   out$row.eff <- row.eff
   out$time <- timeo
   pars <- optr$par
@@ -913,14 +913,14 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     }
   }
   out$A <- A
-
+  
   if (row.eff == "random") {
     Ar <- exp(param[names(param) == "lg_Ar"])
     names(Ar) <- paste("Ar", 1:n, sep = "")
     out$Ar <- Ar^2
   }
-
-
+  
+  
   tr <- try(
     {
       if (sd.errors && !is.infinite(out$logL)) {
@@ -940,13 +940,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         incl[names(objr$par) == "Au"] <- FALSE
         incl[names(objr$par) == "r0"] <- FALSE
         incl[names(objr$par) == "log_sigma"] <- FALSE
-
+        
         if (family != "ordinal") incl[names(objr$par) == "zeta"] <- FALSE
-
+        
         if (common.tolerances == TRUE | gamma2 == 0) {
           incl[names(objr$par) == "lambda3"] <- FALSE
         }
-
+        
         if (row.eff == "random") {
           incld[names(objr$par) == "lg_Ar"] <- TRUE
           incld[names(objr$par) == "r0"] <- FALSE
@@ -959,26 +959,26 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         if (row.eff == "fixed") incl[names(objr$par) == "r0"] <- TRUE
         incl[1] <- FALSE
         incl[names(objr$par) == "log_sigma"] <- FALSE
-
+        
         incl[names(objr$par) == "u"] <- FALSE
         incld[names(objr$par) == "u"] <- TRUE
         incld[names(objr$par) == "Au"] <- TRUE
-
+        
         if (family == "binomial" || family == "ordinal" || family == "poisson") incl[names(objr$par) == "lg_phi"] <- FALSE
-
+        
         if (family == "ordinal") incl[names(objr$par) == "zeta"] <- TRUE
-
+        
         A.mat <- -sdr[incl, incl] # a x a
         D.mat <- -sdr[incld, incld] # d x d
         B.mat <- -sdr[incl, incld] # a x d
         cov.mat.mod <- try(MASS::ginv(A.mat - B.mat %*% solve(D.mat) %*% t(B.mat)), silent = TRUE)
-
+        
         se <- sqrt(diag(abs(cov.mat.mod)))
-
+        
         incla <- rep(FALSE, length(incl))
         incla[names(objr$par) == "u"] <- TRUE
         out$Hess <- list(Hess.full = sdr, incla = incla, incl = incl, incld = incld, cov.mat.mod = cov.mat.mod)
-
+        
         if (row.eff == "fixed") {
           se.row.params <- c(0, se[1:(n - 1)])
           names(se.row.params) <- rownames(out$y)
@@ -1010,12 +1010,12 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         rownames(se.lambdas2) <- colnames(out$y)
         se <- se[-(1:(p * num.lv))]
         out$sd$theta <- cbind(out$sd$theta, se.lambdas2)
-
-
+        
+        
         # Calculate SE optima and tolerances
         out$sd$optima <- matrix(NA, nrow = p, ncol = num.lv)
         out$sd$tolerances <- matrix(NA, nrow = p, ncol = num.lv)
-
+        
         if (gamma2 > 0 & common.tolerances == F) {
           idx <- c(
             which(colnames(sdr[incl, incl]) == "lambda"),
@@ -1028,11 +1028,11 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             which(colnames(sdr[incl, incl]) == "lambda2")
           )
         }
-
+        
         V <- -cov.mat.mod
         colnames(V) <- colnames(sdr[incl, incl])
         row.names(V) <- row.names(sdr[incl, incl])
-
+        
         for (q in 1:num.lv) {
           for (j in 1:ncol(y)) {
             if (q > 1 & j < q) {
@@ -1042,10 +1042,10 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             }
           }
         }
-
+        
         colnames(V)[colnames(V) == ""] <- "lambda"
         row.names(V)[row.names(V) == ""] <- "lambda"
-
+        
         for (j in 1:p) {
           if (gamma2 > 0) {
             idx <- colnames(V) == "lambda" | colnames(V) == "lambda2" | colnames(V) == "lambda3"
@@ -1064,9 +1064,9 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
               idx <- c((c(1:num.lv) - 1) * p + j, ((1 + p * num.lv + (num.lv * (j - 1))):(p * num.lv + (num.lv * (j - 1)) + num.lv))) # The last is because the order from the tolerances is different from the lambdas1, its per species not per lv.
             }
           }
-
+          
           V.theta2 <- V.theta[idx, idx]
-
+          
           for (i in 1:num.lv) {
             du <- c((2 * out$params$theta[j, num.lv + i, drop = F])^-1, 2 * (out$params$theta[j, i, drop = F] / (2 * out$params$theta[j, num.lv + i, drop = F])^2))
             out$sd$optima[j, i] <- sqrt(abs(t(du) %*% V.theta2[c(i, num.lv + i), c(i, num.lv + i)] %*% du))
@@ -1075,80 +1075,108 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             out$sd$tolerances[j, i] <- sqrt(abs(V.theta2[-c(1:num.lv), -c(1:num.lv)][i, i] * dt^2))
           }
         }
-        row.names(out$sd$optima) <- row.names(out$sd$tolerances) <- colnames(y)
-
-
-        out$sd$theta <- out$sd$theta
-
-        out$sd$beta0 <- sebetaM[, 1]
-        names(out$sd$beta0) <- colnames(out$y)
-        if (!is.null(X)) {
-          out$sd$Xcoef <- matrix(sebetaM[, -1], nrow = nrow(sebetaM))
-          rownames(out$sd$Xcoef) <- colnames(y)
-          colnames(out$sd$Xcoef) <- colnames(X)
-        }
-        if (row.eff == "fixed") {
-          out$sd$row.params <- se.row.params
-        }
-
-        if (family %in% c("negative.binomial")) {
-          se.lphis <- se[1:p]
-          out$sd$inv.phi <- se.lphis * out$params$inv.phi
-          out$sd$phi <- se.lphis * out$params$phi
-          names(out$sd$phi) <- colnames(y)
-          se <- se[-(1:p)]
-        }
-        if (family %in% c("gamma", "gaussian")) {
-          se.lphis <- se[1:p]
-          out$sd$phi <- se.lphis * out$params$phi
-          out$sd$phi <- se.lphis * out$params$phi
-          names(out$sd$phi) <- colnames(y)
-          se <- se[-(1:p)]
-        }
-        if (row.eff == "random") {
-          out$sd$sigma <- se * out$params$sigma
-          names(out$sd$sigma) <- "sigma"
-        }
-
-        if (family %in% c("ordinal")) {
-          se.zetanew <- se.zetas <- se
-          if (zeta.struc == "species") {
-            se.zetanew <- matrix(NA, nrow = p, ncol = K)
-            idx <- 0
-            for (j in 1:ncol(y)) {
-              k <- max(y[, j]) - 2
-              if (k > 0) {
-                for (l in 1:k) {
-                  se.zetanew[j, l + 1] <- se.zetas[idx + l]
-                }
+          if(common.tolerances==FALSE){
+            #calculate gradient length SE, for full quadratic model
+            #calculate SE for gradient length
+            #Derivative dgradlengthdvec(D_j)
+            Gderiv<-function(x){
+              n <- length(x)
+              res<-rep((1/(n-1)*sum((x-sum(x)/n)^2))^-0.75,length(x))  
+              for(j in 1:length(x)){
+                res[j] <- res[j]*1/(n-1)*(2*x[j]+1/n*(2*x[j]+sum(x[-j]))-1/n*(4*x[j]+2*sum(x[-j])))
               }
-              idx <- idx + k
+              res
             }
-            se.zetanew[, 1] <- 0
-            out$sd$zeta <- se.zetanew
-            row.names(out$sd$zeta) <- colnames(y00)
-            colnames(out$sd$zeta) <- paste(min(y00):(max(y00) - 1), "|", (min(y00) + 1):max(y00), sep = "")
-          } else {
-            se.zetanew <- c(0, se.zetanew)
-            out$sd$zeta <- se.zetanew
-            names(out$sd$zeta) <- paste(min(y00):(max(y00) - 1), "|", (min(y00) + 1):max(y00), sep = "")
+            #x = the quadratic coefficients. Now i also need the varcov matrix for quad coefs
+            gradSD <- NULL
+            for(i in 1:num.lv){
+              covmat <- V[colnames(V)=="lambda2",colnames(V)=="lambda2"][(p*(q-1)+1):(p*q),(p*(q-1)+1):(p*q)]
+              grad <- Gderiv(abs(out$params$theta[,num.lv+i,drop=F]))
+              gradSD <- c(gradSD,grad%*%covmat%*%grad)
+            }
+          }else{
+            gradSD <- NULL
+            for(i in 1:num.lv){
+              gradSD<-c(gradSD,4/unique(abs(out$params$theta[,num.lv+i,drop=F]))*V[colnames(V)=="lambda2",colnames(V)=="lambda2"][i,i])
+             }
+          }
+         out$sd$grad.length <- sqrt(abs(gradSD))
+        names(out$sd$grad.length) <- paste("LV",1:num.lv,sep="")
+          
+          row.names(out$sd$optima) <- row.names(out$sd$tolerances) <- colnames(y)
+          
+          
+          out$sd$theta <- out$sd$theta
+          
+          out$sd$beta0 <- sebetaM[, 1]
+          names(out$sd$beta0) <- colnames(out$y)
+          if (!is.null(X)) {
+            out$sd$Xcoef <- matrix(sebetaM[, -1], nrow = nrow(sebetaM))
+            rownames(out$sd$Xcoef) <- colnames(y)
+            colnames(out$sd$Xcoef) <- colnames(X)
+          }
+          if (row.eff == "fixed") {
+            out$sd$row.params <- se.row.params
+          }
+          
+          if (family %in% c("negative.binomial")) {
+            se.lphis <- se[1:p]
+            out$sd$inv.phi <- se.lphis * out$params$inv.phi
+            out$sd$phi <- se.lphis * out$params$phi
+            names(out$sd$phi) <- colnames(y)
+            se <- se[-(1:p)]
+          }
+          if (family %in% c("gamma", "gaussian")) {
+            se.lphis <- se[1:p]
+            out$sd$phi <- se.lphis * out$params$phi
+            out$sd$phi <- se.lphis * out$params$phi
+            names(out$sd$phi) <- colnames(y)
+            se <- se[-(1:p)]
+          }
+          if (row.eff == "random") {
+            out$sd$sigma <- se * out$params$sigma
+            names(out$sd$sigma) <- "sigma"
+          }
+          
+          if (family %in% c("ordinal")) {
+            se.zetanew <- se.zetas <- se
+            if (zeta.struc == "species") {
+              se.zetanew <- matrix(NA, nrow = p, ncol = K)
+              idx <- 0
+              for (j in 1:ncol(y)) {
+                k <- max(y[, j]) - 2
+                if (k > 0) {
+                  for (l in 1:k) {
+                    se.zetanew[j, l + 1] <- se.zetas[idx + l]
+                  }
+                }
+                idx <- idx + k
+              }
+              se.zetanew[, 1] <- 0
+              out$sd$zeta <- se.zetanew
+              row.names(out$sd$zeta) <- colnames(y00)
+              colnames(out$sd$zeta) <- paste(min(y00):(max(y00) - 1), "|", (min(y00) + 1):max(y00), sep = "")
+            } else {
+              se.zetanew <- c(0, se.zetanew)
+              out$sd$zeta <- se.zetanew
+              names(out$sd$zeta) <- paste(min(y00):(max(y00) - 1), "|", (min(y00) + 1):max(y00), sep = "")
+            }
           }
         }
-      }
-    },
-    silent = T
+      },
+      silent = T
   )
-
+  
   if (inherits(tr, "try-error")) {
     cat("Standard errors for parameters could not be calculated, due to singular fit.\n")
   }
-
+  
   if (is.null(formula1)) {
     out$formula <- formula
   } else {
     out$formula <- formula1
   }
-
+  
   out$TMBfn <- objr
   out$TMBfn$par <- optr$par
   out$logL <- -out$logL
@@ -1160,6 +1188,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   if (family == "gaussian") {
     out$logL <- out$logL - n * p * log(pi) / 2
   }
-
+  
   return(out)
-}
+    }
+  
