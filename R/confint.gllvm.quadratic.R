@@ -46,8 +46,8 @@ confint.gllvm.quadratic <- function(object, parm = NULL, level = 0.95, ...) {
     }
     parm_all <- c("theta", "beta0", "Xcoef", "B", "row.params", "sigma", "inv.phi", "phi", "p")
     parmincl <- parm_all[parm_all %in% names(object$params)]
-    ciup <- unlist(object$params[parmincl]) + qnorm(alfa) * unlist(object$sd[parmincl])
-    cilow <- unlist(object$params[parmincl]) + qnorm(1 - alfa) * unlist(object$sd[parmincl])
+    cilow <- unlist(object$params[parmincl]) + qnorm(alfa) * unlist(object$sd[parmincl])
+    ciup <- unlist(object$params[parmincl]) + qnorm(1 - alfa) * unlist(object$sd[parmincl])
     M <- cbind(cilow, ciup)
 
     colnames(M) <- c(paste(alfa * 100, "%"), paste((1 - alfa) * 100, "%"))
@@ -105,8 +105,8 @@ confint.gllvm.quadratic <- function(object, parm = NULL, level = 0.95, ...) {
       object$sd$Intercept <- object$sd$beta0
       parm[parm == "beta0"] <- "Intercept"
     }
-    cilow <- unlist(object$params[parm]) + qnorm(alfa) * unlist(object$sd[parm])
-    ciup <- unlist(object$params[parm]) + qnorm(1 - alfa) * unlist(object$sd[parm])
+    ciup <- unlist(object$params[parm]) + qnorm(alfa) * unlist(object$sd[parm])
+    cilow <- unlist(object$params[parm]) + qnorm(1 - alfa) * unlist(object$sd[parm])
     M <- cbind(cilow, ciup)
     colnames(M) <- c(paste(alfa * 100, "%"), paste((1 - alfa) * 100, "%"))
   }
