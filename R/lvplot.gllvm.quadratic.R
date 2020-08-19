@@ -48,7 +48,7 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, y
     sppmax <- ncol(object$y)
     sppmin <- 1
   }
-  
+  level <- (1 - level) / 2
   
   optima <- summary(object)$Optima[sppmin:sppmax, which.lvs, drop = F]
   labely <- rownames(optima)[sppmin:sppmax]
