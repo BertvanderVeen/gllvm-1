@@ -72,8 +72,8 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, y
   for (i in LVidx) {
     Xc <- optima[, i]
     sdoptima <- object$sd$optima[sppmin:sppmax, which.lvs[i]]
-    lower <- Xc + qnorm(level) * sdoptima
-    upper <- Xc + qnorm(1 - level) * sdoptima
+    upper <- Xc + qnorm(level) * sdoptima
+    lower <- Xc + qnorm(1 - level) * sdoptima
     Xc <- sort(Xc)
     sdoptima <- sdoptima[names(Xc)]
     lower <- lower[names(Xc)]
@@ -122,8 +122,8 @@ lvplot.gllvm.quadratic <- function(object, plot.optima = TRUE, y.label = TRUE, y
     # tolerances
     tolerances <- 1 / sqrt(-2 * object$params$theta[, -c(1:object$num.lv)][sppmin:sppmax, which.lvs[i]])
     sdtolerances <- object$sd$tolerances[sppmin:sppmax, which.lvs[i]]
-    lower <- tolerances + qnorm(level) * sdtolerances
-    upper <- tolerances + qnorm(1 - level) * sdtolerances
+    upper <- tolerances + qnorm(level) * sdtolerances
+    lower <- tolerances + qnorm(1 - level) * sdtolerances
     if (plot.optima == TRUE) tolerances <- tolerances[names(Xc)]
     if (plot.optima == FALSE) tolerances <- sort(tolerances)
     lower <- lower[names(tolerances)]
