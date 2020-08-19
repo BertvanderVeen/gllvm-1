@@ -57,7 +57,7 @@ summary.gllvm.quadratic <- function(object, ...) {
   if(object$common.tolerances==FALSE){
   sumry$Gradient.length <- 4*sqrt(apply(object$params$theta[,-c(1:object$num.lv)],2,sd))
   }else{
-  sumry$Gradient.length <- c(4*sqrt(abs(unique(object$params$theta[,-c(1:object$num.lv)]))))
+  sumry$Gradient.length <- c(4*sqrt(abs(unique(object$params$theta[,-c(1:object$num.lv),drop=F]))))
   }
   names(sumry$Gradient.length) <- paste("LV",1:object$num.lv,sep="")
 
