@@ -1075,32 +1075,34 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
             out$sd$tolerances[j, i] <- sqrt(abs(V.theta2[-c(1:num.lv), -c(1:num.lv)][i, i] * dt^2))
           }
         }
-          if(common.tolerances==FALSE){
-            #calculate gradient length SE, for full quadratic model
-            #calculate SE for gradient length
-            #Derivative dgradlengthdvec(D_j)
-            Gderiv<-function(x){
-              n <- length(x)
-              res<-rep((1/(n-1)*sum((x-sum(x)/n)^2))^-0.75,length(x))  
-              for(j in 1:length(x)){
-                res[j] <- res[j]*1/(n-1)*(2*x[j]+1/n*(2*x[j]+sum(x[-j]))-1/n*(4*x[j]+2*sum(x[-j])))
+            gradSD <- NULL
+            for(i in 1:num.lv){
+              #covariance matrix for all quadratic coefficients
+              if(common.tolerances==FALSE){
+                covmat <- V[colnames(V)=="lambda2",colnames(V)=="lambda2"][(p*(q-1)+1):(p*q),(p*(q-1)+1):(p*q)] 
+              }else{
+                covmat <- V[colnames(V)=="lambda2",colnames(V)=="lambda2"][q,q]
               }
-              res
+              #selec the parameters that represent the median, middle 2 if even otherwise middle 1
+              if(p%%2==0){
+                #even
+                idx<-order(1/sqrt(2*-out$params$theta[,num.lv+i]),decreasing=T)[(p/2):((p/2)+1)]
+              }else{
+                #odd
+                idx<-order(1/sqrt(2*-out$params$theta[,num.lv+i]),decreasing=T)[p-round(p/2)]
+              }
+              if(common.tolerances==TRUE){
+                #only a function of one parameter, so this is derivative of gradient length (since there is no median)
+               grad<-2*abs(out$params$theta[1,num.lv+i])^-0.5
+               gradSD <- c(gradSD,grad^2*covmat)
+              }else{
+                #this one is a little more, due to the presence of the median on the tolerance scale.
+                grad<-2*sum(sqrt(-out$params$theta[idx,num.lv+i]))^-2*abs(out$params$theta[idx,num.lv+i])^-1.5#4*sqrt(0.5)abs(out$params$theta[idx,num.lv+i])^3 
+                gradSD <- c(gradSD,grad%*%covmat[idx,idx]%*%grad)
+              }
+              
             }
-            #x = the quadratic coefficients. Now i also need the varcov matrix for quad coefs
-            gradSD <- NULL
-            for(i in 1:num.lv){
-              covmat <- V[colnames(V)=="lambda2",colnames(V)=="lambda2"][(p*(q-1)+1):(p*q),(p*(q-1)+1):(p*q)]
-              grad <- Gderiv(abs(out$params$theta[,num.lv+i,drop=F]))
-              gradSD <- c(gradSD,grad%*%covmat%*%grad)
-            }
-          }else{
-            gradSD <- NULL
-            for(i in 1:num.lv){
-              gradSD<-c(gradSD,4/unique(abs(out$params$theta[,num.lv+i,drop=F]))*V[colnames(V)=="lambda2",colnames(V)=="lambda2"][i,i])
-             }
-          }
-         out$sd$grad.length <- sqrt(abs(gradSD))
+         out$sd$grad.length <- sqrt(gradSD)
         names(out$sd$grad.length) <- paste("LV",1:num.lv,sep="")
           
           row.names(out$sd$optima) <- row.names(out$sd$tolerances) <- colnames(y)
