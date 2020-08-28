@@ -1091,13 +1091,19 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                 #odd
                 idx<-order(1/sqrt(2*-out$params$theta[,num.lv+i]),decreasing=T)[p-round(p/2)]
               }
-              if(common.tolerances==TRUE){
+              if(common.tolerances==TRUE|length(idx)==1){
+                if(common.tolerances==TRUE){
                 #only a function of one parameter, so this is derivative of gradient length (since there is no median)
                grad<-2*abs(out$params$theta[1,num.lv+i])^-0.5
                gradSD <- c(gradSD,grad^2*covmat)
+                }else{
+               grad<-2*abs(out$params$theta[idx,num.lv+i])^-0.5#Only needs the right idx, no transformations
+               gradSD <- c(gradSD,grad^2*covmat[idx,idx])
+                }
+                
               }else{
                 #this one is a little more, due to the presence of the median on the tolerance scale.
-                grad<-2*sum(sqrt(-out$params$theta[idx,num.lv+i]))^-2*abs(out$params$theta[idx,num.lv+i])^-1.5#4*sqrt(0.5)abs(out$params$theta[idx,num.lv+i])^3 
+                grad<-4*sum(abs(out$params$theta[idx,num.lv+i])^-0.5)^-2*abs(out$params$theta[idx,num.lv+i])^-1.5#4*sqrt(0.5)abs(out$params$theta[idx,num.lv+i])^3 
                 gradSD <- c(gradSD,grad%*%covmat[idx,idx]%*%grad)
               }
               
