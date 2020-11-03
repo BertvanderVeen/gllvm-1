@@ -112,16 +112,13 @@ Type objective_function<Type>::operator() ()
   
   if(model<1){
     //place constraints for quadratic shapes
+    for (int j=0; j<p;j++){
+      b(0,j) = exp(b(0,j));
+    }
+    
     for (int i=0; i<constraint.size();i++){
-      if(i==0){
         for (int j=0; j<p;j++){
-          b(i,j) = exp(b(i,j));
-        }
-      }
-      if(constraint(i-1)==1){
-        for (int j=0; j<p;j++){
-        b(i,j) = -fabs(b(i,j));  
-      }
+        b(i+1,j) = -fabs(b(i+1,j));  
       }
     }
     C += x*b;
