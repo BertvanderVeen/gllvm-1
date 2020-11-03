@@ -115,13 +115,12 @@ Type objective_function<Type>::operator() ()
     for (int j=0; j<p;j++){
       b(0,j) = exp(b(0,j));
     }
-    
-    for (int i=1; i<x.cols(); i++) {
-      if(constraint(i-1)==1){
+    if(constraints.size()>0){
+    for (int i=0; i<constraints.size(); i++) {
         for (int j=0; j<p;j++){
-        b(i,j) = -1*fabs(b(i,j));
-        }
+        b(constraints(i),j) = -1*fabs(b(constraints(i),j));
       }
+    }
     }
 
     C += x*b;
