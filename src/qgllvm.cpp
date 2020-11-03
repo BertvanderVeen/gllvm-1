@@ -117,7 +117,8 @@ Type objective_function<Type>::operator() ()
         for (int j=0; j<p;j++){
           b(i,j) = exp(b(i,j));
         }
-      }else if(constraint(i-1)==1){
+      }
+      if(constraint(i-1)==1){
         for (int j=0; j<p;j++){
         b(i,j) = -fabs(b(i,j));  
       }
