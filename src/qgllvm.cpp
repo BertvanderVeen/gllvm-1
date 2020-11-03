@@ -13,6 +13,7 @@ Type objective_function<Type>::operator() ()
   DATA_MATRIX(x);
   DATA_MATRIX(xr);
   DATA_MATRIX(offset);
+  DATA_VECTOR(constraint);//to enforce quadratic shapes
   
   //DATA_INTEGER(int_n);//number of quadrature points for Romberg integration in the future
   //DATA_INTEGER(n_int);
@@ -28,9 +29,7 @@ Type objective_function<Type>::operator() ()
   PARAMETER_VECTOR(lg_phi);
   PARAMETER(log_sigma);// log(SD for row effect)
   DATA_SCALAR(gamma);
-  DATA_UPDATE(gamma); //allows updating on R side without recompilation so I can write a function for regularization. DONT IFELSE. Currently doesn't work.
   DATA_SCALAR(gamma2);
-  DATA_UPDATE(gamma2);
   DATA_VECTOR(theta4);
   DATA_INTEGER(num_lv);
   DATA_INTEGER(family);
@@ -112,13 +111,19 @@ Type objective_function<Type>::operator() ()
   
   
   if(model<1){
+    //place constraints for quadratic shapes
+    for (int i=1; i<constraint.size();i++){
+      if(constraint(i-1)==1){
+        b.row(i) = -fabs(b.row(i));  
+      }
+    }
     C += x*b;
   } else {
     matrix<Type> eta1=x*B;
     int m=0;
     for (int j=0; j<p;j++){
       for (int i=0; i<n; i++) {
-        C(i,j)+=b(0,j)+eta1(m,0);
+        C(i,j)+=exp(b(0,j))+eta1(m,0);
         m++;
       }
     }

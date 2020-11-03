@@ -215,7 +215,7 @@
 
 gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL, num.lv = 2, family, row.eff = FALSE, offset = NULL,
                             sd.errors = TRUE, Lambda.struc = "unstructured", diag.iter = 0, trace = FALSE, trace2 = FALSE, n.init = 1, reltol = 1e-08, seed = NULL, maxit = 10000,
-                            start.fit = NULL, starting.val = "res", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, par.scale = 1, fn.scale = 1, grad.check = FALSE, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel = FALSE, start.struc = "common", gamma1 = 0, gamma2 = 0, theta4 = NULL, Lambda2.start = 0.01) {
+                            start.fit = NULL, starting.val = "res", optimizer = "optim", Lambda.start = c(0.1, 0.5), jitter.var = 0, par.scale = 1, fn.scale = 1, grad.check = FALSE, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel = FALSE, start.struc = "common", gamma1 = 0, gamma2 = 0, theta4 = NULL, Lambda2.start = 0.01,constraint = NULL) {
   # build in gradient check
   randomX <- NULL
   term <- NULL
@@ -418,7 +418,7 @@ gllvm.quadratic <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula 
       X = X, formula = formula, num.lv = num.lv, family = family, Lambda.struc = Lambda.struc,
       row.eff = row.eff, reltol = reltol, seed = seed, maxit = maxit, start.lvs = start.lvs, offset = O, sd.errors = sd.errors,
       n.init = n.init, start.params = start.fit, optimizer = optimizer, starting.val = starting.val,
-      diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, par.scale = par.scale, fn.scale = fn.scale, zeta.struc = zeta.struc, maxit.lingllvm = maxit.lingllvm, starting.val.lingllvm = starting.val.lingllvm, common.tolerances = common.tolerances, parallel = parallel, start.struc = start.struc, gamma1 = gamma1, gamma2 = gamma2, theta4 = theta4, Lambda2.start = Lambda2.start
+      diag.iter = diag.iter, trace = trace, trace2 = trace2, Lambda.start = Lambda.start, jitter.var = jitter.var, par.scale = par.scale, fn.scale = fn.scale, zeta.struc = zeta.struc, maxit.lingllvm = maxit.lingllvm, starting.val.lingllvm = starting.val.lingllvm, common.tolerances = common.tolerances, parallel = parallel, start.struc = start.struc, gamma1 = gamma1, gamma2 = gamma2, theta4 = theta4, Lambda2.start = Lambda2.start,constraint=constraint
     )
   }
 
