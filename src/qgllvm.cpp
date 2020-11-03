@@ -13,7 +13,7 @@ Type objective_function<Type>::operator() ()
   DATA_MATRIX(x);
   DATA_MATRIX(xr);
   DATA_MATRIX(offset);
-  DATA_IVECTOR(constraint);//to enforce quadratic shapes
+  DATA_VECTOR(constraint);
   
   //DATA_INTEGER(int_n);//number of quadrature points for Romberg integration in the future
   //DATA_INTEGER(n_int);
@@ -115,15 +115,22 @@ Type objective_function<Type>::operator() ()
     for (int j=0; j<p;j++){
       b(0,j) = exp(b(0,j));
     }
-    if(constraints.size()>0){
-    for (int i=0; i<constraints.size(); i++) {
+    for(int k = 0; k<x.cols();k++){
+      if(constraint(k)==1){
         for (int j=0; j<p;j++){
-        b(constraints(i),j) = -1*fabs(b(constraints(i),j));
+          for (int i=0; i<n; i++) {
+            C(i,j) -= x(i,k)*fabs(b(k,j)); 
+          }
+        }
+      }else{
+        for (int j=0; j<p;j++){
+          for (int i=0; i<n; i++) {
+            C(i,j) += x(i,k)*b(k,j); 
+          }
+        }
       }
     }
-    }
-
-    C += x*b;
+    //C += x*b;
   } else {
     matrix<Type> eta1=x*B;
     int m=0;

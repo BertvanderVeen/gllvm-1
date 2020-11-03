@@ -8,9 +8,12 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                                 n.init = 1, start.params = NULL,
                                 optimizer = "optim", starting.val = "res", diag.iter = 1,
                                 Lambda.start = c(0.1, 0.5), jitter.var = 0, par.scale = 1, fn.scale = 1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel = FALSE, start.struc = "species", gamma1 = 0, gamma2 = 0, theta4 = NULL, Lambda2.start = 0.01, constraint = NULL) {
-  if(length(constraint)!=ncol(X)){stop("Wrong size constraints. Needs to be the same size as X. One equals a constraint.")}else if(is.null(constraint)&!is.null(X)){
+  if(!is.null(constraint)&!is.null(X)){
+    if(length(constraint)!=(ncol(X)+1)){stop("Wrong size constraints. Needs to be the same size as X. Also needs intercept (0).")}  
+  }else{
     constraint<-0
   }
+  
   n <- dim(y)[1]
   p <- dim(y)[2]
   tr <- NULL
@@ -385,26 +388,30 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     if (family == "gamma") {
       familyn <- 4
     }
+    if(starting.val=="zero"){
+      b<-b+0.01
+    }
+    a<-suppressWarnings(ifelse(a>0,log(a),a))
     
     if (starting.val != "zero" & start.struc != "common" | class(start.params) == "lingllvm" & start.struc != "common") {
       mp <- list(r0 = factor(rep(NA, length(r0))), b = factor(rep(NA, length(rbind(a, b)))), B = factor(rep(NA, 1)), lambda = factor(rep(NA, length(lambda))), lambda3 = factor(rep(NA, num.lv)), u = factor(rep(NA, length(u))), lg_phi = factor(rep(NA, length(phi))), log_sigma = factor(rep(NA, length(sigma))), Au = factor(rep(NA, length(Au))), lg_Ar = factor(rep(NA, length(Ar))), zeta = factor(rep(NA, length(zeta))))
       
       if (row.eff == "random") {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
           map = mp, parameters = list(r0 = matrix(r0), b = rbind(a, b), B = matrix(0), lambda = lambda, lambda2 = t(lambda2), lambda3 = lambda3, u = u, lg_phi = log(phi), log_sigma = log(sigma), Au = Au, lg_Ar = log(Ar), zeta = zeta),
           inner.control = list(mgcmax = 1e+200, maxit = maxit),
           DLL = "qgllvm"
         )
       } else {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
           map = mp, parameters = list(r0 = matrix(r0), b = rbind(a, b), B = matrix(0), lambda = lambda, lambda2 = t(lambda2), lambda3 = lambda3, u = u, lg_phi = log(phi), log_sigma = 0, Au = Au, lg_Ar = log(Ar), zeta = zeta),
           inner.control = list(mgcmax = 1e+200, maxit = maxit),
           DLL = "qgllvm"
         ) ## GLLVM
       }
-      
+
       if (optimizer == "nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
       }
@@ -432,20 +439,20 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
     
     if (row.eff == "random") {
       objr <- TMB::MakeADFun(
-        data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+        data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
         parameters = list(r0 = matrix(r0), b = rbind(a, b), B = matrix(0), lambda = lambda, lambda2 = t(lambda2), lambda3 = lambda3, u = u, lg_phi = log(phi), log_sigma = log(sigma), Au = Au, lg_Ar = log(Ar), zeta = zeta),
         inner.control = list(mgcmax = 1e+200, maxit = maxit),
         DLL = "qgllvm"
       )
     } else {
       objr <- TMB::MakeADFun(
-        data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+        data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
         parameters = list(r0 = matrix(r0), b = rbind(a, b), B = matrix(0), lambda = lambda, lambda2 = t(lambda2), lambda3 = lambda3, u = u, lg_phi = log(phi), log_sigma = 0, Au = Au, lg_Ar = log(Ar), zeta = zeta),
         inner.control = list(mgcmax = 1e+200, maxit = maxit),
         DLL = "qgllvm"
       ) ## GLLVM
     }
-    
+
     if (optimizer == "nlminb") {
       timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
     }
@@ -499,20 +506,20 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       if (row.eff == "random") {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
           parameters = list(r0 = r1, b = b1, B = matrix(0), lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1, lg_phi = lg_phi1, log_sigma = log_sigma1, Au = Au1, lg_Ar = lg_Ar1, zeta = zeta), # log(phi)
           inner.control = list(mgcmax = 1e+200, maxit = maxit),
           DLL = "qgllvm"
         )
       } else {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
           parameters = list(r0 = r1, b = b1, B = matrix(0), lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1, lg_phi = lg_phi1, log_sigma = 0, Au = Au1, lg_Ar = lg_Ar1, zeta = zeta), # log(phi)
           inner.control = list(mgcmax = 1e+200, maxit = maxit),
           DLL = "qgllvm"
         ) # GLLVM#
       }
-      
+
       if (optimizer == "nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
       }
@@ -600,20 +607,20 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
         mp <- list(r0 = factor(rep(NA, length(r1))), b = factor(rep(NA, length(b1))), B = factor(rep(NA, 1)), lambda = factor(rep(NA, length(lambda1))), lambda3 = factor(rep(NA, num.lv)), u = factor(rep(NA, length(u1))), lg_phi = factor(rep(NA, length(lg_phi1))), log_sigma = factor(rep(NA, length(log_sigma1))), Au = factor(rep(NA, length(Au1))), lg_Ar = factor(rep(NA, length(lg_Ar1))), zeta = factor(rep(NA, length(zeta))))
         if (row.eff == "random") {
           objr <- TMB::MakeADFun(
-            data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+            data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
             map = mp, parameters = list(r0 = r1, b = b1, B = matrix(0), lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1, lg_phi = lg_phi1, log_sigma = log_sigma1, Au = Au1, lg_Ar = lg_Ar1, zeta = zeta), # log(phi)
             inner.control = list(mgcmax = 1e+200, maxit = maxit),
             DLL = "qgllvm"
           )
         } else {
           objr <- TMB::MakeADFun(
-            data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+            data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
             map = mp, parameters = list(r0 = r1, b = b1, B = matrix(0), lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1, lg_phi = lg_phi1, log_sigma = 0, Au = Au1, lg_Ar = lg_Ar1, zeta = zeta), # log(phi)
             inner.control = list(mgcmax = 1e+200, maxit = maxit),
             DLL = "qgllvm"
           ) # GLLVM#
         }
-        
+
         if (optimizer == "nlminb") {
           timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
         }
@@ -641,20 +648,20 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
       
       if (row.eff == "random") {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 1, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
           parameters = list(r0 = r1, b = b1, B = matrix(0), lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1, lg_phi = lg_phi1, log_sigma = log_sigma1, Au = Au1, lg_Ar = lg_Ar1, zeta = zeta), # log(phi)
           inner.control = list(mgcmax = 1e+200, maxit = maxit),
           DLL = "qgllvm"
         )
       } else {
         objr <- TMB::MakeADFun(
-          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, family = familyn, constraint  =constraint, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
+          data = list(y = y, x = Xd, xr = xr, offset = offset, num_lv = num.lv, constraint=constraint, family = familyn, model = 0, random = 0, zetastruc = ifelse(zeta.struc == "species", 1, 0), gamma = gamma1, gamma2 = gamma2, theta4 = theta4), silent = TRUE,
           parameters = list(r0 = r1, b = b1, B = matrix(0), lambda = lambda1, lambda2 = lambda2, lambda3 = lambda3, u = u1, lg_phi = lg_phi1, log_sigma = 0, Au = Au1, lg_Ar = lg_Ar1, zeta = zeta), # log(phi)
           inner.control = list(mgcmax = 1e+200, maxit = maxit),
           DLL = "qgllvm"
         ) # GLLVM#
       }
-      
+
       if (optimizer == "nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr, control = list(rel.tol = reltol, iter.max = maxit, eval.max = maxit, trace = trace2)), silent = !trace2))
       }
@@ -822,7 +829,13 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   }
   betaM <- matrix(param[bi], p, num.X + 1, byrow = TRUE)
   beta0 <- exp(betaM[, 1])
-  if (!is.null(X)) betas <- betaM[, -1]
+  if (!is.null(X)){ betas <- betaM[, -1]
+  for(k in 1:ncol(betas)){
+    if(constraint[k]==1){
+      betas[,k]<- -abs(betas[,k]) 
+    }
+  }
+  }
   lvs <- matrix(param[ui], n, num.lv)
   theta <- matrix(0, p, num.lv)
   if (p > 1) {
