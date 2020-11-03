@@ -9,7 +9,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
                                 optimizer = "optim", starting.val = "res", diag.iter = 1,
                                 Lambda.start = c(0.1, 0.5), jitter.var = 0, par.scale = 1, fn.scale = 1, zeta.struc = "species", maxit.lingllvm = NULL, starting.val.lingllvm = "res", common.tolerances = FALSE, parallel = FALSE, start.struc = "species", gamma1 = 0, gamma2 = 0, theta4 = NULL, Lambda2.start = 0.01, constraint = NULL) {
   if(length(constraint)!=ncol(X)){stop("Wrong size constraints. Needs to be the same size as X. One equals a constraint.")}else if(is.null(constraint)&!is.null(X)){
-    constraint<-rep(0,ncol(X))
+    constraint<-0
   }
   n <- dim(y)[1]
   p <- dim(y)[2]
