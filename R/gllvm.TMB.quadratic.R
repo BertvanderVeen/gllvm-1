@@ -829,7 +829,7 @@ gllvm.TMB.quadratic <- function(y, X = NULL, formula = NULL, num.lv = 2, family 
   }
   betaM <- matrix(param[bi], p, num.X + 1, byrow = TRUE)
   beta0 <- exp(betaM[, 1])
-  if (!is.null(X)){ betas <- betaM[, -1]
+  if (!is.null(X)){ betas <- betaM[, -1,drop=F]
   for(k in 1:ncol(betas)){
     if(constraint[k]==1){
       betas[,k]<- -abs(betas[,k]) 
