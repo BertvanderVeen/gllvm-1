@@ -75,7 +75,7 @@ Type objective_function<Type>::operator() ()
       // }
     }
   }
-  
+  Type pi =  2 * acos(0.0); 
   parallel_accumulator<Type> nll(this); // initial value of log-likelihood
   //Type nll = 0;
   C += r0*xr + offset;
@@ -106,7 +106,7 @@ Type objective_function<Type>::operator() ()
   //if(max==0){
   //A is a num.lv x num.lv x n array, theta is p x num.lv matrix
   for (int i=0; i<n; i++) {
-    nll -= 0.5*(log(A.col(i).matrix().determinant()) - A.col(i).matrix().trace());// log(det(A_i))-sum(trace(A_i))*0.5 sum.diag(A)
+    nll -= 0.5*(log(2*exp(1)*pi*A.col(i).matrix().determinant()) - A.col(i).matrix().trace());// log(det(A_i))-sum(trace(A_i))*0.5 sum.diag(A)
   }
   //}
   
