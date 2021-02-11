@@ -235,7 +235,7 @@ Type objective_function<Type>::operator() ()
       for (int j=0; j<p;j++){
         b(0,j) = exp(b(0,j));
       }
-      for(int k = 0; k<x.cols();k++){
+      for(int k = 1; k<x.cols();k++){
         if(constraint(k)==1){
           for (int j=0; j<p;j++){
             for (int i=0; i<n; i++) {

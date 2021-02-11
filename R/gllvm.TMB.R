@@ -8,10 +8,10 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
       trace=FALSE,link="logit",n.init=1,restrict=30,start.params=NULL,
       optimizer="optim",starting.val="res",Power=1.5,diag.iter=1, dependent.row = FALSE,
       Lambda.start=c(0.1,0.5), quad.start=0.01, jitter.var=0, zeta.struc = "species", quadratic = FALSE, start.struc = "LV", constraint = NULL) {
-  if(!is.null(constraint)&!is.null(X)){
-    if(length(constraint)!=(ncol(X)+1)){stop("Wrong size constraints. Needs to be the same size as X. Also needs intercept (0).")}  
+  if(!is.null(constraint)&!is.null(X)&length(constraint)!=ncol(X)){
+    if(length(constraint)!=(ncol(X[,!(colnames(X)%in%("(Intercept)")]))){stop("Wrong size constraints. Needs to be the same size as X and no intercept.")}  
   }else{
-    constraint<-0
+    constraint<-rep(0,ncol(X))
   }
   if(!is.null(start.params)) starting.val <- "zero"
   ignore.u=FALSE
