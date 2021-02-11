@@ -14,6 +14,7 @@ Type objective_function<Type>::operator() ()
   DATA_MATRIX(xr);
   DATA_MATRIX(xb);
   DATA_MATRIX(offset);
+  DATA_VECTOR(constraint);
   
   PARAMETER_MATRIX(r0);
   PARAMETER_MATRIX(b);
@@ -230,7 +231,25 @@ Type objective_function<Type>::operator() ()
     }
     
     if(model<1){
-      eta += x*b;
+      //eta += x*b;
+      for (int j=0; j<p;j++){
+        b(0,j) = exp(b(0,j));
+      }
+      for(int k = 0; k<x.cols();k++){
+        if(constraint(k)==1){
+          for (int j=0; j<p;j++){
+            for (int i=0; i<n; i++) {
+              eta(i,j) -= x(i,k)*fabs(b(k,j)); 
+            }
+          }
+        }else{
+          for (int j=0; j<p;j++){
+            for (int i=0; i<n; i++) {
+              eta(i,j) += x(i,k)*b(k,j); 
+            }
+          }
+        }
+      }
     } else {
       // Fourth corner model
       matrix<Type> eta1=x*B;
