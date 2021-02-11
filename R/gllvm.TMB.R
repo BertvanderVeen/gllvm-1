@@ -86,9 +86,9 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
     formula = "~ 1"
   }
   if(!is.null(constraint)&!is.null(X)&length(constraint)!=ncol(X)){
-    if(length(constraint)!=ncol(X)){stop("Wrong size constraints. Needs to be the same size as X and no intercept.")}  
+    if(length(constraint)!=(ncol(X)-1)){stop("Wrong size constraints. Needs to be the same size as X and no intercept.")}  
   }else{
-    constraint<-rep(0,ncol(X))
+    constraint<-rep(0,ncol(X)-1)
   }
   ## Set initial values for model parameters (including dispersion prm) and latent variables
   if(!is.null(seed)) {
