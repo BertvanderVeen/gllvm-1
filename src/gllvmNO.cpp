@@ -236,7 +236,7 @@ Type objective_function<Type>::operator() ()
         b(0,j) = exp(b(0,j));
       }
       for(int k = 1; k<x.cols();k++){
-        if(constraint(k)==1){
+        if(constraint(k-1)==1){
           for (int j=0; j<p;j++){
             for (int i=0; i<n; i++) {
               eta(i,j) -= x(i,k)*fabs(b(k,j)); 
