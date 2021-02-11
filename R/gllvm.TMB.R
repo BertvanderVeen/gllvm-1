@@ -342,7 +342,7 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
         data = data.list, silent=TRUE,
         parameters = parameter.list, map = map.list2,
         inner.control=list(maxit = maxit), #mgcmax = 1e+200,
-        DLL = "gllvm")##GLLVM
+        DLL = "gllvmNO")##GLLVM
       
       if(optimizer=="nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol,iter.max=maxit,eval.max=maxit)),silent = TRUE))
@@ -397,7 +397,7 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
         data = data.list, silent=TRUE,
         parameters = parameter.list, map = map.list,
         inner.control=list(maxit = maxit), #mgcmax = 1e+200,
-        DLL = "gllvm")##GLLVM
+        DLL = "gllvmNO")##GLLVM
       
       if(optimizer=="nlminb") {
         timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol,iter.max=maxit,eval.max=maxit)),silent = TRUE))
@@ -437,7 +437,7 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
           data = data.list, silent=TRUE,
           parameters = parameter.list, map = map.list,
           inner.control=list(maxit = maxit), #mgcmax = 1e+200,
-          DLL = "gllvm")
+          DLL = "gllvmNO")
         
         if(optimizer=="nlminb") {
           timeo <- system.time(optr <- try(nlminb(objr$par, objr$fn, objr$gr,control = list(rel.tol=reltol,iter.max=maxit,eval.max=maxit)),silent = TRUE))
@@ -571,7 +571,7 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
         data = data.list, silent=!trace,
         parameters = parameter.list, map = map.list,
         inner.control=list(mgcmax = 1e+200,maxit = maxit,tol10=0.01),
-        random = randomp, DLL = "gllvm")
+        random = randomp, DLL = "gllvmNO")
       
       if(family=="ZIP" && FALSE) {
         m <- length(objr$par)
