@@ -778,6 +778,9 @@ gllvm <- function(y = NULL, X = NULL, TR = NULL, data = NULL, formula = NULL,
     if(is.null(out$sd)){
       out$sd <- FALSE
     }
+    if(constraint[1]==1){
+      out$params$beta0 <- abs(out$params$beta0)
+    }
     
     out$quadratic <- fitg$quadratic
     out$Hess = fitg$Hess

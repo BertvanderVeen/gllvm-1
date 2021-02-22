@@ -232,24 +232,23 @@ Type objective_function<Type>::operator() ()
     
     if(model<1){
       //eta += x*b;
-      for (int j=0; j<p;j++){
-        b(0,j) = exp(b(0,j));
-      }
-      for(int k = 1; k<x.cols();k++){
-        if(constraint(k-1)==1){
+      // for (int j=0; j<p;j++){
+      //   b(0,j) = fabs(b(0,j));
+      // }
+      for(int k = 0; k<x.cols();k++){
+        if(k==0 && constraint(0)==1){
           for (int j=0; j<p;j++){
-            for (int i=0; i<n; i++) {
-              eta(i,j) -= x(i,k)*fabs(b(k,j)); 
-            }
+          b(k,j) = fabs(b(k,j)); 
           }
         }else{
-          for (int j=0; j<p;j++){
-            for (int i=0; i<n; i++) {
-              eta(i,j) += x(i,k)*b(k,j); 
+          if(constraint(k)==1){
+            for (int j=0; j<p;j++){
+              b(k,j) = -fabs(b(k,j)); 
             }
           }
         }
       }
+      eta += x*b;
     } else {
       // Fourth corner model
       matrix<Type> eta1=x*B;
@@ -502,8 +501,26 @@ Type objective_function<Type>::operator() ()
     }
     
     if(model<1){
-      
+      // 
+      // for (int j=0; j<p;j++){
+      //   b(0,j) = CppAD::abs(b(0,j));
+      // }
+      // 
+      for(int k = 0; k<x.cols();k++){
+        if(k==0 && constraint(0)==1){
+          for (int j=0; j<p;j++){
+          b(k,j) = fabs(b(k,j)); 
+          }
+        }else{
+        if(constraint(k)==1){
+          for (int j=0; j<p;j++){
+            b(k,j) = -fabs(b(k,j)); 
+          }
+        }
+        }
+      }
       eta += x*b;
+      
       for (int j=0; j<p; j++){
         for(int i=0; i<n; i++){
           mu(i,j) = exp(eta(i,j));
@@ -586,6 +603,6 @@ Type objective_function<Type>::operator() ()
   }
   
   REPORT(nll);//only works for VA!!
-  
+  REPORT(b);
   return nll.sum();
 }

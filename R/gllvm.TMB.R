@@ -85,11 +85,15 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
   if (is.null(formula) && is.null(X)) {
     formula = "~ 1"
   }
-  if(!is.null(constraint)&!is.null(X)&length(constraint)!=ncol(X)){
-    if(length(constraint)!=(ncol(X)-1)){stop("Wrong size constraints. Needs to be the same size as X and no intercept.")}  
-  }else{
-    constraint<-rep(0,ncol(X)-1)
+if(!is.null(X)){
+  if(!is.null(constraint)&length(constraint)!=(ncol(X)+1)){
+    if(length(constraint)!=(ncol(X)+1)){stop("Wrong size constraints. Needs to be the same size as X + intercept.")}  
+  }else if(is.null(constraint)&!is.null(X)){
+    constraint<-rep(0,ncol(X)+1)
   }
+}else{
+  constraint <- 0
+}
   ## Set initial values for model parameters (including dispersion prm) and latent variables
   if(!is.null(seed)) {
     set.seed(seed)
@@ -105,7 +109,7 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
     if(n.init > 1 && trace)
       cat("Initial run ", n.i, "\n")
 
-    fit <- start.values.gllvm.TMB(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, power = Power, jitter.var = jitter.var, row.eff = row.eff, TMB=TRUE, link=link, zeta.struc = zeta.struc)
+    fit <- start.values.gllvm.TMB(y = y, X = X, TR = NULL, family = family, offset= offset, num.lv = num.lv, start.lvs = start.lvs, seed = seed[n.i], starting.val = starting.val, power = Power, jitter.var = jitter.var, row.eff = row.eff, TMB=TRUE, link=link, zeta.struc = zeta.struc, constraint = constraint)
     
     sigma <- 1
     if (is.null(start.params)) {
@@ -227,6 +231,11 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
 
     current.loglik <- -1e6; iter <- 1; err <- 10;
     ## LA-likelihood
+    if(starting.val=="zero"){
+      betas<-betas+0.01#With sign constraints, these need to be started at a small value
+      beta0<-beta0+0.01
+    }
+    
     if(!is.null(row.params)){ r0 <- row.params} else {r0 <- rep(0,n)}
     a <- c(beta0)
     b <- NULL; if(!is.null(X)) b <- matrix(betas, ncol(X), p,byrow = TRUE)
@@ -242,6 +251,7 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
         fit$phi <- phi
     }
     
+
     q <- num.lv
 
     map.list <- list()    
@@ -262,7 +272,6 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
     optr<-NULL
     timeo<-NULL
     se <- NULL
-
 
     if(method=="VA" && (nlvr>0)){
       if(nlvr>0){
@@ -288,9 +297,9 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
 
       
       if(quadratic == TRUE && start.struc == "LV"){
-        start.fit <- try(gllvm.TMB(y=y, X=X, num.lv=num.lv, family = family, Lambda.struc = Lambda.struc, row.eff=row.eff, reltol=reltol, seed =  seed[n.i], maxit = maxit, start.lvs = start.lvs, offset = offset, n.init = 1, diag.iter=diag.iter, dependent.row=dependent.row, quadratic="LV", starting.val = starting.val, Lambda.start = Lambda.start, quad.start = quad.start, jitter.var = jitter.var, zeta.struc = zeta.struc, sd.errors = FALSE, optimizer = optimizer),silent=T)
+        start.fit <- try(gllvm.TMB(y=y, X=X, num.lv=num.lv, family = family, Lambda.struc = Lambda.struc, row.eff=row.eff, reltol=reltol, seed =  seed[n.i], maxit = maxit, start.lvs = start.lvs, offset = offset, n.init = 1, diag.iter=diag.iter, dependent.row=dependent.row, quadratic="LV", starting.val = starting.val, Lambda.start = Lambda.start, quad.start = quad.start, jitter.var = jitter.var, zeta.struc = zeta.struc, sd.errors = FALSE, optimizer = optimizer,constraint=constraint),silent=T)
         if(inherits(start.fit,"try-error")&starting.val!="zero"){
-          start.fit <- try(gllvm.TMB(y=y, X=X, num.lv=num.lv, family = family, Lambda.struc = Lambda.struc, row.eff=row.eff, reltol=reltol, seed =  seed[n.i], maxit = maxit, start.lvs = start.lvs, offset = offset, n.init = 1, diag.iter=diag.iter, dependent.row=dependent.row, quadratic="LV", starting.val = "zero", Lambda.start = Lambda.start, quad.start = quad.start, jitter.var = jitter.var, zeta.struc = zeta.struc, sd.errors = FALSE, optimizer = optimizer),silent=T)
+          start.fit <- try(gllvm.TMB(y=y, X=X, num.lv=num.lv, family = family, Lambda.struc = Lambda.struc, row.eff=row.eff, reltol=reltol, seed =  seed[n.i], maxit = maxit, start.lvs = start.lvs, offset = offset, n.init = 1, diag.iter=diag.iter, dependent.row=dependent.row, quadratic="LV", starting.val = "zero", Lambda.start = Lambda.start, quad.start = quad.start, jitter.var = jitter.var, zeta.struc = zeta.struc, sd.errors = FALSE, optimizer = optimizer,constraint=constraint),silent=T)
         }
         if(!inherits(start.fit,"try-error")){
           u <- start.fit$lvs
@@ -307,7 +316,7 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
       if(family == "gamma") {familyn=4}
       if(family == "ordinal") {familyn=7}
       if(family == "exponential") {familyn=8}
-      
+ 
       if(starting.val!="zero" && quadratic != FALSE && num.lv>0){
       #generate starting values quadratic coefficients in some cases
       data.list = list(y = y, x = Xd,xr=xr,xb=xb,offset=offset, num_lv = num.lv,constraint=constraint,quadratic = 1, family=familyn,extra=extra,method=0,model=0,random=randoml, zetastruc = ifelse(zeta.struc=="species",1,0))
@@ -514,10 +523,10 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
         }
       }
       betaM <- matrix(param[bi],p,num.X+1,byrow=TRUE)
-      beta0 <- betaM[,1]
+      beta0 <- (betaM[,1])
       if (!is.null(X)){ betas <- betaM[, -1,drop=F]
       for(k in 1:ncol(betas)){
-        if(constraint[k]==1){
+        if(constraint[k+1]==1){
           betas[,k]<- -abs(betas[,k]) 
         }
       }
@@ -611,10 +620,10 @@ gllvm.TMB <- function(y, X = NULL, formula = NULL, num.lv = 2, family = "poisson
         }
       }
       betaM <- matrix(param[bi],p,num.X+1,byrow=TRUE)
-      beta0 <- betaM[,1]
+      beta0 <- (betaM[,1])
       if (!is.null(X)){ betas <- betaM[, -1,drop=F]
       for(k in 1:ncol(betas)){
-        if(constraint[k]==1){
+        if(constraint[k+1]==1){
           betas[,k]<- -abs(betas[,k]) 
         }
       }
