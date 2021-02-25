@@ -132,7 +132,7 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
 
     # mu <- predict(object, newLV = newLV, LVonly = T, which.lvs = which.lvs,type = type,intercept=intercept)[,largest.lnorms,drop=F]
     # have to rebuiltin the backtransformation of the linear predictor now I included curve
-    mu <- predict(object, LVonly = T, which.lvs = which.lvs, type =F, intercept = F)[, largest.lnorms, drop = F]
+    mu <- predict(object, LVonly = T, which.lvs = which.lvs, type = "link", intercept = F)[, largest.lnorms, drop = F]
     
     opt <- object$params$theta[largest.lnorms,which.lvs,drop=F]/(2*abs(object$params$theta[,-c(1:object$num.lv),drop=F][largest.lnorms,which.lvs,drop=F]))
     c <- object$params$beta0[largest.lnorms] + rowSums(opt*object$params$theta[largest.lnorms,which.lvs,drop=F]) 
