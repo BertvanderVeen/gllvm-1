@@ -219,9 +219,9 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
       }
     } else {
       if (type == "link") {
-        func <- function(x, beta, u, u2) beta + x * u + x^2 * u2
+        func <- function(x, c,opt,tol, u, u2) c-opt^2/(2*tol^2) + x * u + x^2 * u2
       } else {
-        func <- function(x, beta, u, u2) linkinv(beta + x * u + x^2 * u2)
+        func <- function(x, c,opt,tol, u, u2) linkinv(c-opt^2/(2*tol^2) + x * u + x^2 * u2)
       }
     }
     for (j in 1:ncol(mu)) {
@@ -230,7 +230,7 @@ optiplot.gllvm.quadratic <- function(object, ind.spp = NULL, alpha = 0.5, main =
       if (intercept == F) {
         curvePlot$y <- func(curvePlot$x, u = object$params$theta[largest.lnorms, , drop = F][j, which.lvs], u2 = object$params$theta[largest.lnorms, , drop = F][j, -(1:object$num.lv), drop = F][, which.lvs])
       } else {
-        curvePlot$y <- func(curvePlot$x, beta = object$params$beta0[largest.lnorms][j], u = object$params$theta[largest.lnorms, , drop = F][j, which.lvs], u2 = object$params$theta[largest.lnorms, , drop = F][j, -(1:object$num.lv), drop = F][, which.lvs])
+        curvePlot$y <- func(curvePlot$x, opt=opt[j,],c=c[j],tol=tol[j,], u = object$params$theta[largest.lnorms, , drop = F][j, which.lvs], u2 = object$params$theta[largest.lnorms, , drop = F][j, -(1:object$num.lv), drop = F][, which.lvs])
       }
 
       lines(x = curvePlot$x, y = curvePlot$y, col = cols[j])
